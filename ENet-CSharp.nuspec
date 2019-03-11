@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>ENet-CSharp</id>
+    <version>2.2.1</version>
+    <title>ENet-CSharp</title>
+    <authors>Stanislav Denisov</authors>
+    <owners>nxrighthere</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="file">license\license.txt</license>
+    <projectUrl>https://github.com/nxrighthere/ENet-CSharp</projectUrl>
+    <description>Reliable UDP networking library extended for the .NET environment</description>
+    <summary></summary>
+    <releaseNotes></releaseNotes>
+    <copyright>(c) 2019 Stanislav Denisov</copyright>
+    <tags>networking udp protocol ipv4 ipv6 gamedev</tags>
+  </metadata>
+  <files>
+    <file src="build\ENet-CSharp.targets" target="build\ENet-CSharp.targets" />
+    <file src="lib\net35\ENet-CSharp.dll" target="lib\net35\ENet-CSharp.dll" />
+    <file src="lib\netcoreapp2.0\ENet-CSharp.dll" target="lib\netcoreapp2.0\ENet-CSharp.dll" />
+    <file src="lib\netcoreapp2.0\enet.dll" target="lib\netcoreapp2.0\enet.dll" />
+    <file src="lib\netcoreapp2.0\enet.dylib" target="lib\netcoreapp2.0\enet.dylib" />
+    <file src="lib\netcoreapp2.0\libenet.so" target="lib\netcoreapp2.0\libenet.so" />
+    <file src="lib\netstandard2.0\ENet-CSharp.dll" target="lib\netstandard2.0\ENet-CSharp.dll" />
+    <file src="lib\enet.dll" target="lib\enet.dll" />
+    <file src="lib\enet.dylib" target="lib\enet.dylib" />
+    <file src="lib\libenet.so" target="lib\libenet.so" />
+    <file src="license\license.txt" target="license\license.txt" />
+  </files>
+</package>
