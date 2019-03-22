@@ -79,6 +79,10 @@
 		#pragma comment(lib, "winmm.lib")
 	#endif
 
+	#if _MSC_VER
+		#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#endif
+
 	#if _MSC_VER >= 1910
 		/* It looks like there were changes as of Visual Studio 2017 and there are no 32/64 bit
 		versions of _InterlockedExchange[operation], only InterlockedExchange[operation]
@@ -176,6 +180,7 @@
 
 #define ENET_HOST_ANY       in6addr_any
 #define ENET_PORT_ANY       0
+#define ENET_HOST_SIZE      1025
 #define ENET_HOST_BROADCAST 0xFFFFFFFFU
 
 #define ENET_HOST_TO_NET_16(value) (htons(value))
@@ -203,9 +208,9 @@ extern "C" {
 	typedef fd_set ENetSocketSet;
 
 	typedef struct _ENetCallbacks {
-		void*(ENET_CALLBACK *malloc)(size_t size);
-		void(ENET_CALLBACK *free)(void* memory);
-		void(ENET_CALLBACK *noMemory)(void);
+		void* (ENET_CALLBACK *malloc)(size_t size);
+		void (ENET_CALLBACK *free)(void* memory);
+		void (ENET_CALLBACK *noMemory)(void);
 	} ENetCallbacks;
 
 	extern void* enet_malloc(size_t);
@@ -462,6 +467,7 @@ extern "C" {
 	#define in6_equal(in6_addr_a, in6_addr_b) (memcmp(&in6_addr_a, &in6_addr_b, sizeof(struct in6_addr)) == 0)
 
 	typedef enum _ENetPacketFlag {
+		ENET_PACKET_FLAG_NONE                = 0,
 		ENET_PACKET_FLAG_RELIABLE            = (1 << 0),
 		ENET_PACKET_FLAG_UNSEQUENCED         = (1 << 1),
 		ENET_PACKET_FLAG_NO_ALLOCATE         = (1 << 2),
@@ -1021,7 +1027,11 @@ extern "C" {
 // !
 // =======================================================================//
 
-	static ENetCallbacks callbacks = { malloc, free, abort };
+	static ENetCallbacks callbacks = {
+		malloc,
+		free,
+		abort
+	};
 
 	int enet_initialize_with_callbacks(ENetVersion version, const ENetCallbacks* inits) {
 		if (version < ENET_VERSION_CREATE(1, 3, 0))
@@ -2632,7 +2642,7 @@ extern "C" {
 			size_t shouldCompress = 0;
 		#endif
 
-		while (host->continueSending)
+		while (host->continueSending) {
 			for (host->continueSending = 0, currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
 				if (currentPeer->state == ENET_PEER_STATE_DISCONNECTED || currentPeer->state == ENET_PEER_STATE_ZOMBIE)
 					continue;
@@ -2719,11 +2729,13 @@ extern "C" {
 							host->compressionBufferSize = originalSize;
 						}
 
-						int totalSize = originalSize, dataSize = 0;
+						size_t totalSize = originalSize, dataSize = 0;
 
 						while (totalSize) {
-							for (int i = 0; i < host->bufferCount - 1; i++) {
-								int copySize = ENET_MIN(totalSize, (int)buffers[i].dataLength);
+							size_t i;
+
+							for (i = 0; i < host->bufferCount - 1; i++) {
+								size_t copySize = ENET_MIN(totalSize, buffers[i].dataLength);
 
 								memcpy(host->compressionBuffer + dataSize, buffers[i].data, copySize);
 
@@ -2777,6 +2789,7 @@ extern "C" {
 				currentPeer->totalDataSent += sentLength;
 				host->totalSentPackets++;
 			}
+		}
 
 		return 0;
 	}
@@ -3906,11 +3919,12 @@ extern "C" {
 
 	void enet_host_broadcast_selective(ENetHost* host, enet_uint8 channelID, ENetPacket* packet, ENetPeer** peers, size_t length) {
 		ENetPeer* currentPeer;
+		size_t i;
 
 		if (host == NULL)
 			return;
 
-		for (int i = 0; i < length; i++) {
+		for (i = 0; i < length; i++) {
 			currentPeer = peers[i];
 
 			if (currentPeer == NULL || currentPeer->state != ENET_PEER_STATE_CONNECTED)
