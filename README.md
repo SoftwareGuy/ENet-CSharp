@@ -2,7 +2,12 @@
   <img src="https://i.imgur.com/CxkUxTs.png" alt="alt logo">
 </p>
 
-[![GitHub release](https://img.shields.io/github/release/nxrighthere/ENet-CSharp.svg)](https://github.com/nxrighthere/ENet-CSharp/releases) [![PayPal](https://drive.google.com/uc?id=1OQrtNBVJehNVxgPf6T6yX1wIysz1ElLR)](https://www.paypal.me/nxrighthere) [![Bountysource](https://drive.google.com/uc?id=19QRobscL8Ir2RL489IbVjcw3fULfWS_Q)](https://salt.bountysource.com/checkout/amount?team=nxrighthere) [![Coinbase](https://drive.google.com/uc?id=1LckuF-IAod6xmO9yF-jhTjq1m-4f7cgF)](https://commerce.coinbase.com/checkout/03e11816-b6fc-4e14-b974-29a1d0886697)
+[![PayPal](https://drive.google.com/uc?id=1OQrtNBVJehNVxgPf6T6yX1wIysz1ElLR)](https://www.paypal.me/coburn64)
+
+This is a fork of nxrighthere's ENET-CSharp repository where, as the 
+said user blocked me and the Mirror team from being able to keep our own 
+forks of ENET. For a quick rundown on the whole saga [read my blog 
+post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition)
 
 This project is based on collaborative work with [@inlife](https://github.com/inlife) and inherited all features of the custom [fork](https://github.com/zpl-c/enet) where the native library was heavily modified. You can find the most notable changes [here](https://github.com/nxrighthere/ENet-CSharp/issues/22#issuecomment-432982154). This version is extended, optimized, and involves new features that were not available before to boost the development process and run safely in the managed .NET environment with the highest possible performance.
 
@@ -23,7 +28,7 @@ Features:
 - Adaptability
 - Portability
 
-Please, read [common mistakes](https://github.com/nxrighthere/ENet-CSharp/issues/45) during integration and check [this](https://github.com/nxrighthere/ENet-CSharp/issues?q=is%3Aissue+is%3Aclosed) section before opening a new issue.
+Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/COMMON-MISTAKES.md) during integration and check the closed issues section before opening a new issue.
 
 Building
 --------
