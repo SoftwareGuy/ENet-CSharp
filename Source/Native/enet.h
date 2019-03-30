@@ -35,7 +35,7 @@
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 2
-#define ENET_VERSION_PATCH 1
+#define ENET_VERSION_PATCH 3
 #define ENET_VERSION_CREATE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 #define ENET_VERSION_GET_MAJOR(version) (((version) >> 16) & 0xFF)
 #define ENET_VERSION_GET_MINOR(version) (((version) >> 8) & 0xFF)
@@ -746,6 +746,7 @@ extern "C" {
 	ENET_API int enet_host_service(ENetHost*, ENetEvent*, enet_uint32);
 	ENET_API void enet_host_flush(ENetHost*);
 	ENET_API void enet_host_broadcast(ENetHost*, enet_uint8, ENetPacket*);
+	ENET_API void enet_host_broadcast_excluding(ENetHost*, enet_uint8, ENetPacket*, ENetPeer*);
 	ENET_API void enet_host_broadcast_selective(ENetHost*, enet_uint8, ENetPacket*, ENetPeer**, size_t);
 	ENET_API void enet_host_channel_limit(ENetHost*, size_t);
 	ENET_API void enet_host_bandwidth_limit(ENetHost*, enet_uint32, enet_uint32);
@@ -1875,24 +1876,24 @@ extern "C" {
 				--startCommand->fragmentsRemaining;
 				startCommand->fragments[fragmentNumber / 32] |= (1 << (fragmentNumber % 32));
 
-				if (fragmentOffset + fragmentLength > startCommand->packet->dataLength)
-					fragmentLength = startCommand->packet->dataLength - fragmentOffset;
+			if (fragmentOffset + fragmentLength > startCommand->packet->dataLength)
+				fragmentLength = startCommand->packet->dataLength - fragmentOffset;
 
-				memcpy(startCommand->packet->data + fragmentOffset, (enet_uint8*)command + sizeof(ENetProtocolSendFragment), fragmentLength);
+			memcpy(startCommand->packet->data + fragmentOffset, (enet_uint8*)command + sizeof(ENetProtocolSendFragment), fragmentLength);
 
-				if (startCommand->fragmentsRemaining <= 0)
-					enet_peer_dispatch_incoming_unreliable_commands(peer, channel);
-			}
-
-			return 0;
+			if (startCommand->fragmentsRemaining <= 0)
+				enet_peer_dispatch_incoming_unreliable_commands(peer, channel);
 		}
 
-		static int enet_protocol_handle_ping(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
-			if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)
-				return -1;
+		return 0;
+	}
 
-			return 0;
-		}
+	static int enet_protocol_handle_ping(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
+		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)
+			return -1;
+
+		return 0;
+	}
 
 	static int enet_protocol_handle_bandwidth_limit(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
 		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)
@@ -2004,9 +2005,7 @@ extern "C" {
 		if (peer->roundTripTimeVariance > peer->highestRoundTripTimeVariance)
 			peer->highestRoundTripTimeVariance = peer->roundTripTimeVariance;
 
-		if (peer->packetThrottleEpoch == 0 ||
-			ENET_TIME_DIFFERENCE(host->serviceTime, peer->packetThrottleEpoch) >= peer->packetThrottleInterval) {
-
+		if (peer->packetThrottleEpoch == 0 || ENET_TIME_DIFFERENCE(host->serviceTime, peer->packetThrottleEpoch) >= peer->packetThrottleInterval) {
 			peer->lastRoundTripTime            = peer->lowestRoundTripTime;
 			peer->lastRoundTripTimeVariance    = peer->highestRoundTripTimeVariance;
 			peer->lowestRoundTripTime          = peer->roundTripTime;
@@ -3917,6 +3916,20 @@ extern "C" {
 			enet_packet_destroy(packet);
 	}
 
+	void enet_host_broadcast_excluding(ENetHost* host, enet_uint8 channelID, ENetPacket* packet, ENetPeer* excludedPeer) {
+		ENetPeer* currentPeer;
+
+		for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
+			if (currentPeer->state != ENET_PEER_STATE_CONNECTED || currentPeer == excludedPeer)
+				continue;
+
+			enet_peer_send(currentPeer, channelID, packet);
+		}
+
+		if (packet->referenceCount == 0)
+			enet_packet_destroy(packet);		
+	}
+
 	void enet_host_broadcast_selective(ENetHost* host, enet_uint8 channelID, ENetPacket* packet, ENetPeer** peers, size_t length) {
 		ENetPeer* currentPeer;
 		size_t i;
@@ -4325,7 +4338,11 @@ extern "C" {
 		void enet_deinitialize(void) { }
 
 		enet_uint64 enet_host_random_seed(void) {
-			return (enet_uint64)time(NULL);
+			struct timeval timeVal;
+
+			gettimeofday(&timeVal, NULL);
+
+			return (timeVal.tv_sec * 1000) ^ (timeVal.tv_usec / 1000);
 		}
 
 		int enet_address_set_host_ip(ENetAddress* address, const char* name) {
@@ -4538,8 +4555,8 @@ extern "C" {
 		}
 
 		int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
+			int result = -1;
 			struct sockaddr_in6 sin;
-			int result;
 
 			memset(&sin, 0, sizeof(struct sockaddr_in6));
 
@@ -4556,7 +4573,7 @@ extern "C" {
 		}
 
 		ENetSocket enet_socket_accept(ENetSocket socket, ENetAddress* address) {
-			int result;
+			int result = -1;
 			struct sockaddr_in6 sin;
 			socklen_t sinLength = sizeof(struct sockaddr_in6);
 
@@ -4579,7 +4596,7 @@ extern "C" {
 		}
 
 		void enet_socket_destroy(ENetSocket socket) {
-			if (socket != -1)
+			if (socket != ENET_SOCKET_NULL)
 				close(socket);
 		}
 
@@ -4603,7 +4620,7 @@ extern "C" {
 
 			msgHdr.msg_iov    = (struct iovec*)buffers;
 			msgHdr.msg_iovlen = bufferCount;
-			sentLength = sendmsg(socket, &msgHdr, MSG_NOSIGNAL);
+			sentLength        = sendmsg(socket, &msgHdr, MSG_NOSIGNAL);
 
 			if (sentLength == -1) {
 				if (errno == EWOULDBLOCK)
@@ -4629,7 +4646,7 @@ extern "C" {
 
 			msgHdr.msg_iov    = (struct iovec*)buffers;
 			msgHdr.msg_iovlen = bufferCount;
-			recvLength = recvmsg(socket, &msgHdr, MSG_NOSIGNAL);
+			recvLength        = recvmsg(socket, &msgHdr, MSG_NOSIGNAL);
 
 			if (recvLength == -1) {
 				if (errno == EWOULDBLOCK)
@@ -4926,8 +4943,8 @@ extern "C" {
 		}
 
 		int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
+			int result = -1;
 			struct sockaddr_in6 sin;
-			int result;
 
 			memset(&sin, 0, sizeof(struct sockaddr_in6));
 
@@ -4985,7 +5002,7 @@ extern "C" {
 			}
 
 			if (WSASendTo(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &sentLength, 0, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? sizeof(struct sockaddr_in6) : 0, NULL, NULL) == SOCKET_ERROR)
-				return (WSAGetLastError() == WSAEWOULDBLOCK) ? 0 : 1;
+				return (WSAGetLastError() == WSAEWOULDBLOCK) ? 0 : -1;
 
 			return (int)sentLength;
 		}
