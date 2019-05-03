@@ -2,12 +2,9 @@
   <img src="https://i.imgur.com/CxkUxTs.png" alt="alt logo">
 </p>
 
-[![PayPal](https://drive.google.com/uc?id=1OQrtNBVJehNVxgPf6T6yX1wIysz1ElLR)](https://www.paypal.me/coburn64)
+[![GitHub release](https://img.shields.io/github/release/nxrighthere/ENet-CSharp.svg)](https://github.com/nxrighthere/ENet-CSharp/releases) [![PayPal](https://drive.google.com/uc?id=1OQrtNBVJehNVxgPf6T6yX1wIysz1ElLR)](https://www.paypal.me/nxrighthere) [![Bountysource](https://drive.google.com/uc?id=19QRobscL8Ir2RL489IbVjcw3fULfWS_Q)](https://salt.bountysource.com/checkout/amount?team=nxrighthere) [![Coinbase](https://drive.google.com/uc?id=1LckuF-IAod6xmO9yF-jhTjq1m-4f7cgF)](https://commerce.coinbase.com/checkout/03e11816-b6fc-4e14-b974-29a1d0886697)
 
-This is a fork of nxrighthere's ENET-CSharp repository where, as the 
-said user blocked me and the Mirror team from being able to keep our own 
-forks of ENET. For a quick rundown on the whole saga [read my blog 
-post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition)
+_The library is no longer in active public development, all futher work moved to private, this repository turned into read-only mode for historical reference. Thanks to all supporters and contributors._
 
 This project is based on collaborative work with [@inlife](https://github.com/inlife) and inherited all features of the custom [fork](https://github.com/zpl-c/enet) where the native library was heavily modified. You can find the most notable changes [here](https://github.com/nxrighthere/ENet-CSharp/issues/22#issuecomment-432982154). This version is extended, optimized, and involves new features that were not available before to boost the development process and run safely in the managed .NET environment with the highest possible performance.
 
@@ -28,7 +25,7 @@ Features:
 - Adaptability
 - Portability
 
-Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/COMMON-MISTAKES.md) during integration and check the closed issues section before opening a new issue.
+Please, read [common mistakes](https://github.com/nxrighthere/ENet-CSharp/issues/45) during integration and check [this](https://github.com/nxrighthere/ENet-CSharp/issues?q=is%3Aissue+is%3Aclosed) section before opening a new issue.
 
 Building
 --------
@@ -137,7 +134,7 @@ using (Host client = new Host()) {
 					break;
 
 				case EventType.Connect:
-					Console.WriteLine("Client connected to server - ID: " + peer.ID);
+					Console.WriteLine("Client connected to server");
 					break;
 
 				case EventType.Disconnect:
@@ -278,6 +275,10 @@ Contains marshalled structure with host data and port number.
 
 `Address.Port` set or get a port number.
 
+`Address.GetIP()` get an IP address.
+
+`Address.SetIP(string ip)` set an IP address.
+
 `Address.GetHost()` attempts to do a reverse lookup from the address. Returns a string with a resolved name or an IP address.
 
 `Address.SetHost(string hostName)` set host name or an IP address (IPv4/IPv6). Should be used for binding to a network interface or for connection to a foreign host. Returns true on success or false on failure.
@@ -310,7 +311,7 @@ Contains a managed pointer to the packet.
 
 `Packet.SetFreeCallback(PacketFreeCallback callback)` set callback to notify the programmer when an appropriate packet is being destroyed. Pointer `IntPtr` to a callback can be used instead of a reference to a delegate.
 
-`Packet.Create(byte[] data, int offset, int length, PacketFlags flags)` creates a packet that may be sent to a peer. The offset, length and packet flags parameters are optional. Multiple flags can be specified at once. Pointer `IntPtr` to a native buffer can be used instead of a reference to a byte array.
+`Packet.Create(byte[] data, int offset, int length, PacketFlags flags)` creates a packet that may be sent to a peer. The offset parameter indicates the starting point of data in an array, the length is the ending point of data in an array. All parameters are optional. Multiple packet flags can be specified at once. Pointer `IntPtr` to a native buffer can be used instead of a reference to a byte array.
 
 `Packet.CopyTo(byte[] destination)` copies payload from the packet to the destination array.
 
@@ -387,7 +388,7 @@ Contains a managed pointer to the host.
 
 `Host.PreventConnections(bool state)` prevents access to the host for new incoming connections. This function makes the host completely invisible from outside, any peer that attempts to connect to it will be timed out.
 
-`Host.Broadcast(byte channelID, ref Packet packet, Peer[] peers)` queues a packet to be sent to a range of peers or to all peers associated with the host if the optional peers parameter is not used. Any zeroed `Peer` structure in an array will be excluded from the broadcast.
+`Host.Broadcast(byte channelID, ref Packet packet, Peer[] peers)` queues a packet to be sent to a range of peers or to all peers associated with the host if the optional peers parameter is not used. Any zeroed `Peer` structure in an array will be excluded from the broadcast. Instead of an array, a single `Peer` can be passed to function which will be excluded from the broadcast.
 
 `Host.CheckEvents(out Event @event)` checks for any queued events on the host and dispatches one if available. Returns > 0 if an event was dispatched, 0 if no events are available, < 0 on failure.
 
