@@ -1,17 +1,22 @@
 cmake_minimum_required(VERSION 2.6)
 project(enet C)
 
+set(ENET_DEBUG "0" CACHE BOOL "Enable debug functionality")
 set(ENET_STATIC "0" CACHE BOOL "Create a static library")
 set(ENET_SHARED "0" CACHE BOOL "Create a shared library")
 set(ENET_LZ4 "0" CACHE BOOL "Add support for an optional packet-level compression")
 
 if (MSVC)
-	add_definitions(-W3)
+    add_definitions(-W3)
 else()
-	add_definitions(-Wno-error)
+    add_definitions(-Wno-error)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
+
+if (ENET_DEBUG)
+    add_definitions(-DENET_DEBUG)
+endif()
 
 if (ENET_LZ4)
     add_definitions(-DENET_LZ4)
