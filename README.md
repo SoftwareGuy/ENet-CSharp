@@ -6,8 +6,10 @@
 
 This is a fork of nxrighthere's ENET-CSharp repository where, as the 
 said user blocked me and the Mirror team from being able to keep our own 
-forks of ENET. For a quick rundown on the whole saga [read my blog 
-post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition)
+forks of ENET. That didn't mean I can't make a manual fork myself!
+
+For a quick rundown on the whole saga [read my blog 
+post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition). It's a good read.
 
 This project is based on collaborative work with [@inlife](https://github.com/inlife) and inherited all features of the custom [fork](https://github.com/zpl-c/enet) where the native library was heavily modified. You can find the most notable changes [here](https://github.com/nxrighthere/ENet-CSharp/issues/22#issuecomment-432982154). This version is extended, optimized, and involves new features that were not available before to boost the development process and run safely in the managed .NET environment with the highest possible performance.
 
@@ -44,6 +46,8 @@ A managed assembly can be built using any available compiling platform that supp
 
 Compiled libraries
 --------
+**NOTE:** If you use these compiled libraries, you'll be taken to the upstream ENET-C# repository. They won't contain any modifications this fork has!
+
 You can grab compiled libraries from the [release](https://github.com/nxrighthere/ENet-CSharp/releases) section or from [NuGet](https://www.nuget.org/packages/ENet-CSharp):
 
 `ENet-CSharp` contains compiled assembly with native libraries for the .NET environment (.NET Standard 2.0).
@@ -137,7 +141,7 @@ using (Host client = new Host()) {
 					break;
 
 				case EventType.Connect:
-					Console.WriteLine("Client connected to server - ID: " + peer.ID);
+					Console.WriteLine("Client connected to server");
 					break;
 
 				case EventType.Disconnect:
@@ -278,6 +282,10 @@ Contains marshalled structure with host data and port number.
 
 `Address.Port` set or get a port number.
 
+`Address.GetIP()` get an IP address.
+
+`Address.SetIP(string ip)` set an IP address.
+
 `Address.GetHost()` attempts to do a reverse lookup from the address. Returns a string with a resolved name or an IP address.
 
 `Address.SetHost(string hostName)` set host name or an IP address (IPv4/IPv6). Should be used for binding to a network interface or for connection to a foreign host. Returns true on success or false on failure.
@@ -310,7 +318,7 @@ Contains a managed pointer to the packet.
 
 `Packet.SetFreeCallback(PacketFreeCallback callback)` set callback to notify the programmer when an appropriate packet is being destroyed. Pointer `IntPtr` to a callback can be used instead of a reference to a delegate.
 
-`Packet.Create(byte[] data, int offset, int length, PacketFlags flags)` creates a packet that may be sent to a peer. The offset, length and packet flags parameters are optional. Multiple flags can be specified at once. Pointer `IntPtr` to a native buffer can be used instead of a reference to a byte array.
+`Packet.Create(byte[] data, int offset, int length, PacketFlags flags)` creates a packet that may be sent to a peer. The offset parameter indicates the starting point of data in an array, the length is the ending point of data in an array. All parameters are optional. Multiple packet flags can be specified at once. Pointer `IntPtr` to a native buffer can be used instead of a reference to a byte array.
 
 `Packet.CopyTo(byte[] destination)` copies payload from the packet to the destination array.
 
@@ -348,6 +356,8 @@ Contains a managed pointer to the peer and cached ID.
 `Peer.ConfigureThrottle(uint interval, uint acceleration, uint deceleration)` configures throttle parameter for a peer. Unreliable packets are dropped by ENet in response to the varying conditions of the connection to the peer. The throttle represents a probability that an unreliable packet should not be dropped and thus sent by ENet to the peer. The lowest mean round trip time from the sending of a reliable packet to the receipt of its acknowledgment is measured over an amount of time specified by the interval parameter in milliseconds. If a measured round trip time happens to be significantly less than the mean round trip time measured over the interval, then the throttle probability is increased to allow more traffic by an amount specified in the acceleration parameter, which is a ratio to the `Library.throttleScale` constant. If a measured round trip time happens to be significantly greater than the mean round trip time measured over the interval, then the throttle probability is decreased to limit traffic by an amount specified in the deceleration parameter, which is a ratio to the `Library.throttleScale` constant. When the throttle has a value of `Library.throttleScale`, no unreliable packets are dropped by ENet, and so 100% of all unreliable packets will be sent. When the throttle has a value of 0, all unreliable packets are dropped by ENet, and so 0% of all unreliable packets will be sent. Intermediate values for the throttle represent intermediate probabilities between 0% and 100% of unreliable packets being sent. The bandwidth limits of the local and foreign hosts are taken into account to determine a sensible limit for the throttle probability above which it should not raise even in the best of conditions.
 
 `Peer.Send(byte channelID, ref Packet packet)` queues a packet to be sent. Returns true on success or false on failure.
+
+`Peer.Receive(out byte channelID, out Packet packet)` attempts to dequeue any incoming queued packet. Returns true if a packet was dequeued or false if no packets available.
 
 `Peer.Ping()` sends a ping request to a peer. ENet automatically pings all connected peers at regular intervals, however, this function may be called to ensure more frequent ping requests.
 
@@ -387,7 +397,7 @@ Contains a managed pointer to the host.
 
 `Host.PreventConnections(bool state)` prevents access to the host for new incoming connections. This function makes the host completely invisible from outside, any peer that attempts to connect to it will be timed out.
 
-`Host.Broadcast(byte channelID, ref Packet packet, Peer[] peers)` queues a packet to be sent to a range of peers or to all peers associated with the host if the optional peers parameter is not used. Any zeroed `Peer` structure in an array will be excluded from the broadcast.
+`Host.Broadcast(byte channelID, ref Packet packet, Peer[] peers)` queues a packet to be sent to a range of peers or to all peers associated with the host if the optional peers parameter is not used. Any zeroed `Peer` structure in an array will be excluded from the broadcast. Instead of an array, a single `Peer` can be passed to function which will be excluded from the broadcast.
 
 `Host.CheckEvents(out Event @event)` checks for any queued events on the host and dispatches one if available. Returns > 0 if an event was dispatched, 0 if no events are available, < 0 on failure.
 
