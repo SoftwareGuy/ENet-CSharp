@@ -1,0 +1,137 @@
+Hi all, 
+
+over the last couple of days, I ported the native part of enet to the Nintendo Switch. The Switch being a platform under a strict NDA means I can't share code. But I want to help to make porting easier in the future. Also, I have not fully tested the c#-bindings with my version of enet; In general everything should work, but I will post a small update as soon as I have tried it out with a better example. 
+
+First things first; 
+* Almost everybody is using Visual Studio to develop for the Switch; 
+* Switch has its own toolchain based on clang
+* Switch is not allowing every feature of c/cpp on its platform (can't go super in depth about it)
+
+Obviously, I did not have to change much to get it up and running on windows. But had to add a couple of preprocessor #ifs and #elses :) 
+
+The first big change is when enet figures out the platform and compiler it is building on. 
+The Switch is Unix based but not directly compatible with most of the Unix networking headers. In general, you can probably get it working using the standard. But during submission, you will fail due to not using the specific headers. 
+
+:::Systems differences:::
+Old: 
+#ifdef _WIN32 
+//Windows stuff	
+#else 
+//Unix stuff
+#endif 
+
+New: 
+#ifdef _WIN32 
+//Windows stuff
+#elif defined(unix) || defined(__unix__) || defined(__unix) //UNIX
+//unix stuff
+#elif <<<Nintendo Specific Define>>>
+//Nintendo stuff 
+#endif
+
+A good thing here is that most of the things we do in Unix we can do on the Switch, but still a couple of things that are not supported. Its also good to know that the switch does not need to include all the header files we need in the Unix version. Basically, everything is combined into "a switch socket header".
+
+Things that don't work on the switch: 
+#define ENET_HOST_ANY	in6addr_any  
+#define ENET_HOST_TO_NET_16(value) (htons(value))
+#define ENET_HOST_TO_NET_32(value) (htonl(value))
+#define ENET_NET_TO_HOST_16(value) (ntohs(value))
+#define ENET_NET_TO_HOST_32(value) (ntohl(value))
+
+So I wrapped those in a define and changed them to the switch version. in6addr_any is not allowed so we have to switch to the ipv4 version. htons and friends have an appropriate switch function to be used. 
+
+Here we can clearly see the first big picture. Every function, every define, every typedef related to sockets has to be changed. Most of the changes are trivial and just have different naming. 
+
+So for example: 
+#if defined(ENET_WIN) || defined(ENET_UNIX)
+#define ENET_HOST_TO_NET_16(value) (htons(value))
+#elif defined (ENET_NINTENDO)
+#define ENET_HOST_TO_NET_16(value) (<<<Nintendo Specific Call to htons(value)>>>)
+#else
+#error
+#endif
+
+Not being able to use in6addr_any proved to be one of the bigger challenges and so far I have not found a good solution on how to change that and still be able to use the original Enet.cs Binding file. 
+
+#if defined(ENET_NINTENDO)
+	typedef struct _ENetAddress {
+		<<<Nintendo specific IPv4 type in 32bit>>> host;
+		enet_uint16 port;
+		enet_uint16 scope;
+	} ENetAddress;
+
+#define in6_equal(in6_addr_a, in6_addr_b) (memcmp(&in6_addr_a, &in6_addr_b, sizeof(<<<Nintendo specific IPv4 type in 32bit>>>)) == 0)
+#else // ENET_WIN or ENET_UNIX -> breakes bindings here.
+	typedef struct _ENetAddress {
+		struct in6_addr host;
+		enet_uint16 port;
+		enet_uint16 scope;
+	} ENetAddress;
+
+#define in6_equal(in6_addr_a, in6_addr_b) (memcmp(&in6_addr_a, &in6_addr_b, sizeof(struct in6_addr)) == 0)
+#endif
+
+:::Atomics:::
+Proved to be the other big problem. Because we have to use Visual Studio and a different (not windows based) toolchain.
+I changed the 
+#ifdef _MSC_VER 
+to
+#if defined(_MSC_VER) && defined(ENET_WIN)
+That way I can exclude windows specifics.
+
+The switch being based clang is able to use __atomic_* and the likes but when debugging via Visual Studio IntelliSense keeps reporting errors. Which is annoying. Using the __INTELLISENSE__ preprocessor helped to shut it up.
+
+In the end I defined a function for each atomic operation: 
+#ifdef __INTELLISENSE__
+int32_t enet_atomic_load32(const int32_t* ptr, int memorder);
+#endif 
+
+#if defined(ENET_WIN) 
+static __inline int32_t enet_atomic_load32(const int32_t* ptr, int memorder) {
+//..
+}
+#elif defined(ENET_UNIX) || defined(ENET_NINTENDO) 
+static __inline int32_t enet_atomic_load32(int32_t* ptr, int memorder) {
+    return __atomic_load_n(ptr, memorder);
+}
+#endif
+
+That helped a lot :) 
+
+:::Platform Specific (Unix):::
+As I already said, each socket function has to be changed. Most of those changes are easy. Keep in mind the socket address is ipv4 instead of ipv6:
+For example: 
+From: 
+((enet_uint32*)&address->host.s6_addr)[0] = 0;
+((enet_uint32*)&address->host.s6_addr)[1] = 0;
+((enet_uint32*)&address->host.s6_addr)[2] = ENET_HOST_TO_NET_32(0xFFFF);
+((enet_uint32*)&address->host.s6_addr)[3] = sin->sin_addr.s_addr;
+
+To: 
+address->host = sin->sin_addr.S_addr;
+
+pollfd is not directly usable on the switch and is wrapped via different functions. (all in all a very easy change) 
+
+Other than that. The Nintendo switch requires explicit initialization of all socket buffers. It is able to do that with a simple config and function call. I've not yet fully understood the implications here because somehow I need it in a c/cpp only test application but not when I use enet via Unity, maybe the Unity SDK does something here. Could be wrapped into enet_initialize, enet_deinitialize, I suppose. 
+
+I think that's "all" in a c/cpp sense. 
+
+Obviously, I had to change the Enet.cs part: 
+
+From: 
+[StructLayout(LayoutKind.Sequential)]
+	public struct ENetAddress {
+		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+		public byte[] host;
+		public ushort port;
+		public ushort scope;
+	}
+
+to
+
+[StructLayout(LayoutKind.Sequential)]
+	public struct ENetAddress {
+		public uint host;
+		public ushort port;
+		public ushort scope;
+	}

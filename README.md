@@ -30,7 +30,7 @@ Features:
 - Adaptability
 - Portability
 
-Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/COMMON-MISTAKES.md) during integration and check the closed issues section before opening a new issue.
+Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/COMMON-MISTAKES.md) during integration and check the closed issues section before opening a new issue.
 
 Building
 --------
@@ -39,6 +39,8 @@ To build the native library appropriate software is required:
 For desktop platforms [CMake](https://cmake.org/download/) with GNU Make or Visual Studio.
 
 For mobile platforms [NDK](https://developer.android.com/ndk/downloads/) for Android and [Xcode](https://developer.apple.com/xcode/) for iOS. Make sure that all compiled libraries are assigned to appropriate platforms and CPU architectures.
+
+To build the library for Nintendo Switch, follow [this](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/BUILD-FOR-SWITCH.txt) guide.
 
 Define `ENET_LZ4` to build the library with support for an optional packet-level compression.
 
