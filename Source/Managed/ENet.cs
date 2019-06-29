@@ -35,7 +35,7 @@ namespace ENet {
 		Reliable = 1 << 0,
 		Unsequenced = 1 << 1,
 		NoAllocate = 1 << 2,
-		UnreliableFragment = 1 << 3
+		UnreliableFragmented = 1 << 3
 	}
 
 	public enum EventType {
@@ -63,7 +63,7 @@ namespace ENet {
 	[StructLayout(LayoutKind.Sequential)]
 	public struct ENetAddress {
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-		public byte[] host;
+		public byte[] ip;
 		public ushort port;
 		public ushort scope;
 	}
@@ -673,12 +673,9 @@ namespace ENet {
 
 				byte[] ip = ArrayPool.GetByteBuffer();
 
-				if (Native.enet_peer_get_ip(nativePeer, ip, (IntPtr)ip.Length) == 0) {
-					if (Encoding.ASCII.GetString(ip).Remove(7) != "::ffff:")
-						return Encoding.ASCII.GetString(ip, 0, ip.StringLength());
-					else
-						return Encoding.ASCII.GetString(ip, 0, ip.StringLength()).Substring(7);
-				} else {
+				if (Native.enet_peer_get_ip(nativePeer, ip, (IntPtr)ip.Length) == 0)
+					return Encoding.ASCII.GetString(ip, 0, ip.StringLength());
+				else
 					return String.Empty;
 				}
 			}
@@ -781,10 +778,10 @@ namespace ENet {
 				throw new InvalidOperationException("Peer not created");
 		}
 
-		public void ConfigureThrottle(uint interval, uint acceleration, uint deceleration) {
+		public void ConfigureThrottle(uint interval, uint acceleration, uint deceleration, uint threshold) {
 			CheckCreated();
 
-			Native.enet_peer_throttle_configure(nativePeer, interval, acceleration, deceleration);
+			Native.enet_peer_throttle_configure(nativePeer, interval, acceleration, deceleration, threshold);
 		}
 
 		public bool Send(byte channelID, ref Packet packet) {
@@ -878,7 +875,7 @@ namespace ENet {
 		public const uint timeoutLimit = 32;
 		public const uint timeoutMinimum = 5000;
 		public const uint timeoutMaximum = 30000;
-		public const uint version = (2 << 16) | (2 << 8) | (7);
+		public const uint version = (2 << 16) | (2 << 8) | (8);
 
 		public static bool Initialize() {
 			return Native.enet_initialize() == 0;
@@ -1016,7 +1013,7 @@ namespace ENet {
 		internal static extern void enet_host_prevent_connections(IntPtr host, byte state);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void enet_peer_throttle_configure(IntPtr peer, uint interval, uint acceleration, uint deceleration);
+		internal static extern void enet_peer_throttle_configure(IntPtr peer, uint interval, uint acceleration, uint deceleration, uint threshold);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern uint enet_peer_get_id(IntPtr peer);

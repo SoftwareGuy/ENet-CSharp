@@ -13,7 +13,7 @@ post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-git
 
 This project is based on collaborative work with [@inlife](https://github.com/inlife) and inherited all features of the custom [fork](https://github.com/zpl-c/enet) where the native library was heavily modified. You can find the most notable changes [here](https://github.com/nxrighthere/ENet-CSharp/issues/22#issuecomment-432982154). This version is extended, optimized, and involves new features that were not available before to boost the development process and run safely in the managed .NET environment with the highest possible performance.
 
-Although the project is called ENet-CSharp, this is not just a C# wrapper for the native C library, but an independent fork which is incompatible with any other ENet implementation including the [original](https://github.com/lsalzman/enet) since 2.0.0 version. Programmers who are using C/C++ languages can utilize this fork as well in any projects.
+Although the project is called ENet-CSharp, this is not just a C# wrapper for the native C library, but an independent fork which is incompatible with any other ENet implementation including the [original](https://github.com/lsalzman/enet) since 2.0.0 version. Programmers who are using C/C++ languages can utilize this fork as well in any projects such as [NetDynamics](https://github.com/nxrighthere/NetDynamics).
 
 Features:
 
@@ -30,7 +30,9 @@ Features:
 - Adaptability
 - Portability
 
-Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/COMMON-MISTAKES.md) during integration and check the closed issues section before opening a new issue.
+Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/COMMON-MISTAKES.md) during integration and check the closed issues of the upstream repo.
+
+Issues filed here will be analyzed and fixed independently of upstream.
 
 Building
 --------
@@ -233,7 +235,7 @@ Definitions of a flags for `Peer.Send()` function:
 
 `PacketFlags.NoAllocate` a packet will not allocate data, and the user must supply it instead.
 
-`PacketFlags.UnreliableFragment` a packet will be unreliably fragmented if it exceeds the MTU. By default packets larger than MTU fragmented reliably.
+`PacketFlags.UnreliableFragmented` a packet will be unreliably fragmented if it exceeds the MTU. By default packets larger than MTU are fragmented reliably.
 
 #### EventType
 Definitions of event types for `Event.Type` property:
@@ -286,11 +288,11 @@ Contains marshalled structure with host data and port number.
 
 `Address.GetIP()` get an IP address.
 
-`Address.SetIP(string ip)` set an IP address.
+`Address.SetIP(string ip)` set an IP address. To use IPv4 broadcast in the local network the address can be set to _255.255.255.255_ for a client. ENet will automatically respond to the broadcast and update the address to a server's actual IP. 
 
 `Address.GetHost()` attempts to do a reverse lookup from the address. Returns a string with a resolved name or an IP address.
 
-`Address.SetHost(string hostName)` set host name or an IP address (IPv4/IPv6). Should be used for binding to a network interface or for connection to a foreign host. Returns true on success or false on failure.
+`Address.SetHost(string hostName)` set host name or an IP address. Should be used for binding to a network interface or for connection to a foreign host. Returns true on success or false on failure.
 
 #### Event
 Contains marshalled structure with the event type, managed pointer to the peer, channel ID, user-supplied data, and managed pointer to the packet.
@@ -355,7 +357,7 @@ Contains a managed pointer to the peer and cached ID.
 
 `Peer.Data` set or get the user-supplied data. Should be used with an explicit cast to appropriate data type.
 
-`Peer.ConfigureThrottle(uint interval, uint acceleration, uint deceleration)` configures throttle parameter for a peer. Unreliable packets are dropped by ENet in response to the varying conditions of the connection to the peer. The throttle represents a probability that an unreliable packet should not be dropped and thus sent by ENet to the peer. The lowest mean round trip time from the sending of a reliable packet to the receipt of its acknowledgment is measured over an amount of time specified by the interval parameter in milliseconds. If a measured round trip time happens to be significantly less than the mean round trip time measured over the interval, then the throttle probability is increased to allow more traffic by an amount specified in the acceleration parameter, which is a ratio to the `Library.throttleScale` constant. If a measured round trip time happens to be significantly greater than the mean round trip time measured over the interval, then the throttle probability is decreased to limit traffic by an amount specified in the deceleration parameter, which is a ratio to the `Library.throttleScale` constant. When the throttle has a value of `Library.throttleScale`, no unreliable packets are dropped by ENet, and so 100% of all unreliable packets will be sent. When the throttle has a value of 0, all unreliable packets are dropped by ENet, and so 0% of all unreliable packets will be sent. Intermediate values for the throttle represent intermediate probabilities between 0% and 100% of unreliable packets being sent. The bandwidth limits of the local and foreign hosts are taken into account to determine a sensible limit for the throttle probability above which it should not raise even in the best of conditions. To disable throttling the deceleration parameter should be set to zero.
+`Peer.ConfigureThrottle(uint interval, uint acceleration, uint deceleration, uint threshold)` configures throttle parameter for a peer. Unreliable packets are dropped by ENet in response to the varying conditions of the connection to the peer. The throttle represents a probability that an unreliable packet should not be dropped and thus sent by ENet to the peer. The lowest mean round trip time from the sending of a reliable packet to the receipt of its acknowledgment is measured over an amount of time specified by the interval parameter in milliseconds. If a measured round trip time happens to be significantly less than the mean round trip time measured over the interval, then the throttle probability is increased to allow more traffic by an amount specified in the acceleration parameter, which is a ratio to the `Library.throttleScale` constant. If a measured round trip time happens to be significantly greater than the mean round trip time measured over the interval, then the throttle probability is decreased to limit traffic by an amount specified in the deceleration parameter, which is a ratio to the `Library.throttleScale` constant. When the throttle has a value of `Library.throttleScale`, no unreliable packets are dropped by ENet, and so 100% of all unreliable packets will be sent. When the throttle has a value of 0, all unreliable packets are dropped by ENet, and so 0% of all unreliable packets will be sent. Intermediate values for the throttle represent intermediate probabilities between 0% and 100% of unreliable packets being sent. The bandwidth limits of the local and foreign hosts are taken into account to determine a sensible limit for the throttle probability above which it should not raise even in the best of conditions. To disable throttling the deceleration parameter should be set to zero. The threshold parameter can be used to reduce packet throttling in unstable network environments with high jitter and low average latency which is a common condition for Wi-Fi networks in crowded places.
 
 `Peer.Send(byte channelID, ref Packet packet)` queues a packet to be sent. Returns true on success or false on failure.
 
