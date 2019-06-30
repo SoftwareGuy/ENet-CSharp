@@ -65,7 +65,6 @@ namespace ENet {
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
 		public byte[] ip;
 		public ushort port;
-		public ushort scope;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -677,7 +676,6 @@ namespace ENet {
 					return Encoding.ASCII.GetString(ip, 0, ip.StringLength());
 				else
 					return String.Empty;
-				}
 			}
 		}
 
