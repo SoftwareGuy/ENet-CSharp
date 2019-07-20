@@ -35,7 +35,8 @@ namespace ENet {
 		Reliable = 1 << 0,
 		Unsequenced = 1 << 1,
 		NoAllocate = 1 << 2,
-		UnreliableFragmented = 1 << 3
+		UnreliableFragmented = 1 << 3,
+		Instant = 1 << 4
 	}
 
 	public enum EventType {
@@ -61,14 +62,14 @@ namespace ENet {
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ENetAddress {
+	internal struct ENetAddress {
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
 		public byte[] ip;
 		public ushort port;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ENetEvent {
+	internal struct ENetEvent {
 		public EventType type;
 		public IntPtr peer;
 		public byte channelID;
@@ -77,7 +78,7 @@ namespace ENet {
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ENetCallbacks {
+	internal struct ENetCallbacks {
 		public AllocCallback malloc;
 		public FreeCallback free;
 		public NoMemoryCallback noMemory;
@@ -529,7 +530,7 @@ namespace ENet {
 			CheckCreated();
 
 			packet.CheckCreated();
-			Native.enet_host_broadcast_excluding(nativeHost, channelID, packet.NativeData, excludedPeer.NativeData);
+			Native.enet_host_broadcast_exclude(nativeHost, channelID, packet.NativeData, excludedPeer.NativeData);
 			packet.NativeData = IntPtr.Zero;
 		}
 
@@ -873,7 +874,7 @@ namespace ENet {
 		public const uint timeoutLimit = 32;
 		public const uint timeoutMinimum = 5000;
 		public const uint timeoutMaximum = 30000;
-		public const uint version = (2 << 16) | (2 << 8) | (9);
+		public const uint version = (2 << 16) | (3 << 8) | (0);
 
 		public static bool Initialize() {
 			return Native.enet_initialize() == 0;
@@ -966,7 +967,7 @@ namespace ENet {
 		internal static extern void enet_host_broadcast(IntPtr host, byte channelID, IntPtr packet);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void enet_host_broadcast_excluding(IntPtr host, byte channelID, IntPtr packet, IntPtr excludedPeer);
+		internal static extern void enet_host_broadcast_exclude(IntPtr host, byte channelID, IntPtr packet, IntPtr excludedPeer);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void enet_host_broadcast_selective(IntPtr host, byte channelID, IntPtr packet, IntPtr[] peers, IntPtr peersLength);

@@ -237,6 +237,8 @@ Definitions of a flags for `Peer.Send()` function:
 
 `PacketFlags.UnreliableFragmented` a packet will be unreliably fragmented if it exceeds the MTU. By default packets larger than MTU are fragmented reliably.
 
+`PacketFlags.Instant` a packet will not be bundled with other packets at a next service iteration and sent instantly instead. This delivery type trades multiplexing efficiency in favor of latency. The same packet can't be used for multiple `Peer.Send()` calls.
+
 #### EventType
 Definitions of event types for `Event.Type` property:
 

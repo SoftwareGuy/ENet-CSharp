@@ -30,8 +30,8 @@
 #include <time.h>
 
 #define ENET_VERSION_MAJOR 2
-#define ENET_VERSION_MINOR 2
-#define ENET_VERSION_PATCH 9
+#define ENET_VERSION_MINOR 3
+#define ENET_VERSION_PATCH 0
 #define ENET_VERSION_CREATE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 #define ENET_VERSION_GET_MAJOR(version) (((version) >> 16) & 0xFF)
 #define ENET_VERSION_GET_MINOR(version) (((version) >> 8) & 0xFF)
@@ -470,6 +470,7 @@ extern "C" {
 		ENET_PACKET_FLAG_UNSEQUENCED           = (1 << 1),
 		ENET_PACKET_FLAG_NO_ALLOCATE           = (1 << 2),
 		ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED = (1 << 3),
+		ENET_PACKET_FLAG_INSTANT               = (1 << 4),
 		ENET_PACKET_FLAG_SENT                  = (1 << 8)
 	} ENetPacketFlag;
 
@@ -739,7 +740,7 @@ extern "C" {
 	ENET_API int enet_host_service(ENetHost*, ENetEvent*, enet_uint32);
 	ENET_API void enet_host_flush(ENetHost*);
 	ENET_API void enet_host_broadcast(ENetHost*, enet_uint8, ENetPacket*);
-	ENET_API void enet_host_broadcast_excluding(ENetHost*, enet_uint8, ENetPacket*, ENetPeer*);
+	ENET_API void enet_host_broadcast_exclude(ENetHost*, enet_uint8, ENetPacket*, ENetPeer*);
 	ENET_API void enet_host_broadcast_selective(ENetHost*, enet_uint8, ENetPacket*, ENetPeer**, size_t);
 	ENET_API void enet_host_channel_limit(ENetHost*, size_t);
 	ENET_API void enet_host_bandwidth_limit(ENetHost*, enet_uint32, enet_uint32);
@@ -1150,9 +1151,9 @@ extern "C" {
 	}
 
 	size_t enet_string_copy(char* destination, const char* source, size_t length) {
-		register char *d = destination;
-		register const char *s = source;
-		register size_t n = length;
+		char *d = destination;
+		const char *s = source;
+		size_t n = length;
 
 		if (n != 0 && --n != 0) {
 			do {
@@ -3251,6 +3252,9 @@ extern "C" {
 		if (enet_peer_queue_outgoing_command(peer, &command, packet, 0, packet->dataLength) == NULL)
 			return -1;
 
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			enet_host_flush(peer->host);
+
 		return 0;
 	}
 
@@ -4103,6 +4107,9 @@ extern "C" {
 	void enet_host_broadcast(ENetHost* host, enet_uint8 channelID, ENetPacket* packet) {
 		ENetPeer* currentPeer;
 
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			++packet->referenceCount;
+
 		for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
 			if (currentPeer->state != ENET_PEER_STATE_CONNECTED)
 				continue;
@@ -4110,12 +4117,18 @@ extern "C" {
 			enet_peer_send(currentPeer, channelID, packet);
 		}
 
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			--packet->referenceCount;
+
 		if (packet->referenceCount == 0)
 			enet_packet_destroy(packet);
 	}
 
-	void enet_host_broadcast_excluding(ENetHost* host, enet_uint8 channelID, ENetPacket* packet, ENetPeer* excludedPeer) {
+	void enet_host_broadcast_exclude(ENetHost* host, enet_uint8 channelID, ENetPacket* packet, ENetPeer* excludedPeer) {
 		ENetPeer* currentPeer;
+
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			++packet->referenceCount;
 
 		for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
 			if (currentPeer->state != ENET_PEER_STATE_CONNECTED || currentPeer == excludedPeer)
@@ -4124,8 +4137,11 @@ extern "C" {
 			enet_peer_send(currentPeer, channelID, packet);
 		}
 
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			--packet->referenceCount;
+
 		if (packet->referenceCount == 0)
-			enet_packet_destroy(packet);		
+			enet_packet_destroy(packet);
 	}
 
 	void enet_host_broadcast_selective(ENetHost* host, enet_uint8 channelID, ENetPacket* packet, ENetPeer** peers, size_t length) {
@@ -4135,6 +4151,9 @@ extern "C" {
 		if (host == NULL)
 			return;
 
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			++packet->referenceCount;
+
 		for (i = 0; i < length; i++) {
 			currentPeer = peers[i];
 
@@ -4143,6 +4162,9 @@ extern "C" {
 
 			enet_peer_send(currentPeer, channelID, packet);
 		}
+
+		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
+			--packet->referenceCount;
 
 		if (packet->referenceCount == 0)
 			enet_packet_destroy(packet);
