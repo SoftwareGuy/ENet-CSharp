@@ -14,10 +14,11 @@
 
     <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
         <CMakeVSArch></CMakeVSArch>
-        <CMakeVSArch Condition="'$(Configuration)' == 'x86'">-A WIN32</CMakeVSArch>
+        <CMakeVSArch Condition="'$(Platform)' == 'x64'">Win64</CMakeVSArch>
+		<CMakeVSArch Condition="'$(Platform)' == 'AnyCPU'">Win64</CMakeVSArch>
         <CMakeVSToolset></CMakeVSToolset>
         <!--<CMakeVSToolset>-T v141</CMakeVSToolset>-->
-        <CMakeGenerator>-G"Visual Studio 15 2017" $(CMakeVSArch) $(CMakeVSToolset)</CMakeGenerator>
+        <CMakeGenerator>-G"Visual Studio 15 2017 $(CMakeVSArch)" $(CMakeVSToolset)</CMakeGenerator>
     </PropertyGroup>
     <PropertyGroup Condition="'$(OSPlatformWindows)' != 'true'">
         <CMakeConfigBuildType>-DCMAKE_BUILD_TYPE=$(CMakeBuildType)</CMakeConfigBuildType>
@@ -33,6 +34,7 @@
     <Target Name="CMakeConfigTarget" BeforeTargets="Build;VSTest">
         <Message Text="CMake -- configuring $(CMakeBuildType) $(Platform): $(CMakeProjName)" Importance="high" />
         <MakeDir Directories="$(CMakeBinaryDir)" />
+		<Message Text="cmake $(Configuration)" Importance="high" />
         <Message Text="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" Importance="high" />
         <Exec Command="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" WorkingDirectory="$(CMakeBinaryDir)" StandardOutputImportance="low" StandardErrorImportance="high" />
         <OnError ExecuteTargets="CMakeBuildFailed" />

@@ -30,6 +30,7 @@
 
     <PropertyGroup>
         <PluginDir>$(SlnDir)build_cmake_enet\</PluginDir>
+        <PluginDir Condition="'$(OSPlatformWindows)' == 'true'">$(PluginDir)$(Configuration)\</PluginDir>
         <PluginArchDir></PluginArchDir>
         <PluginBaseName>enet</PluginBaseName>
         
