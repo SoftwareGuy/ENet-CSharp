@@ -2901,21 +2901,18 @@ extern "C" {
 				} else if (ENET_TIME_DIFFERENCE(host->serviceTime, currentPeer->packetLossEpoch) >= ENET_PEER_PACKET_LOSS_INTERVAL && currentPeer->packetsSent > 0) {
 					enet_uint32 packetLoss = currentPeer->packetsLost * ENET_PEER_PACKET_LOSS_SCALE / currentPeer->packetsSent;
 
-					ENET_LOG_TRACE("happy times");
-					#ifdef ENET_DEBUG
-						ENET_LOG_TRACE(
-							"peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer->incomingPeerID,
-							currentPeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE,
-							currentPeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE, currentPeer->roundTripTime, currentPeer->roundTripTimeVariance,
-							currentPeer->packetThrottle / (float)ENET_PEER_PACKET_THROTTLE_SCALE,
+					ENET_LOG_TRACE(
+						"peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer->incomingPeerID,
+						currentPeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE,
+						currentPeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE, currentPeer->roundTripTime, currentPeer->roundTripTimeVariance,
+						currentPeer->packetThrottle / (float)ENET_PEER_PACKET_THROTTLE_SCALE,
 
-							enet_list_size(&currentPeer->outgoingReliableCommands),
-							enet_list_size(&currentPeer->outgoingUnreliableCommands),
+						enet_list_size(&currentPeer->outgoingReliableCommands),
+						enet_list_size(&currentPeer->outgoingUnreliableCommands),
 
-							currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingReliableCommands) : 0,
-							currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingUnreliableCommands) : 0
-						);
-					#endif
+						currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingReliableCommands) : 0,
+						currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingUnreliableCommands) : 0
+					);
 
 					currentPeer->packetLossVariance -= currentPeer->packetLossVariance / 4;
 
@@ -2974,9 +2971,7 @@ extern "C" {
 							host->headerFlags |= ENET_PROTOCOL_HEADER_FLAG_COMPRESSED;
 							shouldCompress = compressedSize;
 
-							#ifdef ENET_DEBUG
-								ENET_LOG_TRACE("peer %u: compressed %u->%u (%u%%)\n", currentPeer->incomingPeerID, originalSize, compressedSize, (compressedSize * 100) / originalSize);
-							#endif
+							ENET_LOG_TRACE("peer %u: compressed %u->%u (%u%%)\n", currentPeer->incomingPeerID, originalSize, compressedSize, (compressedSize * 100) / originalSize);
 						}
 					}
 				#endif
@@ -4034,6 +4029,7 @@ extern "C" {
 			enet_peer_reset(currentPeer);
 		}
 
+		ENET_LOG_TRACE("host created successfully\n");
 		return host;
 	}
 
