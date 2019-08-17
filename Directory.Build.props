@@ -35,6 +35,7 @@
         <PluginBaseName>enet</PluginBaseName>
         
         <PluginPrefix Condition="'$(OSPlatformLinux)' == 'true'">lib</PluginPrefix>
+		<PluginPrefix Condition="'$(OSPlatformOSX)' == 'true'">lib</PluginPrefix>
 
         <PluginExt Condition="'$(PluginExt)' == ''">dll</PluginExt>
         <PluginExt Condition="'$(OSPlatformLinux)' == 'true'">so</PluginExt>
