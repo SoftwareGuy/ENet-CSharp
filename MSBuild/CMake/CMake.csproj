@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+        <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+        <EnableDefaultItems>false</EnableDefaultItems>
+        <BuildInParallel Condition="'$(BuildInParallel)' == ''">false</BuildInParallel>
+    </PropertyGroup>
+
+    <Import Project="$(CsDir)Common\BannerTask.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
+
+    <Target Name="ConsoleBanner" BeforeTargets="Build" Condition="'$(BuildingInsideVisualStudio)' != 'true'">
+        <BannerTask TextFile="$(CsDir)Common\Banner.txt" />
+    </Target>
+
+    <Import Project="CMake.Build.targets" />
+
+</Project>
