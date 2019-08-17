@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <TargetFramework>netcoreapp2.2</TargetFramework>
         <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
         <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
         <EnableDefaultItems>false</EnableDefaultItems>
-        <BuildInParallel Condition="'$(BuildInParallel)' == ''">false</BuildInParallel>
     </PropertyGroup>
 
     <Import Project="$(CsDir)Common\BannerTask.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />

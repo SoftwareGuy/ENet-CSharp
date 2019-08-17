@@ -29,8 +29,8 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <PluginDir>$(SlnDir)PluginOutput</PluginDir>
-        <PluginArchDir>x86_64\</PluginArchDir>
+        <PluginDir>$(SlnDir)build_cmake_enet\</PluginDir>
+        <PluginArchDir></PluginArchDir>
         <PluginBaseName>enet</PluginBaseName>
         
         <PluginPrefix Condition="'$(OSPlatformLinux)' == 'true'">lib</PluginPrefix>

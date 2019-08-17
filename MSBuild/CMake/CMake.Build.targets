@@ -33,6 +33,7 @@
     <Target Name="CMakeConfigTarget" BeforeTargets="Build;VSTest">
         <Message Text="CMake -- configuring $(CMakeBuildType) $(Platform): $(CMakeProjName)" Importance="high" />
         <MakeDir Directories="$(CMakeBinaryDir)" />
+        <Message Text="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" Importance="high" />
         <Exec Command="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" WorkingDirectory="$(CMakeBinaryDir)" StandardOutputImportance="low" StandardErrorImportance="high" />
         <OnError ExecuteTargets="CMakeBuildFailed" />
     </Target>
