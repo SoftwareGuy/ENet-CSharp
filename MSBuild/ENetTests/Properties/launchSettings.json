@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SockLynxTests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

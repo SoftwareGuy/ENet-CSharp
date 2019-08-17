@@ -1,0 +1,12 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <UsingTask TaskName="BannerTask" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(SdkDir)Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <TextFile ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Reference Include="$(SdkDir)Microsoft.Build.Framework.dll" />
+            <Reference Include="$(SdkDir)Microsoft.Build.Utilities.Core.dll" />
+            <Code Type="Class" Language="cs" Source="$(CsDir)Common/BannerTask.cs" />
+        </Task>
+    </UsingTask>
+</Project>

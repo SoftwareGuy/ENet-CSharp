@@ -1,0 +1,66 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <CMakeProjName>enet</CMakeProjName>
+        <CMakeSourceDir>$(SlnDir)Source\Native</CMakeSourceDir>
+        <CMakeBinaryDir>$(SlnDir)build_cmake_enet</CMakeBinaryDir>
+        <CMakeBuildType Condition="'$(CMakeBuildType)' == ''">Debug</CMakeBuildType>
+        <CMakeBuildType Condition="'$(Configuration)' == 'Release'">Release</CMakeBuildType>
+        <CMakeOpts>$(CMakeOpts) -DENET_SHARED=ON</CMakeOpts>
+        <CMakeOpts Condition="'$(CMakeBuildType)' == 'Debug'">$(CMakeOpts) -DENET_DEBUG=ON</CMakeOpts>
+        <CMakeGenerator></CMakeGenerator>
+        <CMakeConfigBuildType></CMakeConfigBuildType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
+        <CMakeVSArch></CMakeVSArch>
+        <CMakeVSArch Condition="'$(Platform)' == 'x64'">Win64</CMakeVSArch>
+		<CMakeVSArch Condition="'$(Platform)' == 'AnyCPU'">Win64</CMakeVSArch>
+        <CMakeVSToolset></CMakeVSToolset>
+        <!--<CMakeVSToolset>-T v141</CMakeVSToolset>-->
+        <CMakeGenerator>-G"Visual Studio 15 2017 $(CMakeVSArch)" $(CMakeVSToolset)</CMakeGenerator>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(OSPlatformWindows)' != 'true'">
+        <CMakeConfigBuildType>-DCMAKE_BUILD_TYPE=$(CMakeBuildType)</CMakeConfigBuildType>
+    </PropertyGroup>
+
+    <Target Name="CMakeBuildClean" BeforeTargets="Clean">
+        <Message Text="CMake -- cleaning project: $(CMakeProjName)" Importance="high" />
+        <RemoveDir Directories="$(CMakeBinaryDir)"/>
+        <MakeDir Directories="$(CMakeBinaryDir)"/>
+        <OnError ExecuteTargets="CMakeCleanFailed" />
+    </Target>
+
+    <Target Name="CMakeConfigTarget" BeforeTargets="Build;VSTest">
+        <Message Text="CMake -- configuring $(CMakeBuildType) $(Platform): $(CMakeProjName)" Importance="high" />
+        <MakeDir Directories="$(CMakeBinaryDir)" />
+        <Message Text="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" Importance="high" />
+        <Exec Command="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" WorkingDirectory="$(CMakeBinaryDir)" StandardOutputImportance="low" StandardErrorImportance="high" />
+        <OnError ExecuteTargets="CMakeBuildFailed" />
+    </Target>
+
+    <Target Name="CMakeBuildTarget" BeforeTargets="Build;VSTest">
+        <Message Text="CMake -- building project: $(CMakeProjName)" Importance="high" />
+        <Exec Command="cmake --build . --config $(CMakeBuildType)" WorkingDirectory="$(CMakeBinaryDir)" StandardOutputImportance="low" StandardErrorImportance="high" />
+        <OnError ExecuteTargets="CMakeBuildFailed" />
+    </Target>
+
+    <Target Name="CMakeBuildSuccess" BeforeTargets="Build;VSTest">
+        <Message Text="CMake -- build succeeded: $(CMakeProjName)" Importance="high" />
+    </Target>
+
+    <Target Name="CMakeCleanFailed">
+        <Warning Text="CMake -- the most common cause of CMake clean errors is file locking (eg. windows console in the build dir)" />
+        <Warning Text="CMake -- please unlock or reboot and try cleaning again before filing an issue on github:" />
+        <Warning Text="CMake -- https://github.com/cburns/socklynx" />
+        <Error Text="CMake -- build failed: $(CMakeProjName)" />
+    </Target>
+
+    <Target Name="CMakeBuildFailed">
+        <Warning Text="CMake -- the most common cause of CMake build errors is changing config without cleaning" />
+        <Warning Text="CMake -- please try cleaning and building again before filing an issue on github:" />
+        <Warning Text="CMake -- https://github.com/cburns/socklynx" />
+        <Error Text="CMake -- build failed: $(CMakeProjName)" />
+    </Target>
+
+</Project>

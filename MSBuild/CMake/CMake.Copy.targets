@@ -1,0 +1,11 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <Target Name="CMakeContentCopy" AfterTargets="Build">
+        <PropertyGroup>
+            <PluginFullPath>$(PluginDir)$(PluginArchDir)$(PluginPrefix)$(PluginBaseName).$(PluginExt)</PluginFullPath>
+        </PropertyGroup>
+
+        <Copy SourceFiles="$(PluginFullPath)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+    </Target>
+
+</Project>

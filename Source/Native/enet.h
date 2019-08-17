@@ -24,9 +24,11 @@
 #ifndef ENET_H
 #define ENET_H
 
-#include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #define ENET_VERSION_MAJOR 2
@@ -50,6 +52,40 @@
 
 #define ENET_SRTT_INITIAL 1.0
 #define ENET_SRTT_PARA_G 0.125
+
+static FILE *enet_log_fp = NULL;
+enum enet_log_type
+{
+	ENET_LOG_TYPE_TRACE,
+	ENET_LOG_TYPE_ERROR,
+};
+static const char *const enet_log_type_names[] = {
+	[ENET_LOG_TYPE_TRACE] = "TRACE",
+	[ENET_LOG_TYPE_ERROR] = "ERROR",
+};
+#if ENET_DEBUG
+	#define ENET_LOG_TRACE(...) enet_log(ENET_LOG_TYPE_TRACE, __FUNCTION__, __LINE__, __VA_ARGS__)
+	#define ENET_LOG_ERROR(...) g_enet_fp = fopen("enet_log.txt", "a")
+#else
+	#define ENET_LOG_TRACE(...) ((void)0)
+	#define ENET_LOG_ERROR(...) ((void)0)
+#endif
+#define ENET_LOG_FILE "enet_log.txt"
+static inline void enet_log(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
+{
+	if (!enet_log_fp) enet_log_fp = fopen(ENET_LOG_FILE, "a");
+	if (!enet_log_fp) return;
+	va_list args;
+	time_t tstamp = time(NULL);
+	struct tm *local_time = localtime(&tstamp);
+	char time_buf[64];
+	time_buf[strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_time)] = '\0';
+	fprintf(enet_log_fp, "%s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
+	va_start(args, fmt);
+	vfprintf(enet_log_fp, fmt, args);
+	va_end(args);
+	fflush(enet_log_fp);
+}
 
 /*
 =======================================================================
@@ -2865,20 +2901,18 @@ extern "C" {
 				} else if (ENET_TIME_DIFFERENCE(host->serviceTime, currentPeer->packetLossEpoch) >= ENET_PEER_PACKET_LOSS_INTERVAL && currentPeer->packetsSent > 0) {
 					enet_uint32 packetLoss = currentPeer->packetsLost * ENET_PEER_PACKET_LOSS_SCALE / currentPeer->packetsSent;
 
-					#ifdef ENET_DEBUG
-						printf(
-							"peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer->incomingPeerID,
-							currentPeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE,
-							currentPeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE, currentPeer->roundTripTime, currentPeer->roundTripTimeVariance,
-							currentPeer->packetThrottle / (float)ENET_PEER_PACKET_THROTTLE_SCALE,
+					ENET_LOG_TRACE(
+						"peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer->incomingPeerID,
+						currentPeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE,
+						currentPeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE, currentPeer->roundTripTime, currentPeer->roundTripTimeVariance,
+						currentPeer->packetThrottle / (float)ENET_PEER_PACKET_THROTTLE_SCALE,
 
-							enet_list_size(&currentPeer->outgoingReliableCommands),
-							enet_list_size(&currentPeer->outgoingUnreliableCommands),
+						enet_list_size(&currentPeer->outgoingReliableCommands),
+						enet_list_size(&currentPeer->outgoingUnreliableCommands),
 
-							currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingReliableCommands) : 0,
-							currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingUnreliableCommands) : 0
-						);
-					#endif
+						currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingReliableCommands) : 0,
+						currentPeer->channels != NULL ? enet_list_size(&currentPeer->channels->incomingUnreliableCommands) : 0
+					);
 
 					currentPeer->packetLossVariance -= currentPeer->packetLossVariance / 4;
 
@@ -2937,9 +2971,7 @@ extern "C" {
 							host->headerFlags |= ENET_PROTOCOL_HEADER_FLAG_COMPRESSED;
 							shouldCompress = compressedSize;
 
-							#ifdef ENET_DEBUG
-								printf("peer %u: compressed %u->%u (%u%%)\n", currentPeer->incomingPeerID, originalSize, compressedSize, (compressedSize * 100) / originalSize);
-							#endif
+							ENET_LOG_TRACE("peer %u: compressed %u->%u (%u%%)\n", currentPeer->incomingPeerID, originalSize, compressedSize, (compressedSize * 100) / originalSize);
 						}
 					}
 				#endif
@@ -3997,6 +4029,7 @@ extern "C" {
 			enet_peer_reset(currentPeer);
 		}
 
+		ENET_LOG_TRACE("host created successfully\n");
 		return host;
 	}
 

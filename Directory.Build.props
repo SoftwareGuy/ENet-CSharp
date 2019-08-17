@@ -1,0 +1,45 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    
+    <PropertyGroup>
+        <SlnDir>$(MSBuildThisFileDirectory)</SlnDir>
+        <SlnDir Condition="!HasTrailingSlash('$(SlnDir)')">$(SlnDir)\</SlnDir>
+        
+        <CsDir>$(SlnDir)MSBuild\</CsDir>
+        
+        <SdkDir>$(MSBuildExtensionsPath)</SdkDir>
+        <SdkDir Condition="!HasTrailingSlash('$(SdkDir)')">$(SdkDir)\</SdkDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <OSPlatformWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</OSPlatformWindows>
+        <OSPlatformLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</OSPlatformLinux>
+        <OSPlatformOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</OSPlatformOSX>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
+        <DefineConstants>$(DefineConstants);EN_PLATFORM_WINDOWS;EN_SOCK_API_WINSOCK</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OSPlatformLinux)' == 'true'">
+        <DefineConstants>$(DefineConstants);EN_PLATFORM_LINUX;EN_SOCK_API_POSIX</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OSPlatformOSX)' == 'true'">
+        <DefineConstants>$(DefineConstants);EN_PLATFORM_OSX;EN_SOCK_API_POSIX</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PluginDir>$(SlnDir)build_cmake_enet\</PluginDir>
+        <PluginDir Condition="'$(OSPlatformWindows)' == 'true'">$(PluginDir)$(Configuration)\</PluginDir>
+        <PluginArchDir></PluginArchDir>
+        <PluginBaseName>enet</PluginBaseName>
+        
+        <PluginPrefix Condition="'$(OSPlatformLinux)' == 'true'">lib</PluginPrefix>
+		<PluginPrefix Condition="'$(OSPlatformOSX)' == 'true'">lib</PluginPrefix>
+
+        <PluginExt Condition="'$(PluginExt)' == ''">dll</PluginExt>
+        <PluginExt Condition="'$(OSPlatformLinux)' == 'true'">so</PluginExt>
+        <PluginExt Condition="'$(OSPlatformOSX)' == 'true'">dylib</PluginExt>
+    </PropertyGroup>
+    
+</Project>
