@@ -1,5 +1,6 @@
 README.md
 Source/Native/build/
+build*
 *.bak
 **/bin
 **/obj
