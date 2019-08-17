@@ -71,7 +71,7 @@ static const char *const enet_log_type_names[] = {
 	#define ENET_LOG_ERROR(...) ((void)0)
 #endif
 #define ENET_LOG_FILE "enet_log.txt"
-inline void enet_log(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
+static inline void enet_log(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
 {
 	if (!enet_log_fp) enet_log_fp = fopen(ENET_LOG_FILE, "a");
 	if (!enet_log_fp) return;
