@@ -18,27 +18,40 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+CMake build driver
+All key properties are overridable from CLI (-p:PropName=PropVal) or PropertyGroup
+
+CMakeProjName - project name outputted to build log
+CMakeSourceDir - path to CMakeList.txt
+CMakeBinaryDir - path to drop all the outputs
+CMakeBuildType - Debug or Release (or RelWithDeb or any valid value of DCMAKE_BUILD_TYPE)
+CMakeVSArch - force an arch for VS generators (eg. -AWin32)
+CMakeGenerator - override the CMake generator
+CMakeConfigBuildType - override the configuration build type (for non IDE systems that can switch)
+CMakeHelpLink - link to repo or other magical site when error occurs
+
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
     <PropertyGroup>
-        <CMakeProjName>enet</CMakeProjName>
-        <CMakeSourceDir>$(SlnDir)</CMakeSourceDir>
-        <CMakeBinaryDir>$(SlnDir)build_cmake_enet</CMakeBinaryDir>
-        <CMakeBuildType Condition="'$(CMakeBuildType)' == ''">Debug</CMakeBuildType>
-        <CMakeBuildType Condition="'$(Configuration)' == 'Release'">Release</CMakeBuildType>
+        <CMakeProjName Condition="'$(CMakeProjName)' == ''">enet</CMakeProjName>
+        <CMakeSourceDir Condition="'$(CMakeSourceDir)' == ''">$(SlnDir)</CMakeSourceDir>
+        <CMakeBinaryDir Condition="'$(CMakeBinaryDir)' == ''">$(SlnDir)build_cmake_enet</CMakeBinaryDir>
+        <CMakeBuildType Condition="'$(CMakeBuildType)' == '' AND '$(Configuration)' == 'Debug'">Debug</CMakeBuildType>
+        <CMakeBuildType Condition="'$(CMakeBuildType)' == '' AND '$(Configuration)' == 'Release'">Release</CMakeBuildType>
+        <CMakeHelpLink Condition="'$(CMakeHelpLink)' == ''">https://github.com/SoftwareGuy/ENet-CSharp</CMakeHelpLink>
+
         <CMakeOpts Condition="'$(CMakeBuildType)' == 'Debug'">$(CMakeOpts) -DENET_DEBUG=ON</CMakeOpts>
-        <CMakeGenerator></CMakeGenerator>
-        <CMakeConfigBuildType></CMakeConfigBuildType>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
-        <CMakeVSArch></CMakeVSArch>
-        <CMakeVSArch Condition="'$(Platform)' == 'x86'">-AWin32</CMakeVSArch>
-        <CMakeGenerator>-G"Visual Studio 16 2019" $(CMakeVSArch) $(CMakeVSToolset)</CMakeGenerator>
+        <CMakeVSArch Condition="'$(CMakeVSArch)' == '' AND '$(Platform)' == 'x86'">-AWin32</CMakeVSArch>
+        <CMakeGenerator Condition="'$(CMakeVSArch)' == ''">-G"Visual Studio 16 2019" $(CMakeVSArch) $(CMakeVSToolset)</CMakeGenerator>
     </PropertyGroup>
+
     <PropertyGroup Condition="'$(OSPlatformWindows)' != 'true'">
-        <CMakeConfigBuildType>-DCMAKE_BUILD_TYPE=$(CMakeBuildType)</CMakeConfigBuildType>
+        <CMakeConfigBuildType Condition="'$(CMakeConfigBuildType)' == ''">-DCMAKE_BUILD_TYPE=$(CMakeBuildType)</CMakeConfigBuildType>
     </PropertyGroup>
 
     <Target Name="CMakeBuildClean" BeforeTargets="Clean">
@@ -51,13 +64,14 @@ SOFTWARE.
     <Target Name="CMakeConfigTarget" BeforeTargets="Build;VSTest">
         <Message Text="CMake -- configuring $(CMakeBuildType) $(Platform): $(CMakeProjName)" Importance="high" />
         <MakeDir Directories="$(CMakeBinaryDir)" />
-        <Message Text="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" Importance="high" />
+        <Message Text="CMake -- cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" Importance="high" />
         <Exec Command="cmake $(CMakeGenerator) $(CMakeConfigBuildType) $(CMakeOpts) $(CMakeSourceDir)" WorkingDirectory="$(CMakeBinaryDir)" StandardOutputImportance="low" StandardErrorImportance="high" />
         <OnError ExecuteTargets="CMakeBuildFailed" />
     </Target>
 
     <Target Name="CMakeBuildTarget" BeforeTargets="Build;VSTest">
-        <Message Text="CMake -- building project: $(CMakeProjName)" Importance="high" />
+        <Message Text="CMake -- building $(CMakeBuildType) $(Platform): $(CMakeProjName)" Importance="high" />
+        <Message Text="CMake -- cmake --build . --config $(CMakeBuildType)" Importance="high" />
         <Exec Command="cmake --build . --config $(CMakeBuildType)" WorkingDirectory="$(CMakeBinaryDir)" StandardOutputImportance="low" StandardErrorImportance="high" />
         <OnError ExecuteTargets="CMakeBuildFailed" />
     </Target>
