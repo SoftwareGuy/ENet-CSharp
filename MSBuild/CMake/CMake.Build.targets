@@ -25,10 +25,11 @@ All key properties are overridable from CLI (-p:PropName=PropVal) or PropertyGro
 CMakeProjName - project name outputted to build log
 CMakeSourceDir - path to CMakeList.txt
 CMakeBinaryDir - path to drop all the outputs
-CMakeBuildType - Debug or Release (or RelWithDeb or any valid value of DCMAKE_BUILD_TYPE)
+CMakeBuildType - any valid value of DCMAKE_BUILD_TYPE (applies to both config and build for VS)
+CMakeConfigBuildType - any valid value of DCMAKE_BUILD_TYPE (for posix CLI)
 CMakeVSArch - force an arch for VS generators (eg. -AWin32)
+CMakeVSToolset = force an msvc platform toolset (eg. -Tv141)
 CMakeGenerator - override the CMake generator
-CMakeConfigBuildType - override the configuration build type (for non IDE systems that can switch)
 CMakeHelpLink - link to repo or other magical site when error occurs
 
 -->
@@ -41,24 +42,52 @@ CMakeHelpLink - link to repo or other magical site when error occurs
         <CMakeBuildType Condition="'$(CMakeBuildType)' == '' AND '$(Configuration)' == 'Debug'">Debug</CMakeBuildType>
         <CMakeBuildType Condition="'$(CMakeBuildType)' == '' AND '$(Configuration)' == 'Release'">Release</CMakeBuildType>
         <CMakeHelpLink Condition="'$(CMakeHelpLink)' == ''">https://github.com/SoftwareGuy/ENet-CSharp</CMakeHelpLink>
-
         <CMakeOpts Condition="'$(CMakeBuildType)' == 'Debug'">$(CMakeOpts) -DENET_DEBUG=ON</CMakeOpts>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
-        <CMakeVSArch Condition="'$(CMakeVSArch)' == '' AND '$(Platform)' == 'x86'">-AWin32</CMakeVSArch>
-        <CMakeGenerator Condition="'$(CMakeVSArch)' == ''">-G"Visual Studio 16 2019" $(CMakeVSArch) $(CMakeVSToolset)</CMakeGenerator>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OSPlatformWindows)' != 'true'">
         <CMakeConfigBuildType Condition="'$(CMakeConfigBuildType)' == ''">-DCMAKE_BUILD_TYPE=$(CMakeBuildType)</CMakeConfigBuildType>
     </PropertyGroup>
-
+  
     <Target Name="CMakeBuildClean" BeforeTargets="Clean">
         <Message Text="CMake -- cleaning project: $(CMakeProjName)" Importance="high" />
         <RemoveDir Directories="$(CMakeBinaryDir)"/>
         <MakeDir Directories="$(CMakeBinaryDir)"/>
         <OnError ExecuteTargets="CMakeCleanFailed" />
+    </Target>
+
+    <Target Name="CMakeCheckVSVersion" BeforeTargets="Build;VSTest" Condition="'$(OSPlatformWindows)' == 'true'">
+        <Error Text="CMake -- Unidentified Visual Studio Version" Condition="'$(VisualStudioVersion)' == ''" />
+        <PropertyGroup>
+            <VisualStudioVersionMajor>$(VisualStudioVersion.Substring(0, 2))</VisualStudioVersionMajor>
+        </PropertyGroup>
+      
+        <Error Text="CMake -- Unsupported Visual Studio Version: $(VisualStudioVersion)" Condition="'$(VisualStudioVersionMajor)' != '15' AND '$(VisualStudioVersionMajor)' != '16'" />
+        <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
+            <VCToolsVersion Condition="'$(VCToolsVersion)' == '' AND '$(VisualStudioVersionMajor)' == '15'">14.1</VCToolsVersion>
+            <VCToolsVersion Condition="'$(VCToolsVersion)' == '' AND '$(VisualStudioVersionMajor)' == '16'">14.2</VCToolsVersion>
+            <VCToolsVersionMajor>$(VCToolsVersion.Substring(0, 2))</VCToolsVersionMajor>
+            <VCToolsVersionMinor>$(VCToolsVersion.Substring(3, 1))</VCToolsVersionMinor>
+            <CMakeVSYear Condition="'$(VisualStudioVersionMajor)' == '15'">2017</CMakeVSYear>
+            <CMakeVSYear Condition="'$(VisualStudioVersionMajor)' == '16'">2019</CMakeVSYear>
+            <CMakeVSGenVer>$(VisualStudioVersionMajor) $(CMakeVSYear)</CMakeVSGenVer>
+            <CMakeVSToolset Condition="'$(CMakeVSToolset)' == ''">-Tv$(VCToolsVersionMajor)$(VCToolsVersionMinor)</CMakeVSToolset>
+            <CMakeVSToolset Condition="'$(CMakeVSToolset)' != ''"> $(CMakeVSToolset)</CMakeVSToolset>
+            <CMakePlatform Condition="'$(CMakePlatform)' == ''">$(Platform)</CMakePlatform>
+            <CMakePlatform Condition="'$(CMakePlatform)' == 'AnyCPU'">x64</CMakePlatform>
+        </PropertyGroup>
+
+        <PropertyGroup Condition="'$(CMakeVSYear)' == '2017'">
+            <CMakeVSArch Condition="'$(CMakeVSArch)' == '' AND '$(CMakePlatform)' == 'x64'">Win64</CMakeVSArch>
+            <CMakeVSArch Condition="'$(CMakeVSArch)' != ''"> $(CMakeVSArch)</CMakeVSArch>
+            <CMakeGenerator Condition="'$(CMakeGenerator)' == ''">-G"Visual Studio $(CMakeVSGenVer)$(CMakeVSArch)"$(CMakeVSToolset)</CMakeGenerator>
+        </PropertyGroup>
+
+        <PropertyGroup Condition="'$(CMakeVSYear)' == '2019'">
+            <CMakeVSArch Condition="'$(CMakeVSArch)' == '' AND '$(CMakePlatform)' == 'x86'">-AWin32</CMakeVSArch>
+            <CMakeVSArch Condition="'$(CMakeVSArch)' != ''"> $(CMakeVSArch)</CMakeVSArch>
+            <CMakeGenerator Condition="'$(CMakeGenerator)' == ''">-G"Visual Studio $(CMakeVSGenVer)"$(CMakeVSArch)$(CMakeVSToolset)</CMakeGenerator>
+        </PropertyGroup>
     </Target>
 
     <Target Name="CMakeConfigTarget" BeforeTargets="Build;VSTest">
