@@ -31,6 +31,7 @@ set(ENET_SRCDIR "Source/Native")
 set(ENET_SRCS
 	${ENET_SRCDIR}/enet.c
 	${ENET_SRCDIR}/enet.h
+	${ENET_SRCDIR}/enet_log.h
 )
 
 if(ENET_DEBUG)
@@ -39,9 +40,6 @@ endif()
 
 if(MSVC)
 	set(CompilerFlags
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
         CMAKE_C_FLAGS
         CMAKE_C_FLAGS_DEBUG
         CMAKE_C_FLAGS_RELEASE

@@ -31,7 +31,7 @@ SOFTWARE.
     <Import Project="$(CsDir)Common\BannerTask.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
 
     <Target Name="ConsoleBanner" BeforeTargets="Build" Condition="'$(BuildingInsideVisualStudio)' != 'true'">
-        <BannerTask TextFile="$(CsDir)Common\Banner.txt" />
+        <BannerTask TextFile="$(CsDir)Common\Banner.txt" Condition="'$(BannerSkip)' != 'true'"/>
     </Target>
 
     <Import Project="CMake.Build.targets" />

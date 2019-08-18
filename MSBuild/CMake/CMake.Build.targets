@@ -34,9 +34,7 @@ SOFTWARE.
 
     <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
         <CMakeVSArch></CMakeVSArch>
-        <CMakeVSArch Condition="'$(Platform)' == 'x86'">-A Win32</CMakeVSArch>
-        <CMakeVSToolset></CMakeVSToolset>
-        <CMakeVSToolset Condition="'$(BuildingInsideVisualStudio)' != 'true'">-T v141</CMakeVSToolset>
+        <CMakeVSArch Condition="'$(Platform)' == 'x86'">-AWin32</CMakeVSArch>
         <CMakeGenerator>-G"Visual Studio 16 2019" $(CMakeVSArch) $(CMakeVSToolset)</CMakeGenerator>
     </PropertyGroup>
     <PropertyGroup Condition="'$(OSPlatformWindows)' != 'true'">
