@@ -65,7 +65,7 @@ static const char *const enet_log_type_names[] = {
 };
 #if ENET_DEBUG
 	#define ENET_LOG_TRACE(...) enet_log(ENET_LOG_TYPE_TRACE, __FUNCTION__, __LINE__, __VA_ARGS__)
-	#define ENET_LOG_ERROR(...) g_enet_fp = fopen("enet_log.txt", "a")
+	#define ENET_LOG_ERROR(...) enet_log(ENET_LOG_TYPE_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
 #else
 	#define ENET_LOG_TRACE(...) ((void)0)
 	#define ENET_LOG_ERROR(...) ((void)0)
@@ -3044,7 +3044,7 @@ extern "C" {
 
 				case -1:
 					#ifdef ENET_DEBUG
-						perror("Error dispatching incoming packets");
+						ENET_LOG_ERROR("Error dispatching incoming packets");
 					#endif
 
 					return -1;
@@ -3066,9 +3066,7 @@ extern "C" {
 					return 1;
 
 				case -1:
-					#ifdef ENET_DEBUG
-						perror("Error sending outgoing packets");
-					#endif
+					ENET_LOG_ERROR("Error sending outgoing packets");
 
 					return -1;
 
@@ -3081,9 +3079,7 @@ extern "C" {
 					return 1;
 
 				case -1:
-					#ifdef ENET_DEBUG
-						perror("Error receiving incoming packets");
-					#endif
+					ENET_LOG_ERROR("Error receiving incoming packets");
 
 					return -1;
 
@@ -3096,9 +3092,7 @@ extern "C" {
 					return 1;
 
 				case -1:
-					#ifdef ENET_DEBUG
-						perror("Error sending outgoing packets");
-					#endif
+					ENET_LOG_ERROR("Error dispatching outgoing packets!");
 
 					return -1;
 
@@ -3112,9 +3106,7 @@ extern "C" {
 						return 1;
 
 					case -1:
-						#ifdef ENET_DEBUG
-							perror("Error dispatching incoming packets");
-						#endif
+						ENET_LOG_ERROR("Error dispatching incoming packets!");
 
 						return -1;
 
@@ -3198,8 +3190,11 @@ extern "C" {
 		ENetProtocol command;
 		size_t fragmentLength;
 
-		if (peer->state != ENET_PEER_STATE_CONNECTED || channelID >= peer->channelCount || packet->dataLength > peer->host->maximumPacketSize)
+		if (peer->state != ENET_PEER_STATE_CONNECTED || channelID >= peer->channelCount || packet->dataLength > peer->host->maximumPacketSize) {			
+			ENET_LOG_ERROR("Cannot send data. Peer is not connected, the channel id is above the maximum channels supported or the packet data length is above the maximum packet size");
 			return -1;
+		}
+			
 
 		fragmentLength = peer->mtu - sizeof(ENetProtocolHeader) - sizeof(ENetProtocolSendFragment);
 
@@ -3213,8 +3208,11 @@ extern "C" {
 			ENetList fragments;
 			ENetOutgoingCommand* fragment;
 
-			if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT)
+			if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT) {
+				ENET_LOG_ERROR("Cannot send data. Too many fragments (%u vs %u)", fragmentCount, ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT);
 				return -1;
+			}
+				
 
 			if ((packet->flags & (ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED)) == ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED && channel->outgoingUnreliableSequenceNumber < 0xFFFF) {
 				commandNumber = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT;
@@ -3238,6 +3236,8 @@ extern "C" {
 
 						enet_free(fragment);
 					}
+
+					ENET_LOG_ERROR("Cannot send data. A fragment was null.");
 
 					return -1;
 				}
