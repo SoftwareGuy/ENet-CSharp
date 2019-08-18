@@ -23,11 +23,10 @@ SOFTWARE.
 
     <PropertyGroup>
         <CMakeProjName>enet</CMakeProjName>
-        <CMakeSourceDir>$(SlnDir)Source\Native</CMakeSourceDir>
+        <CMakeSourceDir>$(SlnDir)</CMakeSourceDir>
         <CMakeBinaryDir>$(SlnDir)build_cmake_enet</CMakeBinaryDir>
         <CMakeBuildType Condition="'$(CMakeBuildType)' == ''">Debug</CMakeBuildType>
         <CMakeBuildType Condition="'$(Configuration)' == 'Release'">Release</CMakeBuildType>
-        <CMakeOpts>$(CMakeOpts) -DENET_SHARED=ON</CMakeOpts>
         <CMakeOpts Condition="'$(CMakeBuildType)' == 'Debug'">$(CMakeOpts) -DENET_DEBUG=ON</CMakeOpts>
         <CMakeGenerator></CMakeGenerator>
         <CMakeConfigBuildType></CMakeConfigBuildType>
@@ -35,11 +34,10 @@ SOFTWARE.
 
     <PropertyGroup Condition="'$(OSPlatformWindows)' == 'true'">
         <CMakeVSArch></CMakeVSArch>
-        <CMakeVSArch Condition="'$(Platform)' == 'x64'">Win64</CMakeVSArch>
-		<CMakeVSArch Condition="'$(Platform)' == 'AnyCPU'">Win64</CMakeVSArch>
+        <CMakeVSArch Condition="'$(Platform)' == 'x86'">-A Win32</CMakeVSArch>
         <CMakeVSToolset></CMakeVSToolset>
-        <!--<CMakeVSToolset>-T v141</CMakeVSToolset>-->
-        <CMakeGenerator>-G"Visual Studio 15 2017 $(CMakeVSArch)" $(CMakeVSToolset)</CMakeGenerator>
+        <CMakeVSToolset Condition="'$(BuildingInsideVisualStudio)' != 'true'">-T v141</CMakeVSToolset>
+        <CMakeGenerator>-G"Visual Studio 16 2019" $(CMakeVSArch) $(CMakeVSToolset)</CMakeGenerator>
     </PropertyGroup>
     <PropertyGroup Condition="'$(OSPlatformWindows)' != 'true'">
         <CMakeConfigBuildType>-DCMAKE_BUILD_TYPE=$(CMakeBuildType)</CMakeConfigBuildType>
