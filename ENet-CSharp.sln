@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29209.62
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MSBuild", "MSBuild", "{3C9CA6C8-3AAB-4D16-BF28-E66AA81F9854}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CMake", "MSBuild\CMake\CMake.csproj", "{CB21753B-56F0-46D2-8495-40CC8F5915A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ENet-CSharp", "MSBuild\ENetCSharp\ENetCSharp.csproj", "{311EBFD0-E0DE-439E-9AE3-CBE210E1A9EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ENetCSharp", "MSBuild\ENetCSharp\ENetCSharp.csproj", "{311EBFD0-E0DE-439E-9AE3-CBE210E1A9EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ENetTests", "MSBuild\ENetTests\ENetTests.csproj", "{E25F1A0A-7FCB-4CA2-9CFF-AAE6DD28EB0E}"
 EndProject
@@ -19,9 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{CB21753B-56F0-46D2-8495-40CC8F5915A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -61,9 +58,15 @@ Global
 		{E25F1A0A-7FCB-4CA2-9CFF-AAE6DD28EB0E}.Release|x86.ActiveCfg = Release|Any CPU
 		{E25F1A0A-7FCB-4CA2-9CFF-AAE6DD28EB0E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{CB21753B-56F0-46D2-8495-40CC8F5915A7} = {3C9CA6C8-3AAB-4D16-BF28-E66AA81F9854}
 		{311EBFD0-E0DE-439E-9AE3-CBE210E1A9EF} = {3C9CA6C8-3AAB-4D16-BF28-E66AA81F9854}
 		{E25F1A0A-7FCB-4CA2-9CFF-AAE6DD28EB0E} = {3C9CA6C8-3AAB-4D16-BF28-E66AA81F9854}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6AF2E99-F5E4-4098-9468-EA8E26ACBE57}
 	EndGlobalSection
 EndGlobal
