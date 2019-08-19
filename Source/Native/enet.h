@@ -830,10 +830,6 @@ extern "C" {
 extern "C" {
 #endif
 
-#ifdef ENET_LZ4
-	#include "lz4/lz4.h"
-#endif
-
 #ifdef __MINGW32__
 	#include "mingw/inet_ntop.c"
 	#include "mingw/inet_pton.c"
@@ -2392,20 +2388,6 @@ extern "C" {
 				return 0;
 		}
 
-		#ifdef ENET_LZ4
-			if (flags & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED) {
-				size_t originalSize = LZ4_decompress_safe((const char*)host->receivedData + headerSize, (char*)host->packetData[1] + headerSize, host->receivedDataLength - headerSize, sizeof(host->packetData[1]) - headerSize);
-
-				if (originalSize <= 0 || originalSize > sizeof(host->packetData[1]) - headerSize)
-					return 0;
-
-				memcpy(host->packetData[1], header, headerSize);
-
-				host->receivedData = host->packetData[1];
-				host->receivedDataLength = headerSize + originalSize;
-			}
-		#endif
-
 		if (host->checksumCallback != NULL) {
 			enet_uint32* checksum = (enet_uint32*)&host->receivedData[headerSize - sizeof(enet_uint32)];
 			enet_uint32 desiredChecksum = *checksum;
@@ -2901,10 +2883,6 @@ extern "C" {
 		int sentLength;
 		host->continueSending = 1;
 
-		#ifdef ENET_LZ4
-			size_t shouldCompress = 0;
-		#endif
-
 		while (host->continueSending) {
 			for (host->continueSending = 0, currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
 				if (currentPeer->state == ENET_PEER_STATE_DISCONNECTED || currentPeer->state == ENET_PEER_STATE_ZOMBIE)
@@ -2978,44 +2956,6 @@ extern "C" {
 					host->buffers->dataLength = (size_t)&((ENetProtocolHeader*)0)->sentTime;
 				}
 
-				#ifdef ENET_LZ4
-					if (host->compression == 1 && host->packetSize > 64) {
-						size_t originalSize = host->packetSize - sizeof(ENetProtocolHeader), compressedSize = 0;
-						const ENetBuffer* buffers = &host->buffers[1];
-
-						if (host->compressionBufferSize < originalSize) {
-							enet_free(host->compressionBuffer);
-
-							host->compressionBuffer = (char*)enet_malloc(originalSize);
-							host->compressionBufferSize = originalSize;
-						}
-
-						size_t totalSize = originalSize, dataSize = 0;
-
-						while (totalSize) {
-							size_t i;
-
-							for (i = 0; i < host->bufferCount - 1; i++) {
-								size_t copySize = ENET_MIN(totalSize, buffers[i].dataLength);
-
-								memcpy(host->compressionBuffer + dataSize, buffers[i].data, copySize);
-
-								totalSize -= copySize;
-								dataSize += copySize;
-							}
-						}
-
-						compressedSize = LZ4_compress_default((const char*)host->compressionBuffer, (char*)host->packetData[1], dataSize, originalSize);
-
-						if (compressedSize > 0 && compressedSize < originalSize) {
-							host->headerFlags |= ENET_PROTOCOL_HEADER_FLAG_COMPRESSED;
-							shouldCompress = compressedSize;
-
-							ENET_LOG_TRACE("peer %u: compressed %u->%u (%u%%)\n", currentPeer->incomingPeerID, originalSize, compressedSize, (compressedSize * 100) / originalSize);
-						}
-					}
-				#endif
-
 				if (currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID)
 					host->headerFlags |= currentPeer->outgoingSessionID << ENET_PROTOCOL_HEADER_SESSION_SHIFT;
 
@@ -3027,14 +2967,6 @@ extern "C" {
 					host->buffers->dataLength += sizeof(enet_uint32);
 					*checksum = host->checksumCallback(host->buffers, host->bufferCount);
 				}
-
-				#ifdef ENET_LZ4
-					if (shouldCompress > 0) {
-						host->buffers[1].data = host->packetData[1];
-						host->buffers[1].dataLength = shouldCompress;
-						host->bufferCount = 2;
-					}
-				#endif
 
 				currentPeer->lastSendTime = host->serviceTime;
 				sentLength = enet_socket_send(host->socket, &currentPeer->address, host->buffers, host->bufferCount);
