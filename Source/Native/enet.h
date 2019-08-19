@@ -1047,11 +1047,18 @@ extern "C" {
 
 	int enet_initialize_with_callbacks(ENetVersion version, const ENetCallbacks* inits) {
 		if (version < ENET_VERSION_CREATE(1, 3, 0))
+		{
+			ENET_LOG_ERROR("ENET version is too old");
 			return -1;
+		}
+		
 
 		if (inits->malloc != NULL || inits->free != NULL) {
-			if (inits->malloc == NULL || inits->free == NULL)
+			if (inits->malloc == NULL || inits->free == NULL) {
+				ENET_LOG_ERROR("memory allocator or free thingy is NULL");
 				return -1;
+			}
+				
 
 			callbacks.malloc = inits->malloc;
 			callbacks.free = inits->free;
@@ -1831,17 +1838,26 @@ extern "C" {
 	static int enet_protocol_handle_send_reliable(ENetHost* host, ENetPeer* peer, const ENetProtocol* command, enet_uint8** currentData) {
 		size_t dataLength;
 
-		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER))
+		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
+			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
 			return -1;
+		}
+			
 
 		dataLength = ENET_NET_TO_HOST_16(command->sendReliable.dataLength);
 		*currentData += dataLength;
 
-		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength])
+		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
+			ENET_LOG_ERROR("data length is wacko");
 			return -1;
+		}
+			
 
-		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL)
+		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL) {
+			ENET_LOG_ERROR("Could not queue incoming command, it returned NULL");
 			return -1;
+		}
+			
 
 		return 0;
 	}
@@ -1850,14 +1866,19 @@ extern "C" {
 		enet_uint32 unsequencedGroup, index;
 		size_t dataLength;
 
-		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER))
+		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
+			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
 			return -1;
+		}
+			
 
 		dataLength = ENET_NET_TO_HOST_16(command->sendUnsequenced.dataLength);
 		*currentData += dataLength;
 
-		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength])
+		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+			ENET_LOG_ERROR("data length is wacko");
 			return -1;
+		}
 
 		unsequencedGroup = ENET_NET_TO_HOST_16(command->sendUnsequenced.unsequencedGroup);
 		index = unsequencedGroup % ENET_PEER_UNSEQUENCED_WINDOW_SIZE;
@@ -1878,8 +1899,10 @@ extern "C" {
 			return 0;
 		}
 		
-		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendUnsequenced), dataLength, ENET_PACKET_FLAG_UNSEQUENCED, 0) == NULL)
+		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendUnsequenced), dataLength, ENET_PACKET_FLAG_UNSEQUENCED, 0) == NULL) {
+			ENET_LOG_ERROR("Could not queue incoming command, it returned NULL");
 			return -1;
+		}
 
 		peer->unsequencedWindow[index / 32] |= 1 << (index % 32);
 
@@ -1889,17 +1912,23 @@ extern "C" {
 	static int enet_protocol_handle_send_unreliable(ENetHost* host, ENetPeer* peer, const ENetProtocol* command, enet_uint8** currentData) {
 		size_t dataLength;
 
-		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER))
+		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
+			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
 			return -1;
+		}
 
 		dataLength = ENET_NET_TO_HOST_16(command->sendUnreliable.dataLength);
 		*currentData += dataLength;
 
-		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength])
+		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+			ENET_LOG_ERROR("data length is wacko");
 			return -1;
+		}
 
-		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendUnreliable), dataLength, 0, 0) == NULL)
+		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendUnreliable), dataLength, 0, 0) == NULL) {
+			ENET_LOG_ERROR("Could not queue incoming command, it returned NULL");
 			return -1;
+		}
 
 		return 0;
 	}
@@ -1911,14 +1940,18 @@ extern "C" {
 		ENetListIterator currentCommand;
 		ENetIncomingCommand* startCommand = NULL;
 
-		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER))
+		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
+			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
 			return -1;
+		}
 
 		fragmentLength = ENET_NET_TO_HOST_16(command->sendFragment.dataLength);
 		*currentData += fragmentLength;
 
-		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength])
+		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+			ENET_LOG_ERROR("data length is wacko");
 			return -1;
+		}
 
 		channel = &peer->channels[command->header.channelID];
 		startSequenceNumber = ENET_NET_TO_HOST_16(command->sendFragment.startSequenceNumber);
@@ -1936,8 +1969,11 @@ extern "C" {
 		fragmentOffset = ENET_NET_TO_HOST_32(command->sendFragment.fragmentOffset);
 		totalLength = ENET_NET_TO_HOST_32(command->sendFragment.totalLength);
 
-		if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT || fragmentNumber >= fragmentCount || totalLength > host->maximumPacketSize || fragmentOffset >= totalLength || fragmentLength > totalLength - fragmentOffset)
+		if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT || fragmentNumber >= fragmentCount || totalLength > host->maximumPacketSize || fragmentOffset >= totalLength || fragmentLength > totalLength - fragmentOffset) {
+			ENET_LOG_ERROR("Some fragment weirdness going on here");
 			return -1;
+		}
+
 
 		for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingReliableCommands)); currentCommand != enet_list_end(&channel->incomingReliableCommands); currentCommand = enet_list_previous(currentCommand)) {
 			ENetIncomingCommand* incomingCommand = (ENetIncomingCommand*)currentCommand;
@@ -1953,8 +1989,11 @@ extern "C" {
 				if (incomingCommand->reliableSequenceNumber < startSequenceNumber)
 					break;
 
-				if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount)
+				if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount) {
+					ENET_LOG_ERROR("Some fragment weirdness going on here");
 					return -1;
+				}
+
 
 				startCommand = incomingCommand;
 
@@ -1967,8 +2006,11 @@ extern "C" {
 			hostCommand.header.reliableSequenceNumber = startSequenceNumber;
 			startCommand = enet_peer_queue_incoming_command(peer, &hostCommand, NULL, totalLength, ENET_PACKET_FLAG_RELIABLE, fragmentCount);
 
-			if (startCommand == NULL)
+			if (startCommand == NULL) {
+				ENET_LOG_ERROR("startCommand was NULL.");
 				return -1;
+			}
+				
 		}
 
 		if ((startCommand->fragments[fragmentNumber / 32] & (1 << (fragmentNumber % 32))) == 0) {
@@ -1994,14 +2036,18 @@ extern "C" {
 		ENetListIterator currentCommand;
 		ENetIncomingCommand* startCommand = NULL;
 
-		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER))
+		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
+			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
 			return -1;
+		}
 
 		fragmentLength = ENET_NET_TO_HOST_16(command->sendFragment.dataLength);
 		*currentData += fragmentLength;
 
-		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength])
+		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
+			ENET_LOG_ERROR("fragment data length is wacko");
 			return -1;
+		}
 
 		channel = &peer->channels[command->header.channelID];
 		reliableSequenceNumber = command->header.reliableSequenceNumber;
@@ -2023,8 +2069,11 @@ extern "C" {
 		fragmentOffset = ENET_NET_TO_HOST_32(command->sendFragment.fragmentOffset);
 		totalLength = ENET_NET_TO_HOST_32(command->sendFragment.totalLength);
 
-		if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT || fragmentNumber >= fragmentCount || totalLength > host->maximumPacketSize || fragmentOffset >= totalLength || fragmentLength > totalLength - fragmentOffset)
+		if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT || fragmentNumber >= fragmentCount || totalLength > host->maximumPacketSize || fragmentOffset >= totalLength || fragmentLength > totalLength - fragmentOffset) {
+			ENET_LOG_ERROR("Exceeded maximum number of fragments, the total length is more than the packet size, the offset is out of bounds or the fragment is too big");
 			return -1;
+		}
+			
 
 			for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingUnreliableCommands)); currentCommand != enet_list_end(&channel->incomingUnreliableCommands); currentCommand = enet_list_previous(currentCommand)) {
 				ENetIncomingCommand* incomingCommand = (ENetIncomingCommand*)currentCommand;
@@ -2046,8 +2095,11 @@ extern "C" {
 					if (incomingCommand->unreliableSequenceNumber < startSequenceNumber)
 						break;
 
-					if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount)
+					if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount) {
+						ENET_LOG_ERROR("Some fragment weirdness going on here");
 						return -1;
+					}
+						
 
 					startCommand = incomingCommand;
 
@@ -2059,8 +2111,11 @@ extern "C" {
 				startCommand = enet_peer_queue_incoming_command(peer, command, NULL, totalLength,
 				ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED, fragmentCount);
 
-				if (startCommand == NULL)
+				if (startCommand == NULL) {
+					ENET_LOG_ERROR("startCommand was NULL");
 					return -1;
+				}
+					
 			}
 
 			if ((startCommand->fragments[fragmentNumber / 32] & (1 << (fragmentNumber % 32))) == 0) {
@@ -2080,15 +2135,20 @@ extern "C" {
 	}
 
 	static int enet_protocol_handle_ping(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
-		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)
+		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
+			ENET_LOG_ERROR("Doing jack squat on a peer that is not connected correctly");
 			return -1;
+		}
+			
 
 		return 0;
 	}
 
 	static int enet_protocol_handle_bandwidth_limit(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
-		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)
+		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
+			ENET_LOG_ERROR("Doing jack squat on a peer that is not connected correctly");
 			return -1;
+		}
 
 		if (peer->incomingBandwidth != 0)
 			--host->bandwidthLimitedPeers;
@@ -2115,8 +2175,10 @@ extern "C" {
 	}
 
 	static int enet_protocol_handle_throttle_configure(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
-		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)
+		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
+			ENET_LOG_ERROR("Doing jack squat on a peer that is not connected correctly");
 			return -1;
+		}
 
 		peer->packetThrottleInterval = ENET_NET_TO_HOST_32(command->throttleConfigure.packetThrottleInterval);
 		peer->packetThrottleAcceleration = ENET_NET_TO_HOST_32(command->throttleConfigure.packetThrottleAcceleration);
@@ -2209,16 +2271,22 @@ extern "C" {
 
 		switch (peer->state) {
 			case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
-				if (commandNumber != ENET_PROTOCOL_COMMAND_VERIFY_CONNECT)
+				if (commandNumber != ENET_PROTOCOL_COMMAND_VERIFY_CONNECT) {
+					ENET_LOG_ERROR("Wrong command number. Got %u vs %u", commandNumber, ENET_PROTOCOL_COMMAND_VERIFY_CONNECT);
 					return -1;
+				}
+					
 
 				enet_protocol_notify_connect(host, peer, event);
 
 				break;
 
 			case ENET_PEER_STATE_DISCONNECTING:
-				if (commandNumber != ENET_PROTOCOL_COMMAND_DISCONNECT)
+				if (commandNumber != ENET_PROTOCOL_COMMAND_DISCONNECT) {
+					ENET_LOG_ERROR("Wrong command number. Got %u vs %u", commandNumber, ENET_PROTOCOL_COMMAND_DISCONNECT);
 					return -1;
+				}
+					
 
 				enet_protocol_notify_disconnect(host, peer, event);
 
@@ -2250,7 +2318,7 @@ extern "C" {
 			peer->eventData = 0;
 
 			enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
-
+			ENET_LOG_ERROR("A peer has entered a Zombie state...");
 			return -1;
 		}
 
@@ -2518,8 +2586,11 @@ extern "C" {
 			if (receivedLength == -2)
 				continue;
 
-			if (receivedLength < 0)
+			if (receivedLength < 0) {
+				ENET_LOG_ERROR("received length was negative: %i", receivedLength);
 				return -1;
+			}
+				
 
 			if (receivedLength == 0)
 				return 0;
@@ -2538,6 +2609,7 @@ extern "C" {
 						continue;
 
 					case -1:
+						ENET_LOG_ERROR("intercept callback failure");
 						return -1;
 
 					default:
@@ -2550,6 +2622,7 @@ extern "C" {
 					return 1;
 
 				case -1:
+					ENET_LOG_ERROR("enet_protocol_handle_incoming_commands failure");
 					return -1;
 
 				default:
@@ -2968,8 +3041,11 @@ extern "C" {
 
 				enet_protocol_remove_sent_unreliable_commands(currentPeer);
 
-				if (sentLength < 0)
+				if (sentLength < 0) {
+					ENET_LOG_ERROR("sentLength was negative: %i", sentLength);
 					return -1;
+				}
+					
 
 				host->totalSentData += sentLength;
 				currentPeer->totalDataSent += sentLength;
@@ -2988,6 +3064,7 @@ extern "C" {
 
 	int enet_host_check_events(ENetHost* host, ENetEvent* event) {
 		if (event == NULL)
+			// Coburn: Probably not needed to put debug here?
 			return -1;
 
 		event->type = ENET_EVENT_TYPE_NONE;
@@ -3010,10 +3087,7 @@ extern "C" {
 					return 1;
 
 				case -1:
-					#ifdef ENET_DEBUG
-						ENET_LOG_ERROR("Error dispatching incoming packets");
-					#endif
-
+					ENET_LOG_ERROR("Error dispatching incoming packets");
 					return -1;
 
 				default:
@@ -3034,7 +3108,6 @@ extern "C" {
 
 				case -1:
 					ENET_LOG_ERROR("Error sending outgoing packets");
-
 					return -1;
 
 				default:
@@ -3047,7 +3120,6 @@ extern "C" {
 
 				case -1:
 					ENET_LOG_ERROR("Error receiving incoming packets");
-
 					return -1;
 
 				default:
@@ -3060,7 +3132,6 @@ extern "C" {
 
 				case -1:
 					ENET_LOG_ERROR("Error dispatching outgoing packets!");
-
 					return -1;
 
 				default:
@@ -3074,7 +3145,6 @@ extern "C" {
 
 					case -1:
 						ENET_LOG_ERROR("Error dispatching incoming packets!");
-
 						return -1;
 
 					default:
@@ -3094,6 +3164,7 @@ extern "C" {
 				waitCondition = ENET_SOCKET_WAIT_RECEIVE | ENET_SOCKET_WAIT_INTERRUPT;
 
 				if (enet_socket_wait(host->socket, &waitCondition, ENET_TIME_DIFFERENCE(timeout, host->serviceTime)) != 0)
+					// Coburn: Is this an error?
 					return -1;
 			}
 
@@ -3146,6 +3217,7 @@ extern "C" {
 			else
 				peer->packetThrottle = 0;
 
+			// Coburn: Not sure if this is an error condition
 			return -1;
 		}
 
@@ -3205,7 +3277,6 @@ extern "C" {
 					}
 
 					ENET_LOG_ERROR("Cannot send data. A fragment was null.");
-
 					return -1;
 				}
 
@@ -3248,8 +3319,11 @@ extern "C" {
 			command.sendUnreliable.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
 		}
 
-		if (enet_peer_queue_outgoing_command(peer, &command, packet, 0, packet->dataLength) == NULL)
+		if (enet_peer_queue_outgoing_command(peer, &command, packet, 0, packet->dataLength) == NULL) {
+			ENET_LOG_ERROR("a queued outgoing command was NULL");
 			return -1;
+		}
+			
 
 		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
 			enet_host_flush(peer->host);
@@ -4342,8 +4416,11 @@ extern "C" {
 			destination = &address->ipv4.ip;
 		}
 
-		if (!inet_pton(type, ip, destination))
+		if (!inet_pton(type, ip, destination)) {
+			ENET_LOG_ERROR("inet_pton failure");
 			return -1;
+		}
+			
 
 		return 0;
 	}
@@ -4355,8 +4432,11 @@ extern "C" {
 
 		hints.ai_family = AF_UNSPEC;
 
-		if (getaddrinfo(name, NULL, &hints, &resultList) != 0)
+		if (getaddrinfo(name, NULL, &hints, &resultList) != 0) {
+			ENET_LOG_ERROR("Could not getaddrinfo");
 			return -1;
+		}
+			
 
 		for (result = resultList; result != NULL; result = result->ai_next) {
 			if (result->ai_addr != NULL && result->ai_addrlen >= sizeof(struct sockaddr_in)) {
@@ -4390,8 +4470,11 @@ extern "C" {
 	}
 
 	int enet_address_get_host_ip(const ENetAddress* address, char* ip, size_t ipLength) {
-		if (inet_ntop(AF_INET6, &address->ipv6, ip, ipLength) == NULL)
+		if (inet_ntop(AF_INET6, &address->ipv6, ip, ipLength) == NULL) {
+			ENET_LOG_ERROR("inet_ntop failure (was NULL)");
 			return -1;
+		}
+			
 
 		if (enet_array_is_zeroed(address->ipv4.zeros, sizeof(address->ipv4.zeros)) == 0 && address->ipv4.ffff == 0xFFFF)
 			enet_string_copy(ip, ip + 7, ipLength);
@@ -4412,14 +4495,20 @@ extern "C" {
 		err = getnameinfo((struct sockaddr*)&sin, sizeof(sin), name, nameLength, NULL, 0, NI_NAMEREQD);
 
 		if (!err) {
-			if (name != NULL && nameLength > 0 && !memchr(name, '\0', nameLength))
+			if (name != NULL && nameLength > 0 && !memchr(name, '\0', nameLength)) {
+				ENET_LOG_ERROR("something funky going on here");
 				return -1;
+			}
+				
 
 			return 0;
 		}
 
-		if (err != EAI_NONAME)
+		if (err != EAI_NONAME) {
+			ENET_LOG_ERROR("some error occurred: %i", err);
 			return -1;
+		}
+			
 
 		return enet_address_get_host_ip(address, name, nameLength);
 	}
@@ -4469,8 +4558,11 @@ extern "C" {
 			struct sockaddr_in6 sin;
 			socklen_t sinLength = sizeof(struct sockaddr_in6);
 
-			if (getsockname(socket, (struct sockaddr*)&sin, &sinLength) == -1)
+			if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
+				ENET_LOG_ERROR("getsockname failure");
 				return -1;
+			}
+				
 
 			address->ipv6 = sin.sin6_addr;
 			address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
@@ -4646,6 +4738,7 @@ extern "C" {
 				if (errno == EWOULDBLOCK)
 					return 0;
 
+				ENET_LOG_ERROR("sentLength weirdness");
 				return -1;
 			}
 
@@ -4672,11 +4765,15 @@ extern "C" {
 				if (errno == EWOULDBLOCK)
 					return 0;
 
+				ENET_LOG_ERROR("recvLength weirdness");
 				return -1;
 			}
 
-			if (msgHdr.msg_flags & MSG_TRUNC)
+			if (msgHdr.msg_flags & MSG_TRUNC) {
+				ENET_LOG_ERROR("message was truncated...");
 				return -1;
+			}
+				
 
 			if (address != NULL) {
 				address->ipv6 = sin.sin6_addr;
@@ -4717,6 +4814,7 @@ extern "C" {
 					return 0;
 				}
 
+				ENET_LOG_DEBUG("pollCount < 0: %i", pollCount);
 				return -1;
 			}
 
@@ -4748,23 +4846,28 @@ extern "C" {
 			WORD versionRequested = MAKEWORD(2, 2);
 			WSADATA wsaData;
 
-			if (WSAStartup(versionRequested, &wsaData))
+			if (WSAStartup(versionRequested, &wsaData)) {
+				ENET_LOG_ERROR("WSAStartup failure");
 				return -1;
+			}
+
+				
 
 			if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+				ENET_LOG_ERROR("Winsock version mismatch");
 				WSACleanup();
-
 				return -1;
 			}
 
 			timeBeginPeriod(1);
-
+			ENET_LOG_TRACE("Initialization");
 			return 0;
 		}
 
 		void enet_deinitialize(void) {
 			timeEndPeriod(1);
 			WSACleanup();
+			ENET_LOG_TRACE("Deinitialization");
 		}
 
 		enet_uint64 enet_host_random_seed(void) {
@@ -4793,8 +4896,11 @@ extern "C" {
 			struct sockaddr_in6 sin;
 			int sinLength = sizeof(struct sockaddr_in6);
 
-			if (getsockname(socket, (struct sockaddr*)&sin, &sinLength) == -1)
+			if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
+				ENET_LOG_ERROR("getsockname failure");
 				return -1;
+			}
+				
 
 			address->ipv6 = sin.sin6_addr;
 			address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
@@ -4897,9 +5003,12 @@ extern "C" {
 			sin.sin6_addr = address->ipv6;
 			result = connect(socket, (struct sockaddr*)&sin, sizeof(struct sockaddr_in6));
 
-			if (result == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
+			if (result == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {
+				int winSockWhat = WSAGetLastError();
+				ENET_LOG_ERROR("Socket connect failure, return code: %i, WSAGetLastError: %i", result, winSockWhat);
 				return -1;
-
+			}
+				
 			return 0;
 		}
 
@@ -4910,8 +5019,11 @@ extern "C" {
 
 			result = accept(socket, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? &sinLength : NULL);
 
-			if (result == INVALID_SOCKET)
+			if (result == INVALID_SOCKET) {
+				ENET_LOG_ERROR("Tried to accept from an invalid socket");
 				return ENET_SOCKET_NULL;
+			}
+				
 
 			if (address != NULL) {
 				address->ipv6 = sin.sin6_addr;
@@ -4954,18 +5066,24 @@ extern "C" {
 			struct sockaddr_in6 sin;
 
 			if (WSARecvFrom(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &recvLength, &flags, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? &sinLength : NULL, NULL, NULL) == SOCKET_ERROR) {
-				switch (WSAGetLastError()) {
+
+				int retCode = WSAGetLastError();
+
+				switch (retCode) {
 					case WSAEWOULDBLOCK:
 					case WSAECONNRESET:
 						return 0;
 				}
 
+				ENET_LOG_ERROR("Socket receive failure, WSA return code %d", retCode);
 				return -1;
 			}
 
-			if (flags & MSG_PARTIAL)
+			if (flags & MSG_PARTIAL) {
+				ENET_LOG_ERROR("Socket receive message was partial??");
 				return -1;
-
+			}
+				
 			if (address != NULL) {
 				address->ipv6 = sin.sin6_addr;
 				address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
@@ -5002,8 +5120,11 @@ extern "C" {
 
 			selectCount = select(socket + 1, &readSet, &writeSet, NULL, &timeVal);
 
-			if (selectCount < 0)
+			if (selectCount < 0) {
+				ENET_LOG_ERROR("selectCount < 0; was %d", selectCount);
 				return -1;
+			}
+				
 
 			*condition = ENET_SOCKET_WAIT_NONE;
 
