@@ -4814,7 +4814,7 @@ extern "C" {
 					return 0;
 				}
 
-				ENET_LOG_DEBUG("pollCount < 0: %i", pollCount);
+				ENET_LOG_ERROR("pollCount < 0: %i", pollCount);
 				return -1;
 			}
 
