@@ -22,7 +22,8 @@ SOFTWARE.
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <langversion>7.1</langversion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

@@ -20,11 +20,13 @@
 # SOFTWARE.
 #
 
+set(ENET_LIB_NAME enet)
 cmake_minimum_required(VERSION 3.1)
-project(enet LANGUAGES C)
+project(${ENET_LIB_NAME} LANGUAGES C)
 
 set(ENET_DEBUG OFF CACHE BOOL "Do debug things")
-
+set(ENET_PLUGIN_DIR_BASE "${CMAKE_CURRENT_SOURCE_DIR}/Unity/Plugins")
+set(ENET_PLUGIN_DIR_ARCH "x86_64")
 set(ENET_DEFINES -DENET_NO_PRAGMA_LINK -DENET_DLL)
 set(ENET_DEPS "")
 set(ENET_SRCDIR "Source/Native")
@@ -53,6 +55,20 @@ if(MSVC)
 endif()
 
 include_directories(${ENET_SRCDIR})
-add_library(enet SHARED ${ENET_SRCS})
-target_link_libraries(enet ${ENET_DEPS})
-target_compile_definitions(enet PRIVATE ${ENET_DEFINES})
+add_library(${ENET_LIB_NAME} SHARED ${ENET_SRCS})
+target_link_libraries(${ENET_LIB_NAME} ${ENET_DEPS})
+target_compile_definitions(${ENET_LIB_NAME} PRIVATE ${ENET_DEFINES})
+
+set(ENET_PLUGIN_DIR ${ENET_PLUGIN_DIR_BASE}/${ENET_PLUGIN_DIR_ARCH})
+set(ENET_LIB_PREFIX ${CMAKE_SHARED_LIBRARY_PREFIX})
+string(REPLACE ".dylib" ".bundle" ENET_LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(ENET_PLUGIN_NAME ${ENET_LIB_PREFIX}${ENET_LIB_NAME}${ENET_LIB_SUFFIX})
+
+file(MAKE_DIRECTORY ${ENET_PLUGIN_DIR})
+add_custom_command(
+    TARGET ${ENET_LIB_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:${ENET_LIB_NAME}>
+        ${ENET_PLUGIN_DIR}/${ENET_PLUGIN_NAME}
+)
