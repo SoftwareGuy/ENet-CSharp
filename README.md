@@ -8,11 +8,11 @@ Welcome to a improved/refactored version of nxrighthere's ENET-CSharp repository
 
 Some features included in this repository include:
 
-- Logging support for ENET Debug Mode
-- Cleanups and Optimizations
-- No auto-closing upon submitting a Issue Support Ticket!
-- Supposedly-a-bug bugs actually get analyzed and if it's really a bug, it'll get fixed!
-- And a bunch of other shit that makes it worthwhile using.
+- Proper implementation of ENET_DEBUG definition, allowing logging output to be written to `enet_log.txt` for further diagnosis and troubleshooting
+- Code cleanups and optimizations for better performance
+- Supposedly-a-bug tickets actually get analyzed and if it's really a bug, it'll get fixed
+- We won't randomly close issue tickets for no apparent reason
+- And a bunch of other shit that this version superior and worthwhile using.
 
 If you want to know what started this repository, go [read my blog 
 post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition) as it'll detail the whole show. It's a good read.
@@ -20,39 +20,51 @@ post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-git
 ### Compatibility with Upstream
 Don't even try using this version of ENET and ENET-CSharp with the upstream repository. It'll likely look at you strange and catch fire. Just don't.
 
+### Building
+You can use the IDE of Visual Studio to build if you like. The following will be oriented for power users and command line heroes.
+
+Unlike upstream, this repo has a complete build system that harnesses the power of `MSBuild`. 
+
+- Ensure you have dotnet 2.2 SDK at least installed. You can use 2.1 since it's LTS but ehh...
+- **If you are building on Windows:** Make sure you have Visual Studio 2017/2019 installed, C++ Support, Windows 10 SDK and CMake. CMake sometimes doesn't get automatically installed with Visual Studio, so you may need to grab it manually.
+- **If you are building on Mac:** Make sure you have Xcode CLI Tools installed (XCode might also be required).
+- Clone a fresh copy of this Git Repo somewhere on your workstation's filesystem.
+- **If you are building on Linux:** Make sure you have your repositories' `build-essential` and `cmake` package installed. On Debian and Ubuntu-based distros, you can do `sudo apt -y build-essential cmake` to install the required things.
+- **If you are building for iOS or Android:** Hold up. We haven't implemented that yet... You'll have to proceed on foot since they use toolchains.
+- Open a command prompt/terminal and change directory into the newly cloned git repository.
+- Run `dotnet build`.
+
+**Protip:** You can append `-c Release` or `-c Debug` to your `dotnet build` command to build a release binary or a debug binary of ENET's C library.
+
+You will see an anime babe appear followed by [Ignorance](https://github.com/SoftwareGuy/Ignorance) ASCII art. 
+
+CMake will fire up, configure itself after inspecting your build environment and hopefully spit out a binary blob inside a `Unity/Plugins` directory. On Windows, this will be a DLL, on Mac it will be a BUNDLE and on Linux it will be a shared object (`.so`). This can be used with Unity or another thing like a C# NET Core application or even other C/C++ apps. 
+
+#### Testing
+- `dotnet test` will run some sanity checks and make sure ENET initializes, data is received and sent correctly, etc.
+
+#### Rebuilding
+Inside the directory that you cloned the repo to, run:
+- `dotnet clean`
+- `dotnet build`
+
+It is recommended to clean the repository work space before building.
+
 ### Features
 - Lightweight and straightforward
 - Low resource consumption
 - Dual-stack IPv4/IPv6 support
 - Connection management, Sequencing, Channels, Reliability, Fragmentation, Reassembly
-- Compression
 - Aggregation
-- Adaptability and last but not least portability
-
-Please, read [common mistakes](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/COMMON-MISTAKES.md) during integration. Issues filed here will be analyzed and fixed independently of upstream.
-
-### Building
-TODO: Come back and fill this in.
-
-***Old shit left below as reference***
-
-To build the native library appropriate software is required:
-
-For desktop platforms [CMake](https://cmake.org/download/) with GNU Make or Visual Studio.
-
-For mobile platforms [NDK](https://developer.android.com/ndk/downloads/) for Android and [Xcode](https://developer.apple.com/xcode/) for iOS. Make sure that all compiled libraries are assigned to appropriate platforms and CPU architectures.
-
-To build the library for Nintendo Switch, follow [this](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/BUILD-FOR-SWITCH.txt) guide.
-
-Define `ENET_LZ4` to build the library with support for an optional packet-level compression.
-
-A managed assembly can be built using any available compiling platform that supports C# 3.0 or higher.
+- Adaptability and portability
 
 ### Usage
 - Initialize ENET first before doing anything by calling the `ENet.Library.Initialize();` function. It will return false on failure, return true on success. You can use this to gracefully quit your application should it fail to initialize, for example.
 - Once you are done, deinitialize the library using `ENet.Library.Deinitialize();` function.
 
-### .NET Code Examples/Quick Start
+### Code Examples/Quick Start
+A good idea is to check out the [common mistakes during integration](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/COMMON-MISTAKES.md) documentation.
+
 ##### A server code example:
 ```c#
 using (Host server = new Host()) {
@@ -79,19 +91,19 @@ using (Host server = new Host()) {
 					break;
 
 				case EventType.Connect:
-					Console.WriteLine("Client connected - ID: " + netEvent.Peer.ID + ", IP: " + netEvent.Peer.IP);
+					Console.WriteLine($"Client connected - ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}");
 					break;
 
 				case EventType.Disconnect:
-					Console.WriteLine("Client disconnected - ID: " + netEvent.Peer.ID + ", IP: " + netEvent.Peer.IP);
+					Console.WriteLine($"Client disconnected - ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}");
 					break;
 
 				case EventType.Timeout:
-					Console.WriteLine("Client timeout - ID: " + netEvent.Peer.ID + ", IP: " + netEvent.Peer.IP);
+					Console.WriteLine($"Client timeout - ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}");
 					break;
 
 				case EventType.Receive:
-					Console.WriteLine("Packet received from - ID: " + netEvent.Peer.ID + ", IP: " + netEvent.Peer.IP + ", Channel ID: " + netEvent.ChannelID + ", Data length: " + netEvent.Packet.Length);
+					Console.WriteLine($"Packet received from peer ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}, Channel ID: {netEvent.ChannelID}, Data length: {netEvent.Packet.Length}");
 					netEvent.Packet.Dispose();
 					break;
 			}
@@ -143,7 +155,7 @@ using (Host client = new Host()) {
 					break;
 
 				case EventType.Receive:
-					Console.WriteLine("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + netEvent.Packet.Length);
+					Console.WriteLine($"Packet received from server - Channel ID: {netEvent.ChannelID}, Data length: {netEvent.Packet.Length}");
 					netEvent.Packet.Dispose();
 					break;
 			}
@@ -196,20 +208,20 @@ Usage is almost the same as in the .NET environment, except that the console fun
 Multi-threading
 --------
 ### Strategy
-The best-known strategy is to use ENet in an independent I/O thread. This can be achieved by using Threads and sending stuff to be sent and received back and forth via ConcurrentQueues. 
+The best-known strategy is to use ENet in an independent I/O thread. This can be achieved by using Threads and enqueuing packets to be sent and received back and forth via ConcurrentQueues. 
 
-In fact, some internal testing showed that ENET had very impressive performance using a thread and queues approach to network I/O, even faster than RingBuffers and Disruptors. Please be beware that using Threads inside a Unity environment can be problematic and can lead to the Unity Editor or built games randomly crashing without any warning. Use it with caution.
+In fact, some internal testing showed that ENET had very impressive performance using a thread and ConcurrentQueues approach to network I/O, even faster than RingBuffers/Disruptors. Please be beware that using Threads inside a Unity environment can be problematic and can lead to the Unity Editor or built games randomly crashing without any warning. Use them with caution!
 
 ### Functionality
 In general, ENet is not thread-safe, but some of its functions can be used safely if the user is careful enough:
 
 `Packet` structure and its functions are safe until a packet is only moving across threads by value and a custom memory allocator is not used.
 
-`Peer.ID` as soon as a pointer to a peer was obtained from the native side, the ID will be cached in `Peer` structure for further actions with objects that assigned to that ID. `Peer` structure can be moved across threads by value, but its functions  are not thread-safe because data in memory may change by the service in another thread.
+`Peer.ID` as soon as a pointer to a peer was obtained from the native side, the ID will be cached in `Peer` structure for further actions with objects that assigned to that ID. `Peer` structure can be moved across threads by value, but its functions are not thread-safe because data in memory may change by the servicing functions in another thread.
 
 `Library.Time` utilizes atomic primitives internally for managing local monotonic time.
 
-Documentation
+API Documentation
 --------
 See `DOCUMENTATION.md` [here](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/DOCUMENTATION.md).
 
