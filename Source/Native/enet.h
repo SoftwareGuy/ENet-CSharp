@@ -56,9 +56,7 @@
 
 /*
 =======================================================================
-
 	System differences
-
 =======================================================================
 */
 
@@ -183,9 +181,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Internals
-
 =======================================================================
 */
 
@@ -245,9 +241,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Protocol
-
 =======================================================================
 */
 
@@ -420,9 +414,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	General structs/enums
-
 =======================================================================
 */
 
@@ -704,9 +696,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Public API
-
 =======================================================================
 */
 
@@ -798,9 +788,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Private API
-
 =======================================================================
 */
 
@@ -837,9 +825,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Atomics
-
 =======================================================================
 */
 
@@ -1029,9 +1015,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Callbacks
-
 =======================================================================
 */
 
@@ -1081,9 +1065,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	List
-
 =======================================================================
 */
 
@@ -1135,9 +1117,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Utilities
-
 =======================================================================
 */
 
@@ -1182,9 +1162,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Time
-
 =======================================================================
 */
 
@@ -1253,7 +1231,9 @@ extern "C" {
 
 			return 0;
 		}
-	#elif __APPLE__ && __MAC_OS_X_VERSION_MIN_REQUIRED < 101200 && !defined(CLOCK_MONOTONIC)
+		// Coburn: this fixes devices on iOS <10.0 from causing a E_ARM_BREAKPOINT and making XCode Debugger angery
+	#elif __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000) && !defined(CLOCK_MONOTONIC)
+		
 		#define CLOCK_MONOTONIC 0
 
 		int clock_gettime(int X, struct timespec* ts) {
@@ -1276,11 +1256,10 @@ extern "C" {
 
 		struct timespec ts;
 
-		#ifdef CLOCK_MONOTONIC_RAW
-			clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-		#else
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-		#endif
+		// c6: what the [redacted] fuck is clock_monotonic_raw??????
+		// c6: just use clock monotonic
+		// Coburn: sir yes sir
+		clock_gettime(CLOCK_MONOTONIC, &ts);
 
 		static const enet_uint64 ns_in_s = 1000 * 1000 * 1000;
 		static const enet_uint64 ns_in_ms = 1000 * 1000;
@@ -1301,9 +1280,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Checksum
-
 =======================================================================
 */
 
@@ -1365,9 +1342,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Packet
-
 =======================================================================
 */
 
@@ -1443,9 +1418,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Protocol
-
 =======================================================================
 */
 
@@ -2920,10 +2893,10 @@ extern "C" {
 					enet_uint32 packetLoss = currentPeer->packetsLost * ENET_PEER_PACKET_LOSS_SCALE / currentPeer->packetsSent;
 
 					ENET_LOG_TRACE(
-						"peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer->incomingPeerID,
-						currentPeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE,
-						currentPeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE, currentPeer->roundTripTime, currentPeer->roundTripTimeVariance,
-						currentPeer->packetThrottle / (float)ENET_PEER_PACKET_THROTTLE_SCALE,
+						"peer %u: %3.3f%% (+-%3.3f%%) pkt loss, %u ms RTT (+-%u ms Jitter), %3.2f%% throttle, reliable list sizes: %u/%u out, %u/%u in\n", currentPeer->incomingPeerID,
+						(currentPeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100,
+						(currentPeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100, currentPeer->roundTripTime, currentPeer->roundTripTimeVariance,
+						(currentPeer->packetThrottle / (float)ENET_PEER_PACKET_THROTTLE_SCALE) * 100,
 
 						enet_list_size(&currentPeer->outgoingReliableCommands),
 						enet_list_size(&currentPeer->outgoingUnreliableCommands),
@@ -3112,9 +3085,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Peer
-
 =======================================================================
 */
 
@@ -3891,9 +3862,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Host
-
 =======================================================================
 */
 
@@ -4332,9 +4301,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Address
-
 =======================================================================
 */
 
@@ -4447,9 +4414,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Platform-specific (Unix)
-
 =======================================================================
 */
 
@@ -4767,9 +4732,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Platform-specific (Windows)
-
 =======================================================================
 */
 
@@ -5075,9 +5038,7 @@ extern "C" {
 
 /*
 =======================================================================
-
 	Extended functionality
-
 =======================================================================
 */
 
