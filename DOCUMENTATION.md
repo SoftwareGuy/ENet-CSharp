@@ -141,6 +141,8 @@ Contains a managed pointer to the peer and cached ID.
 
 `Peer.Send(byte channelID, ref Packet packet)` queues a packet to be sent. Returns true on success or false on failure.
 
+`Peer.SendAndReturnStatusCode(byte channelID, ref Packet packet)` New to this branch of ENET-C#. Returns an int which is 0 on success otherwise it will return a negative value on failure. A list of negative values and their meanings will be provided in the near future.
+
 `Peer.Receive(out byte channelID, out Packet packet)` attempts to dequeue any incoming queued packet. Returns true if a packet was dequeued or false if no packets available.
 
 `Peer.Ping()` sends a ping request to a peer. ENet automatically pings all connected peers at regular intervals, however, this function may be called to ensure more frequent ping requests.
