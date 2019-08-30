@@ -54,116 +54,172 @@
 #define ENET_SRTT_INITIAL 1.0
 #define ENET_SRTT_PARA_G 0.125
 
-/*
-=======================================================================
-	System differences
-=======================================================================
-*/
+ /*
+ =======================================================================
+	 ENET Error Codes
+ =======================================================================
+ */
+// General
+#define ENET_LIBRARY_TOO_OLD -1
+#define ENET_LIBRARY_MEMALLOC_NULL -2
+// Address and Socket Lookup failures
+#define ENET_INET_PTON_FAILURE -5
+#define ENET_GETADDRINFO_FAILURE -6
+#define ENET_GETSOCKINFO_FAILURE -7
+// Host errors
+#define ENET_HOST_CHANNEL_GREATER_OR_WEIRD_PEER_STATE -10
+#define ENET_HOST_INTERCEPT_FAILURE -11
+#define ENET_HOST_FUNKYSTUFF -12 
+#define ENET_HOST_RANDOMERROR -13
+// Dispatching errors
+#define ENET_DISPATCH_INCOMING_FAILURE -20
+#define ENET_DISPATCH_OUTGOING_FAILURE -21
+// Servicing errors
+#define ENET_SERVICE_SEND_OUTGOING_FAILURE -22
+#define ENET_SERVICE_RECEIVE_INCOMING_FAILURE -23
+// Protocol errors
+#define ENET_PROTOCOL_CMD_FAIL -25
+#define ENET_PROTOCOL_SEND_FAIL -26
+// Packet errors
+#define ENET_PACKET_DATA_FRAGMENT_WEIRDNESS -30
+#define ENET_PACKET_DATA_LENGTH_WEIRDNESS -31
+#define ENET_PACKET_DATA_LENGTH_NEGATIVE -32
+#define ENET_PACKET_STARTCMD_NULL -33
+#define ENET_PACKET_IS_BAD -34
+// Peer errors
+#define ENET_PEER_NOT_CONNECTED_CORRECTLY -40
+#define ENET_PEER_BAD_COMMAND_NUMBER -41
+#define ENET_PEER_BECAME_ZOMBIE -42
+#define ENET_PEER_SENDFAIL_GENERIC -43
+#define ENET_PEER_SENDFAIL_FRAGMENTOVERLOAD -44
+#define ENET_PEER_SENDFAIL_FRAGMENTNULL -45
+// Socket errors
+#define ENET_SOCKET_MSGTRUNCATED -50
+#define ENET_SOCKET_WINSOCKMISMATCH -51
+#define ENET_SOCKET_WSAFAILED -52
+// #define ENET_SOCKET_INVALID -53 <-- conflicts with existing defintion, don't uncomment this
+#define ENET_SOCKET_MSGPARTIAL -54
+#define ENET_SOCKET_WAITPOLL_NEGATIVE -55
+#define ENET_SOCKET_SEND_WEIRDNESS -56
+#define ENET_SOCKET_RECEIVE_WEIRDNESS -57
+#define ENET_SOCKET_GETSOCKNAME_FAILURE -58
+// Queue errors
+#define ENET_PEER_QUEUE_INCOMING_FAILURE -60
+#define ENET_PEER_QUEUE_OUTGOING_FAILURE -61
+#define ENET_PEER_QUEUE_OUTGOING_NULL -62
+// "WTF happened here?" for when you don't know what ENET is doing
+#define ENET_GENERAL_WHAT_THE_F	-255
+
+ /*
+ =======================================================================
+	 System differences
+ =======================================================================
+ */
 
 #ifdef _WIN32
-	#if defined(_MSC_VER) && defined(ENET_IMPLEMENTATION)
-		#pragma warning(disable: 4244) /* 64-bit to 32-bit integer conversion */
-		#pragma warning(disable: 4267) /* size_t to integer conversion */
-	#endif
+#if defined(_MSC_VER) && defined(ENET_IMPLEMENTATION)
+#pragma warning(disable: 4244) /* 64-bit to 32-bit integer conversion */
+#pragma warning(disable: 4267) /* size_t to integer conversion */
+#endif
 
-	#ifndef ENET_NO_PRAGMA_LINK
-		#pragma comment(lib, "ws2_32.lib")
-		#pragma comment(lib, "winmm.lib")
-	#endif
+#ifndef ENET_NO_PRAGMA_LINK
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "winmm.lib")
+#endif
 
-	#if _MSC_VER >= 1910
-		/* It looks like there were changes as of Visual Studio 2017 and there are no 32/64 bit
-		versions of _InterlockedExchange[operation], only InterlockedExchange[operation]
-		(without leading underscore), so we have to distinguish between compiler versions */
-		#define NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-	#endif
+#if _MSC_VER >= 1910
+ /* It looks like there were changes as of Visual Studio 2017 and there are no 32/64 bit
+ versions of _InterlockedExchange[operation], only InterlockedExchange[operation]
+ (without leading underscore), so we have to distinguish between compiler versions */
+#define NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+#endif
 
-	#ifdef __GNUC__
-		#if (_WIN32_WINNT < 0x0501)
-			#undef _WIN32_WINNT
-			#define _WIN32_WINNT 0x0501
-		#endif
-	#endif
+#ifdef __GNUC__
+#if (_WIN32_WINNT < 0x0501)
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501
+#endif
+#endif
 
-	#include <winsock2.h>
-	#include <ws2tcpip.h>
-	#include <mmsystem.h>
-	#include <intrin.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <mmsystem.h>
+#include <intrin.h>
 
-	#if defined(_WIN32) && defined(_MSC_VER)
-		#if _MSC_VER < 1900
-			typedef struct timespec {
-				long tv_sec;
-				long tv_nsec;
-			};
-		#endif
-		#define CLOCK_MONOTONIC 0
-	#endif
+#if defined(_WIN32) && defined(_MSC_VER)
+#if _MSC_VER < 1900
+typedef struct timespec {
+	long tv_sec;
+	long tv_nsec;
+};
+#endif
+#define CLOCK_MONOTONIC 0
+#endif
 
-	typedef SOCKET ENetSocket;
+typedef SOCKET ENetSocket;
 
-	#define ENET_SOCKET_NULL INVALID_SOCKET
+#define ENET_SOCKET_NULL INVALID_SOCKET
 
-	typedef struct {
-		size_t dataLength;
-		void* data;
-	} ENetBuffer;
+typedef struct {
+	size_t dataLength;
+	void* data;
+} ENetBuffer;
 
-	#define ENET_CALLBACK __cdecl
+#define ENET_CALLBACK __cdecl
 
-	#ifdef ENET_DLL
-		#ifdef ENET_IMPLEMENTATION
-			#define ENET_API __declspec(dllexport)
-		#else
-			#define ENET_API __declspec(dllimport)
-		#endif
-	#else
-		#define ENET_API extern
-	#endif
+#ifdef ENET_DLL
+#ifdef ENET_IMPLEMENTATION
+#define ENET_API __declspec(dllexport)
 #else
-	#include <sys/types.h>
-	#include <sys/ioctl.h>
-	#include <sys/time.h>
-	#include <sys/socket.h>
-	#include <poll.h>
-	#include <arpa/inet.h>
-	#include <netinet/in.h>
-	#include <netinet/tcp.h>
-	#include <netdb.h>
-	#include <unistd.h>
-	#include <string.h>
-	#include <errno.h>
-	#include <fcntl.h>
+#define ENET_API __declspec(dllimport)
+#endif
+#else
+#define ENET_API extern
+#endif
+#else
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <poll.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 
-	#ifdef __APPLE__
-		#include <mach/clock.h>
-		#include <mach/mach.h>
-		#include <Availability.h>
-	#endif
+#ifdef __APPLE__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#include <Availability.h>
+#endif
 
-	#ifndef MSG_NOSIGNAL
-		#define MSG_NOSIGNAL 0
-	#endif
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 
-	#ifdef MSG_MAXIOVLEN
-		#define ENET_BUFFER_MAXIMUM MSG_MAXIOVLEN
-	#endif
+#ifdef MSG_MAXIOVLEN
+#define ENET_BUFFER_MAXIMUM MSG_MAXIOVLEN
+#endif
 
-	typedef int ENetSocket;
+typedef int ENetSocket;
 
-	#define ENET_SOCKET_NULL -1
+#define ENET_SOCKET_NULL -1
 
-	typedef struct {
-		void* data;
-		size_t dataLength;
-	} ENetBuffer;
+typedef struct {
+	void* data;
+	size_t dataLength;
+} ENetBuffer;
 
-	#define ENET_CALLBACK
-	#define ENET_API extern
+#define ENET_CALLBACK
+#define ENET_API extern
 #endif
 
 #ifndef ENET_BUFFER_MAXIMUM
-	#define ENET_BUFFER_MAXIMUM (1 + 2 * ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS)
+#define ENET_BUFFER_MAXIMUM (1 + 2 * ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS)
 #endif
 
 #define ENET_HOST_ANY in6addr_any
@@ -179,11 +235,11 @@
 extern "C" {
 #endif
 
-/*
-=======================================================================
-	Internals
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Internals
+	=======================================================================
+	*/
 
 	typedef uint8_t enet_uint8;
 	typedef uint16_t enet_uint16;
@@ -195,9 +251,9 @@ extern "C" {
 	typedef fd_set ENetSocketSet;
 
 	typedef struct _ENetCallbacks {
-		void* (ENET_CALLBACK *malloc)(size_t size);
-		void (ENET_CALLBACK *free)(void* memory);
-		void (ENET_CALLBACK *noMemory)(void);
+		void* (ENET_CALLBACK* malloc)(size_t size);
+		void (ENET_CALLBACK* free)(void* memory);
+		void (ENET_CALLBACK* noMemory)(void);
 	} ENetCallbacks;
 
 	extern void* enet_malloc(size_t);
@@ -220,16 +276,16 @@ extern "C" {
 	extern void enet_list_clear(ENetList*);
 	extern size_t enet_list_size(ENetList*);
 
-	#define enet_list_begin(list) ((list)->sentinel.next)
-	#define enet_list_end(list) (&(list)->sentinel)
-	#define enet_list_empty(list) (enet_list_begin(list) == enet_list_end(list))
-	#define enet_list_next(iterator) ((iterator)->next)
-	#define enet_list_previous(iterator) ((iterator)->previous)
-	#define enet_list_front(list) ((void*)(list)->sentinel.next)
-	#define enet_list_back(list) ((void*)(list)->sentinel.previous)
+#define enet_list_begin(list) ((list)->sentinel.next)
+#define enet_list_end(list) (&(list)->sentinel)
+#define enet_list_empty(list) (enet_list_begin(list) == enet_list_end(list))
+#define enet_list_next(iterator) ((iterator)->next)
+#define enet_list_previous(iterator) ((iterator)->previous)
+#define enet_list_front(list) ((void*)(list)->sentinel.next)
+#define enet_list_back(list) ((void*)(list)->sentinel.previous)
 
-	#ifndef IN4ADDR
-	#define IN4ADDR
+#ifndef IN4ADDR
+#define IN4ADDR
 
 	struct in4_addr {
 		uint8_t zeros[10];
@@ -237,62 +293,62 @@ extern "C" {
 		struct in_addr ip;
 	};
 
-	#endif
+#endif
 
-/*
-=======================================================================
-	Protocol
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Protocol
+	=======================================================================
+	*/
 
 	enum {
-		ENET_PROTOCOL_MINIMUM_MTU             = 576,
-		ENET_PROTOCOL_MAXIMUM_MTU             = 4096,
+		ENET_PROTOCOL_MINIMUM_MTU = 576,
+		ENET_PROTOCOL_MAXIMUM_MTU = 4096,
 		ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS = 32,
-		ENET_PROTOCOL_MINIMUM_WINDOW_SIZE     = 4096,
-		ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE     = 65536,
-		ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT   = 1,
-		ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT   = 255,
-		ENET_PROTOCOL_MAXIMUM_PEER_ID         = 0xFFF,
-		ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT  = 1024 * 1024
+		ENET_PROTOCOL_MINIMUM_WINDOW_SIZE = 4096,
+		ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE = 65536,
+		ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT = 1,
+		ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT = 255,
+		ENET_PROTOCOL_MAXIMUM_PEER_ID = 0xFFF,
+		ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT = 1024 * 1024
 	};
 
 	typedef enum _ENetProtocolCommand {
-		ENET_PROTOCOL_COMMAND_NONE                     = 0,
-		ENET_PROTOCOL_COMMAND_ACKNOWLEDGE              = 1,
-		ENET_PROTOCOL_COMMAND_CONNECT                  = 2,
-		ENET_PROTOCOL_COMMAND_VERIFY_CONNECT           = 3,
-		ENET_PROTOCOL_COMMAND_DISCONNECT               = 4,
-		ENET_PROTOCOL_COMMAND_PING                     = 5,
-		ENET_PROTOCOL_COMMAND_SEND_RELIABLE            = 6,
-		ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE          = 7,
-		ENET_PROTOCOL_COMMAND_SEND_FRAGMENT            = 8,
-		ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED         = 9,
-		ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT          = 10,
-		ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE       = 11,
+		ENET_PROTOCOL_COMMAND_NONE = 0,
+		ENET_PROTOCOL_COMMAND_ACKNOWLEDGE = 1,
+		ENET_PROTOCOL_COMMAND_CONNECT = 2,
+		ENET_PROTOCOL_COMMAND_VERIFY_CONNECT = 3,
+		ENET_PROTOCOL_COMMAND_DISCONNECT = 4,
+		ENET_PROTOCOL_COMMAND_PING = 5,
+		ENET_PROTOCOL_COMMAND_SEND_RELIABLE = 6,
+		ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE = 7,
+		ENET_PROTOCOL_COMMAND_SEND_FRAGMENT = 8,
+		ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED = 9,
+		ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT = 10,
+		ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE = 11,
 		ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT = 12,
-		ENET_PROTOCOL_COMMAND_COUNT                    = 13,
-		ENET_PROTOCOL_COMMAND_MASK                     = 0x0F
+		ENET_PROTOCOL_COMMAND_COUNT = 13,
+		ENET_PROTOCOL_COMMAND_MASK = 0x0F
 	} ENetProtocolCommand;
 
 	typedef enum _ENetProtocolFlag {
 		ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE = (1 << 7),
 		ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED = (1 << 6),
-		ENET_PROTOCOL_HEADER_FLAG_SENT_TIME    = (1 << 14),
-		ENET_PROTOCOL_HEADER_FLAG_COMPRESSED   = (1 << 15),
-		ENET_PROTOCOL_HEADER_FLAG_MASK         = ENET_PROTOCOL_HEADER_FLAG_SENT_TIME | ENET_PROTOCOL_HEADER_FLAG_COMPRESSED,
-		ENET_PROTOCOL_HEADER_SESSION_MASK      = (3 << 12),
-		ENET_PROTOCOL_HEADER_SESSION_SHIFT     = 12
+		ENET_PROTOCOL_HEADER_FLAG_SENT_TIME = (1 << 14),
+		ENET_PROTOCOL_HEADER_FLAG_COMPRESSED = (1 << 15),
+		ENET_PROTOCOL_HEADER_FLAG_MASK = ENET_PROTOCOL_HEADER_FLAG_SENT_TIME | ENET_PROTOCOL_HEADER_FLAG_COMPRESSED,
+		ENET_PROTOCOL_HEADER_SESSION_MASK = (3 << 12),
+		ENET_PROTOCOL_HEADER_SESSION_SHIFT = 12
 	} ENetProtocolFlag;
 
-	#ifdef _MSC_VER
-		#pragma pack(push, 1)
-		#define ENET_PACKED
-	#elif defined(__GNUC__) || defined(__clang__)
-		#define ENET_PACKED __attribute__ ((packed))
-	#else
-		#define ENET_PACKED
-	#endif
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#define ENET_PACKED
+#elif defined(__GNUC__) || defined(__clang__)
+#define ENET_PACKED __attribute__ ((packed))
+#else
+#define ENET_PACKED
+#endif
 
 	typedef struct _ENetProtocolHeader {
 		enet_uint16 peerID;
@@ -408,44 +464,44 @@ extern "C" {
 		ENetProtocolThrottleConfigure throttleConfigure;
 	} ENET_PACKED ENetProtocol;
 
-	#ifdef _MSC_VER
-		#pragma pack(pop)
-	#endif
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
-/*
-=======================================================================
-	General structs/enums
-=======================================================================
-*/
+	/*
+	=======================================================================
+		General structs/enums
+	=======================================================================
+	*/
 
 	typedef enum _ENetSocketType {
-		ENET_SOCKET_TYPE_STREAM   = 1,
+		ENET_SOCKET_TYPE_STREAM = 1,
 		ENET_SOCKET_TYPE_DATAGRAM = 2
 	} ENetSocketType;
 
 	typedef enum _ENetSocketWait {
-		ENET_SOCKET_WAIT_NONE      = 0,
-		ENET_SOCKET_WAIT_SEND      = (1 << 0),
-		ENET_SOCKET_WAIT_RECEIVE   = (1 << 1),
+		ENET_SOCKET_WAIT_NONE = 0,
+		ENET_SOCKET_WAIT_SEND = (1 << 0),
+		ENET_SOCKET_WAIT_RECEIVE = (1 << 1),
 		ENET_SOCKET_WAIT_INTERRUPT = (1 << 2)
 	} ENetSocketWait;
 
 	typedef enum _ENetSocketOption {
-		ENET_SOCKOPT_NONBLOCK    = 1,
-		ENET_SOCKOPT_BROADCAST   = 2,
-		ENET_SOCKOPT_RCVBUF      = 3,
-		ENET_SOCKOPT_SNDBUF      = 4,
-		ENET_SOCKOPT_REUSEADDR   = 5,
-		ENET_SOCKOPT_RCVTIMEO    = 6,
-		ENET_SOCKOPT_SNDTIMEO    = 7,
-		ENET_SOCKOPT_ERROR       = 8,
-		ENET_SOCKOPT_NODELAY     = 9,
+		ENET_SOCKOPT_NONBLOCK = 1,
+		ENET_SOCKOPT_BROADCAST = 2,
+		ENET_SOCKOPT_RCVBUF = 3,
+		ENET_SOCKOPT_SNDBUF = 4,
+		ENET_SOCKOPT_REUSEADDR = 5,
+		ENET_SOCKOPT_RCVTIMEO = 6,
+		ENET_SOCKOPT_SNDTIMEO = 7,
+		ENET_SOCKOPT_ERROR = 8,
+		ENET_SOCKOPT_NODELAY = 9,
 		ENET_SOCKOPT_IPV6_V6ONLY = 10
 	} ENetSocketOption;
 
 	typedef enum _ENetSocketShutdown {
-		ENET_SOCKET_SHUTDOWN_READ       = 0,
-		ENET_SOCKET_SHUTDOWN_WRITE      = 1,
+		ENET_SOCKET_SHUTDOWN_READ = 0,
+		ENET_SOCKET_SHUTDOWN_WRITE = 1,
 		ENET_SOCKET_SHUTDOWN_READ_WRITE = 2
 	} ENetSocketShutdown;
 
@@ -457,19 +513,19 @@ extern "C" {
 		uint16_t port;
 	} ENetAddress;
 
-	#define in6_equal(a, b) (memcmp(&a, &b, sizeof(struct in6_addr)) == 0)
+#define in6_equal(a, b) (memcmp(&a, &b, sizeof(struct in6_addr)) == 0)
 
 	typedef enum _ENetPacketFlag {
-		ENET_PACKET_FLAG_NONE                  = 0,
-		ENET_PACKET_FLAG_RELIABLE              = (1 << 0),
-		ENET_PACKET_FLAG_UNSEQUENCED           = (1 << 1),
-		ENET_PACKET_FLAG_NO_ALLOCATE           = (1 << 2),
+		ENET_PACKET_FLAG_NONE = 0,
+		ENET_PACKET_FLAG_RELIABLE = (1 << 0),
+		ENET_PACKET_FLAG_UNSEQUENCED = (1 << 1),
+		ENET_PACKET_FLAG_NO_ALLOCATE = (1 << 2),
 		ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED = (1 << 3),
-		ENET_PACKET_FLAG_INSTANT               = (1 << 4),
-		ENET_PACKET_FLAG_SENT                  = (1 << 8)
+		ENET_PACKET_FLAG_INSTANT = (1 << 4),
+		ENET_PACKET_FLAG_SENT = (1 << 8)
 	} ENetPacketFlag;
 
-	typedef void (ENET_CALLBACK *ENetPacketFreeCallback)(void*);
+	typedef void (ENET_CALLBACK* ENetPacketFreeCallback)(void*);
 
 	typedef struct _ENetPacket {
 		enet_uint32 flags;
@@ -511,45 +567,45 @@ extern "C" {
 	} ENetIncomingCommand;
 
 	typedef enum _ENetPeerState {
-		ENET_PEER_STATE_DISCONNECTED             = 0,
-		ENET_PEER_STATE_CONNECTING               = 1,
-		ENET_PEER_STATE_ACKNOWLEDGING_CONNECT    = 2,
-		ENET_PEER_STATE_CONNECTION_PENDING       = 3,
-		ENET_PEER_STATE_CONNECTION_SUCCEEDED     = 4,
-		ENET_PEER_STATE_CONNECTED                = 5,
-		ENET_PEER_STATE_DISCONNECT_LATER         = 6,
-		ENET_PEER_STATE_DISCONNECTING            = 7,
+		ENET_PEER_STATE_DISCONNECTED = 0,
+		ENET_PEER_STATE_CONNECTING = 1,
+		ENET_PEER_STATE_ACKNOWLEDGING_CONNECT = 2,
+		ENET_PEER_STATE_CONNECTION_PENDING = 3,
+		ENET_PEER_STATE_CONNECTION_SUCCEEDED = 4,
+		ENET_PEER_STATE_CONNECTED = 5,
+		ENET_PEER_STATE_DISCONNECT_LATER = 6,
+		ENET_PEER_STATE_DISCONNECTING = 7,
 		ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT = 8,
-		ENET_PEER_STATE_ZOMBIE                   = 9
+		ENET_PEER_STATE_ZOMBIE = 9
 	} ENetPeerState;
 
 	enum {
-		ENET_HOST_BUFFER_SIZE_MIN              = 256 * 1024,
-		ENET_HOST_BUFFER_SIZE_MAX              = 1024 * 1024,
-		ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL  = 1000,
-		ENET_HOST_DEFAULT_MTU                  = 1280,
-		ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE  = 32 * 1024 * 1024,
+		ENET_HOST_BUFFER_SIZE_MIN = 256 * 1024,
+		ENET_HOST_BUFFER_SIZE_MAX = 1024 * 1024,
+		ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL = 1000,
+		ENET_HOST_DEFAULT_MTU = 1280,
+		ENET_HOST_DEFAULT_MAXIMUM_PACKET_SIZE = 32 * 1024 * 1024,
 		ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA = 32 * 1024 * 1024,
-		ENET_PEER_DEFAULT_ROUND_TRIP_TIME      = 500,
-		ENET_PEER_DEFAULT_PACKET_THROTTLE      = 32,
-		ENET_PEER_PACKET_THROTTLE_SCALE        = 32,
-		ENET_PEER_PACKET_THROTTLE_COUNTER      = 7,
+		ENET_PEER_DEFAULT_ROUND_TRIP_TIME = 500,
+		ENET_PEER_DEFAULT_PACKET_THROTTLE = 32,
+		ENET_PEER_PACKET_THROTTLE_SCALE = 32,
+		ENET_PEER_PACKET_THROTTLE_COUNTER = 7,
 		ENET_PEER_PACKET_THROTTLE_ACCELERATION = 2,
 		ENET_PEER_PACKET_THROTTLE_DECELERATION = 2,
-		ENET_PEER_PACKET_THROTTLE_INTERVAL     = 5000,
-		ENET_PEER_PACKET_LOSS_SCALE            = (1 << 16),
-		ENET_PEER_PACKET_LOSS_INTERVAL         = 10000,
-		ENET_PEER_WINDOW_SIZE_SCALE            = 64 * 1024,
-		ENET_PEER_TIMEOUT_LIMIT                = 32,
-		ENET_PEER_TIMEOUT_MINIMUM              = 5000,
-		ENET_PEER_TIMEOUT_MAXIMUM              = 30000,
-		ENET_PEER_PING_INTERVAL                = 500,
-		ENET_PEER_UNSEQUENCED_WINDOWS          = 64,
-		ENET_PEER_UNSEQUENCED_WINDOW_SIZE      = 1024,
-		ENET_PEER_FREE_UNSEQUENCED_WINDOWS     = 32,
-		ENET_PEER_RELIABLE_WINDOWS             = 16,
-		ENET_PEER_RELIABLE_WINDOW_SIZE         = 0x1000,
-		ENET_PEER_FREE_RELIABLE_WINDOWS        = 8
+		ENET_PEER_PACKET_THROTTLE_INTERVAL = 5000,
+		ENET_PEER_PACKET_LOSS_SCALE = (1 << 16),
+		ENET_PEER_PACKET_LOSS_INTERVAL = 10000,
+		ENET_PEER_WINDOW_SIZE_SCALE = 64 * 1024,
+		ENET_PEER_TIMEOUT_LIMIT = 32,
+		ENET_PEER_TIMEOUT_MINIMUM = 5000,
+		ENET_PEER_TIMEOUT_MAXIMUM = 30000,
+		ENET_PEER_PING_INTERVAL = 500,
+		ENET_PEER_UNSEQUENCED_WINDOWS = 64,
+		ENET_PEER_UNSEQUENCED_WINDOW_SIZE = 1024,
+		ENET_PEER_FREE_UNSEQUENCED_WINDOWS = 32,
+		ENET_PEER_RELIABLE_WINDOWS = 16,
+		ENET_PEER_RELIABLE_WINDOW_SIZE = 0x1000,
+		ENET_PEER_FREE_RELIABLE_WINDOWS = 8
 	};
 
 	typedef struct _ENetChannel {
@@ -632,9 +688,9 @@ extern "C" {
 		size_t totalWaitingData;
 	} ENetPeer;
 
-	typedef enet_uint32 (ENET_CALLBACK *ENetChecksumCallback)(const ENetBuffer* buffers, size_t bufferCount);
+	typedef enet_uint32(ENET_CALLBACK* ENetChecksumCallback)(const ENetBuffer* buffers, size_t bufferCount);
 
-	typedef int (ENET_CALLBACK *ENetInterceptCallback)(struct _ENetHost* host, void* event);
+	typedef int (ENET_CALLBACK* ENetInterceptCallback)(struct _ENetHost* host, void* event);
 
 	typedef struct _ENetHost {
 		ENetSocket socket;
@@ -679,10 +735,10 @@ extern "C" {
 	} ENetHost;
 
 	typedef enum _ENetEventType {
-		ENET_EVENT_TYPE_NONE               = 0,
-		ENET_EVENT_TYPE_CONNECT            = 1,
-		ENET_EVENT_TYPE_DISCONNECT         = 2,
-		ENET_EVENT_TYPE_RECEIVE            = 3,
+		ENET_EVENT_TYPE_NONE = 0,
+		ENET_EVENT_TYPE_CONNECT = 1,
+		ENET_EVENT_TYPE_DISCONNECT = 2,
+		ENET_EVENT_TYPE_RECEIVE = 3,
 		ENET_EVENT_TYPE_DISCONNECT_TIMEOUT = 4
 	} ENetEventType;
 
@@ -694,11 +750,11 @@ extern "C" {
 		ENetPacket* packet;
 	} ENetEvent;
 
-/*
-=======================================================================
-	Public API
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Public API
+	=======================================================================
+	*/
 
 	ENET_API int enet_initialize(void);
 	ENET_API int enet_initialize_with_callbacks(ENetVersion, const ENetCallbacks*);
@@ -786,11 +842,11 @@ extern "C" {
 	ENET_API void* enet_peer_get_data(const ENetPeer*);
 	ENET_API void enet_peer_set_data(ENetPeer*, const void*);
 
-/*
-=======================================================================
-	Private API
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Private API
+	=======================================================================
+	*/
 
 	extern void enet_host_bandwidth_throttle(ENetHost*);
 	extern enet_uint64 enet_host_random_seed(void);
@@ -819,140 +875,140 @@ extern "C" {
 #endif
 
 #ifdef __MINGW32__
-	#include "mingw/inet_ntop.c"
-	#include "mingw/inet_pton.c"
+#include "mingw/inet_ntop.c"
+#include "mingw/inet_pton.c"
 #endif
 
-/*
-=======================================================================
-	Atomics
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Atomics
+	=======================================================================
+	*/
 
 #ifdef _MSC_VER
-	#define ENET_AT_CASSERT_PRED(predicate) sizeof(char[2 * !!(predicate) - 1])
-	#define ENET_IS_SUPPORTED_ATOMIC(size) ENET_AT_CASSERT_PRED(size == 1 || size == 2 || size == 4 || size == 8)
-	#define ENET_ATOMIC_SIZEOF(variable) (ENET_IS_SUPPORTED_ATOMIC(sizeof(*(variable))), sizeof(*(variable)))
+#define ENET_AT_CASSERT_PRED(predicate) sizeof(char[2 * !!(predicate) - 1])
+#define ENET_IS_SUPPORTED_ATOMIC(size) ENET_AT_CASSERT_PRED(size == 1 || size == 2 || size == 4 || size == 8)
+#define ENET_ATOMIC_SIZEOF(variable) (ENET_IS_SUPPORTED_ATOMIC(sizeof(*(variable))), sizeof(*(variable)))
 
 	__inline int64_t enet_at_atomic_read(char* ptr, size_t size) {
 		switch (size) {
-			case 1:
-				return _InterlockedExchangeAdd8((volatile char*)ptr, 0);
+		case 1:
+			return _InterlockedExchangeAdd8((volatile char*)ptr, 0);
 
-			case 2:
-				return _InterlockedExchangeAdd16((volatile SHORT*)ptr, 0);
+		case 2:
+			return _InterlockedExchangeAdd16((volatile SHORT*)ptr, 0);
 
-			case 4:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedExchangeAdd((volatile LONG*)ptr, 0);
-				#else
-					return _InterlockedExchangeAdd((volatile LONG*)ptr, 0);
-				#endif
+		case 4:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedExchangeAdd((volatile LONG*)ptr, 0);
+#else
+			return _InterlockedExchangeAdd((volatile LONG*)ptr, 0);
+#endif
 
-			case 8:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedExchangeAdd64((volatile LONGLONG*)ptr, 0);
-				#else
-					return _InterlockedExchangeAdd64((volatile LONGLONG*)ptr, 0);
-				#endif
+		case 8:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedExchangeAdd64((volatile LONGLONG*)ptr, 0);
+#else
+			return _InterlockedExchangeAdd64((volatile LONGLONG*)ptr, 0);
+#endif
 
-			default:
-				return 0x0;
+		default:
+			return 0x0;
 		}
 	}
 
 	__inline int64_t enet_at_atomic_write(char* ptr, int64_t value, size_t size) {
 		switch (size) {
-			case 1:
-				return _InterlockedExchange8((volatile char*)ptr, (char)value);
+		case 1:
+			return _InterlockedExchange8((volatile char*)ptr, (char)value);
 
-			case 2:
-				return _InterlockedExchange16((volatile SHORT*)ptr, (SHORT)value);
+		case 2:
+			return _InterlockedExchange16((volatile SHORT*)ptr, (SHORT)value);
 
-			case 4:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedExchange((volatile LONG*)ptr, (LONG)value);
-				#else
-					return _InterlockedExchange((volatile LONG*)ptr, (LONG)value);
-				#endif
+		case 4:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedExchange((volatile LONG*)ptr, (LONG)value);
+#else
+			return _InterlockedExchange((volatile LONG*)ptr, (LONG)value);
+#endif
 
-			case 8:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedExchange64((volatile LONGLONG*)ptr, (LONGLONG)value);
-				#else
-					return _InterlockedExchange64((volatile LONGLONG*)ptr, (LONGLONG)value);
-				#endif
+		case 8:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedExchange64((volatile LONGLONG*)ptr, (LONGLONG)value);
+#else
+			return _InterlockedExchange64((volatile LONGLONG*)ptr, (LONGLONG)value);
+#endif
 
-			default:
-				return 0x0;
+		default:
+			return 0x0;
 		}
 	}
 
 	__inline int64_t enet_at_atomic_cas(char* ptr, int64_t new_val, int64_t old_val, size_t size) {
 		switch (size) {
-			case 1:
-				return _InterlockedCompareExchange8((volatile char*)ptr, (char)new_val, (char)old_val);
+		case 1:
+			return _InterlockedCompareExchange8((volatile char*)ptr, (char)new_val, (char)old_val);
 
-			case 2:
-				return _InterlockedCompareExchange16((volatile SHORT*)ptr, (SHORT)new_val, (SHORT)old_val);
+		case 2:
+			return _InterlockedCompareExchange16((volatile SHORT*)ptr, (SHORT)new_val, (SHORT)old_val);
 
-			case 4:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedCompareExchange((volatile LONG*)ptr, (LONG)new_val, (LONG)old_val);
-				#else
-					return _InterlockedCompareExchange((volatile LONG*)ptr, (LONG)new_val, (LONG)old_val);
-				#endif
+		case 4:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedCompareExchange((volatile LONG*)ptr, (LONG)new_val, (LONG)old_val);
+#else
+			return _InterlockedCompareExchange((volatile LONG*)ptr, (LONG)new_val, (LONG)old_val);
+#endif
 
-			case 8:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedCompareExchange64((volatile LONGLONG*)ptr, (LONGLONG)new_val, (LONGLONG)old_val);
-				#else
-					return _InterlockedCompareExchange64((volatile LONGLONG*)ptr, (LONGLONG)new_val, (LONGLONG)old_val);
-				#endif
+		case 8:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedCompareExchange64((volatile LONGLONG*)ptr, (LONGLONG)new_val, (LONGLONG)old_val);
+#else
+			return _InterlockedCompareExchange64((volatile LONGLONG*)ptr, (LONGLONG)new_val, (LONGLONG)old_val);
+#endif
 
-			default:
-				return 0x0;
+		default:
+			return 0x0;
 		}
 	}
 
 	__inline int64_t enet_at_atomic_inc(char* ptr, int64_t delta, size_t data_size) {
 		switch (data_size) {
-			case 1:
-				return _InterlockedExchangeAdd8((volatile char*)ptr, (char)delta);
+		case 1:
+			return _InterlockedExchangeAdd8((volatile char*)ptr, (char)delta);
 
-			case 2:
-				return _InterlockedExchangeAdd16((volatile SHORT*)ptr, (SHORT)delta);
+		case 2:
+			return _InterlockedExchangeAdd16((volatile SHORT*)ptr, (SHORT)delta);
 
-			case 4:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedExchangeAdd((volatile LONG*)ptr, (LONG)delta);
-				#else
-					return _InterlockedExchangeAdd((volatile LONG*)ptr, (LONG)delta);
-				#endif
+		case 4:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedExchangeAdd((volatile LONG*)ptr, (LONG)delta);
+#else
+			return _InterlockedExchangeAdd((volatile LONG*)ptr, (LONG)delta);
+#endif
 
-			case 8:
-				#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-					return InterlockedExchangeAdd64((volatile LONGLONG*)ptr, (LONGLONG)delta);
-				#else
-					return _InterlockedExchangeAdd64((volatile LONGLONG*)ptr, (LONGLONG)delta);
-				#endif
+		case 8:
+#ifdef NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+			return InterlockedExchangeAdd64((volatile LONGLONG*)ptr, (LONGLONG)delta);
+#else
+			return _InterlockedExchangeAdd64((volatile LONGLONG*)ptr, (LONGLONG)delta);
+#endif
 
-			default:
-				return 0x0;
+		default:
+			return 0x0;
 		}
 	}
 
-	#define ENET_ATOMIC_READ(variable) enet_at_atomic_read((char*)(variable), ENET_ATOMIC_SIZEOF(variable))
-	#define ENET_ATOMIC_WRITE(variable, new_val) enet_at_atomic_write((char*)(variable), (int64_t)(new_val), ENET_ATOMIC_SIZEOF(variable))
-	#define ENET_ATOMIC_CAS(variable, old_value, new_val) enet_at_atomic_cas((char*)(variable), (int64_t)(new_val), (int64_t)(old_value), ENET_ATOMIC_SIZEOF(variable))
-	#define ENET_ATOMIC_INC(variable) enet_at_atomic_inc((char*)(variable), 1, ENET_ATOMIC_SIZEOF(variable))
-	#define ENET_ATOMIC_DEC(variable) enet_at_atomic_inc((char*)(variable), -1, ENET_ATOMIC_SIZEOF(variable))
-	#define ENET_ATOMIC_INC_BY(variable, delta) enet_at_atomic_inc((char*)(variable), (delta), ENET_ATOMIC_SIZEOF(variable))
-	#define ENET_ATOMIC_DEC_BY(variable, delta) enet_at_atomic_inc((char*)(variable), -(delta), ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_READ(variable) enet_at_atomic_read((char*)(variable), ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_WRITE(variable, new_val) enet_at_atomic_write((char*)(variable), (int64_t)(new_val), ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_CAS(variable, old_value, new_val) enet_at_atomic_cas((char*)(variable), (int64_t)(new_val), (int64_t)(old_value), ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_INC(variable) enet_at_atomic_inc((char*)(variable), 1, ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_DEC(variable) enet_at_atomic_inc((char*)(variable), -1, ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_INC_BY(variable, delta) enet_at_atomic_inc((char*)(variable), (delta), ENET_ATOMIC_SIZEOF(variable))
+#define ENET_ATOMIC_DEC_BY(variable, delta) enet_at_atomic_inc((char*)(variable), -(delta), ENET_ATOMIC_SIZEOF(variable))
 #elif defined(__GNUC__) || defined(__clang__)
-	#if defined(__clang__) || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))
-		#define AT_HAVE_ATOMICS
-	#endif
+#if defined(__clang__) || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))
+#define AT_HAVE_ATOMICS
+#endif
 
 	/* We want to use __atomic built-ins if possible because the __sync primitives are
 	deprecated, because the __atomic build-ins allow us to use ENET_ATOMIC_WRITE on
@@ -963,61 +1019,61 @@ extern "C" {
 	Note that we use acquire-release memory order (like mutexes do). We could use
 	sequentially consistent memory order but that has lower performance and is
 	almost always unneeded. */
-	#ifdef AT_HAVE_ATOMICS
-		#define ENET_ATOMIC_READ(ptr) __atomic_load_n((ptr), __ATOMIC_ACQUIRE)
-		#define ENET_ATOMIC_WRITE(ptr, value) __atomic_store_n((ptr), (value), __ATOMIC_RELEASE)
+#ifdef AT_HAVE_ATOMICS
+#define ENET_ATOMIC_READ(ptr) __atomic_load_n((ptr), __ATOMIC_ACQUIRE)
+#define ENET_ATOMIC_WRITE(ptr, value) __atomic_store_n((ptr), (value), __ATOMIC_RELEASE)
 
-		#ifndef typeof
-			#define typeof __typeof__
-		#endif
+#ifndef typeof
+#define typeof __typeof__
+#endif
 
-		/* clang_analyzer doesn't know that CAS writes to memory so it complains about
-		potentially lost data. Replace the code with the equivalent non-sync code. */
-		#ifdef __clang_analyzer__
-			#define ENET_ATOMIC_CAS(ptr, old_value, new_value)                                                                   \
+	/* clang_analyzer doesn't know that CAS writes to memory so it complains about
+	potentially lost data. Replace the code with the equivalent non-sync code. */
+#ifdef __clang_analyzer__
+#define ENET_ATOMIC_CAS(ptr, old_value, new_value)                                                                   \
 				({                                                                                                               \
 					typeof(*(ptr)) ENET_ATOMIC_CAS_old_actual_ = (*(ptr));                                                       \
 					if (ATOMIC_CAS_old_actual_ == (old_value))                                                                   \
 						*(ptr) = new_value;                                                                                      \
 					ENET_ATOMIC_CAS_old_actual_;                                                                                 \
 				})
-			#else
-			/* Could use __auto_type instead of typeof but that shouldn't work in C++.
-			The ({ }) syntax is a GCC extension called statement expression. It lets
-			us return a value out of the macro.
+#else
+	/* Could use __auto_type instead of typeof but that shouldn't work in C++.
+	The ({ }) syntax is a GCC extension called statement expression. It lets
+	us return a value out of the macro.
 
-			TODO We should return bool here instead of the old value to avoid the ABA
-			problem. */
-			#define ENET_ATOMIC_CAS(ptr, old_value, new_value)                                                                   \
+	TODO We should return bool here instead of the old value to avoid the ABA
+	problem. */
+#define ENET_ATOMIC_CAS(ptr, old_value, new_value)                                                                   \
 				({                                                                                                               \
 					typeof(*(ptr)) ENET_ATOMIC_CAS_expected_ = (old_value);                                                      \
 					__atomic_compare_exchange_n((ptr), &ENET_ATOMIC_CAS_expected_, (new_value), false,                           \
 					__ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);                                                                         \
 					ENET_ATOMIC_CAS_expected_;                                                                                   \
 				})
-			#endif
-
-			#define ENET_ATOMIC_INC(ptr) __atomic_fetch_add((ptr), 1, __ATOMIC_ACQ_REL)
-			#define ENET_ATOMIC_DEC(ptr) __atomic_fetch_sub((ptr), 1, __ATOMIC_ACQ_REL)
-			#define ENET_ATOMIC_INC_BY(ptr, delta) __atomic_fetch_add((ptr), (delta), __ATOMIC_ACQ_REL)
-			#define ENET_ATOMIC_DEC_BY(ptr, delta) __atomic_fetch_sub((ptr), (delta), __ATOMIC_ACQ_REL)
-		#else
-			#define ENET_ATOMIC_READ(variable) __sync_fetch_and_add(variable, 0)
-			#define ENET_ATOMIC_WRITE(variable, new_val) (void)__sync_val_compare_and_swap((variable), *(variable), (new_val))
-			#define ENET_ATOMIC_CAS(variable, old_value, new_val) __sync_val_compare_and_swap((variable), (old_value), (new_val))
-			#define ENET_ATOMIC_INC(variable) __sync_fetch_and_add((variable), 1)
-			#define ENET_ATOMIC_DEC(variable) __sync_fetch_and_sub((variable), 1)
-			#define ENET_ATOMIC_INC_BY(variable, delta) __sync_fetch_and_add((variable), (delta), 1)
-			#define ENET_ATOMIC_DEC_BY(variable, delta) __sync_fetch_and_sub((variable), (delta), 1)
-		#endif
-	#undef AT_HAVE_ATOMICS
 #endif
 
-/*
-=======================================================================
-	Callbacks
-=======================================================================
-*/
+#define ENET_ATOMIC_INC(ptr) __atomic_fetch_add((ptr), 1, __ATOMIC_ACQ_REL)
+#define ENET_ATOMIC_DEC(ptr) __atomic_fetch_sub((ptr), 1, __ATOMIC_ACQ_REL)
+#define ENET_ATOMIC_INC_BY(ptr, delta) __atomic_fetch_add((ptr), (delta), __ATOMIC_ACQ_REL)
+#define ENET_ATOMIC_DEC_BY(ptr, delta) __atomic_fetch_sub((ptr), (delta), __ATOMIC_ACQ_REL)
+#else
+#define ENET_ATOMIC_READ(variable) __sync_fetch_and_add(variable, 0)
+#define ENET_ATOMIC_WRITE(variable, new_val) (void)__sync_val_compare_and_swap((variable), *(variable), (new_val))
+#define ENET_ATOMIC_CAS(variable, old_value, new_val) __sync_val_compare_and_swap((variable), (old_value), (new_val))
+#define ENET_ATOMIC_INC(variable) __sync_fetch_and_add((variable), 1)
+#define ENET_ATOMIC_DEC(variable) __sync_fetch_and_sub((variable), 1)
+#define ENET_ATOMIC_INC_BY(variable, delta) __sync_fetch_and_add((variable), (delta), 1)
+#define ENET_ATOMIC_DEC_BY(variable, delta) __sync_fetch_and_sub((variable), (delta), 1)
+#endif
+#undef AT_HAVE_ATOMICS
+#endif
+
+	/*
+	=======================================================================
+		Callbacks
+	=======================================================================
+	*/
 
 	static ENetCallbacks callbacks = {
 		malloc,
@@ -1029,16 +1085,16 @@ extern "C" {
 		if (version < ENET_VERSION_CREATE(1, 3, 0))
 		{
 			ENET_LOG_ERROR("ENET version is too old");
-			return -1;
+			return ENET_LIBRARY_TOO_OLD;
 		}
-		
+
 
 		if (inits->malloc != NULL || inits->free != NULL) {
 			if (inits->malloc == NULL || inits->free == NULL) {
 				ENET_LOG_ERROR("memory allocator or free thingy is NULL");
-				return -1;
+				return ENET_LIBRARY_MEMALLOC_NULL;
 			}
-				
+
 
 			callbacks.malloc = inits->malloc;
 			callbacks.free = inits->free;
@@ -1063,11 +1119,11 @@ extern "C" {
 		callbacks.free(memory);
 	}
 
-/*
-=======================================================================
-	List
-=======================================================================
-*/
+	/*
+	=======================================================================
+		List
+	=======================================================================
+	*/
 
 	void enet_list_clear(ENetList* list) {
 		list->sentinel.next = &list->sentinel;
@@ -1115,11 +1171,11 @@ extern "C" {
 		return size;
 	}
 
-/*
-=======================================================================
-	Utilities
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Utilities
+	=======================================================================
+	*/
 
 	ENetVersion enet_linked_version(void) {
 		return ENET_VERSION;
@@ -1137,8 +1193,8 @@ extern "C" {
 	}
 
 	size_t enet_string_copy(char* destination, const char* source, size_t length) {
-		char *d = destination;
-		const char *s = source;
+		char* d = destination;
+		const char* s = source;
 		size_t n = length;
 
 		if (n != 0 && --n != 0) {
@@ -1152,7 +1208,7 @@ extern "C" {
 
 		if (n == 0) {
 			if (length != 0)
-				*d = '\0';
+				* d = '\0';
 
 			while (*s++);
 		}
@@ -1160,96 +1216,98 @@ extern "C" {
 		return (s - source - 1);
 	}
 
-/*
-=======================================================================
-	Time
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Time
+	=======================================================================
+	*/
 
-	#ifdef _WIN32
-		static LARGE_INTEGER gettime_offset(void) {
-			SYSTEMTIME s;
-			FILETIME f;
-			LARGE_INTEGER t;
-			s.wYear = 1970;
-			s.wMonth = 1;
-			s.wDay = 1;
-			s.wHour = 0;
-			s.wMinute = 0;
-			s.wSecond = 0;
-			s.wMilliseconds = 0;
+#ifdef _WIN32
+	static LARGE_INTEGER gettime_offset(void) {
+		SYSTEMTIME s;
+		FILETIME f;
+		LARGE_INTEGER t;
+		s.wYear = 1970;
+		s.wMonth = 1;
+		s.wDay = 1;
+		s.wHour = 0;
+		s.wMinute = 0;
+		s.wSecond = 0;
+		s.wMilliseconds = 0;
 
-			SystemTimeToFileTime(&s, &f);
+		SystemTimeToFileTime(&s, &f);
+
+		t.QuadPart = f.dwHighDateTime;
+		t.QuadPart <<= 32;
+		t.QuadPart |= f.dwLowDateTime;
+
+		return t;
+	}
+
+	int clock_gettime(int X, struct timespec* tv) {
+		LARGE_INTEGER t;
+		FILETIME f;
+		double microseconds;
+
+		static LARGE_INTEGER offset;
+		static double frequencyToMicroseconds;
+		static int initialized = 0;
+		static BOOL usePerformanceCounter = 0;
+
+		if (!initialized) {
+			LARGE_INTEGER performanceFrequency;
+			initialized = 1;
+			usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
+
+			if (usePerformanceCounter) {
+				QueryPerformanceCounter(&offset);
+
+				frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
+			}
+			else {
+				offset = gettime_offset();
+				frequencyToMicroseconds = 10.;
+			}
+		}
+
+		if (usePerformanceCounter) {
+			QueryPerformanceCounter(&t);
+		}
+		else {
+			GetSystemTimeAsFileTime(&f);
 
 			t.QuadPart = f.dwHighDateTime;
 			t.QuadPart <<= 32;
 			t.QuadPart |= f.dwLowDateTime;
-
-			return t;
 		}
 
-		int clock_gettime(int X, struct timespec* tv) {
-			LARGE_INTEGER t;
-			FILETIME f;
-			double microseconds;
+		t.QuadPart -= offset.QuadPart;
+		microseconds = (double)t.QuadPart / frequencyToMicroseconds;
+		t.QuadPart = (LONGLONG)microseconds;
+		tv->tv_sec = (long)(t.QuadPart / 1000000);
+		tv->tv_nsec = t.QuadPart % 1000000 * 1000;
 
-			static LARGE_INTEGER offset;
-			static double frequencyToMicroseconds;
-			static int initialized = 0;
-			static BOOL usePerformanceCounter = 0;
+		return 0;
+	}
+	// Coburn: this fixes devices on iOS <10.0 from causing a E_ARM_BREAKPOINT and making XCode Debugger angery
+#elif __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000) && !defined(CLOCK_MONOTONIC)
 
-			if (!initialized) {
-				LARGE_INTEGER performanceFrequency;
-				initialized = 1;
-				usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
+#define CLOCK_MONOTONIC 0
 
-				if (usePerformanceCounter) {
-					QueryPerformanceCounter(&offset);
+	int clock_gettime(int X, struct timespec* ts) {
+		clock_serv_t cclock;
+		mach_timespec_t mts;
 
-					frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
-				} else {
-					offset = gettime_offset();
-					frequencyToMicroseconds = 10.;
-				}
-			}
+		host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
 
-			if (usePerformanceCounter) {
-				QueryPerformanceCounter(&t);
-			} else {
-				GetSystemTimeAsFileTime(&f);
+		ts->tv_sec = mts.tv_sec;
+		ts->tv_nsec = mts.tv_nsec;
 
-				t.QuadPart = f.dwHighDateTime;
-				t.QuadPart <<= 32;
-				t.QuadPart |= f.dwLowDateTime;
-			}
-
-			t.QuadPart -= offset.QuadPart;
-			microseconds = (double)t.QuadPart / frequencyToMicroseconds;
-			t.QuadPart = (LONGLONG)microseconds;
-			tv->tv_sec = (long)(t.QuadPart / 1000000);
-			tv->tv_nsec = t.QuadPart % 1000000 * 1000;
-
-			return 0;
-		}
-		// Coburn: this fixes devices on iOS <10.0 from causing a E_ARM_BREAKPOINT and making XCode Debugger angery
-	#elif __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000) && !defined(CLOCK_MONOTONIC)
-		
-		#define CLOCK_MONOTONIC 0
-
-		int clock_gettime(int X, struct timespec* ts) {
-			clock_serv_t cclock;
-			mach_timespec_t mts;
-
-			host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
-			clock_get_time(cclock, &mts);
-			mach_port_deallocate(mach_task_self(), cclock);
-
-			ts->tv_sec = mts.tv_sec;
-			ts->tv_nsec = mts.tv_nsec;
-
-			return 0;
-		}
-	#endif
+		return 0;
+	}
+#endif
 
 	enet_uint32 enet_time_get(void) {
 		static enet_uint64 start_time_ns = 0;
@@ -1278,11 +1336,11 @@ extern "C" {
 		return (enet_uint32)(result_in_ns / ns_in_ms);
 	}
 
-/*
-=======================================================================
-	Checksum
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Checksum
+	=======================================================================
+	*/
 
 	static int initializedCRC32 = 0;
 	static enet_uint32 crcTable[256];
@@ -1331,7 +1389,7 @@ extern "C" {
 			const enet_uint8* dataEnd = &data[buffers->dataLength];
 
 			while (data < dataEnd) {
-				crc = (crc >> 8) ^ crcTable[(crc & 0xFF)^* data++];
+				crc = (crc >> 8) ^ crcTable[(crc & 0xFF) ^ *data++];
 			}
 
 			++buffers;
@@ -1340,11 +1398,11 @@ extern "C" {
 		return ENET_HOST_TO_NET_32(~crc);
 	}
 
-/*
-=======================================================================
-	Packet
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Packet
+	=======================================================================
+	*/
 
 	ENetPacket* enet_packet_create(const void* data, size_t dataLength, enet_uint32 flags) {
 		ENetPacket* packet;
@@ -1356,7 +1414,8 @@ extern "C" {
 				return NULL;
 
 			packet->data = (enet_uint8*)data;
-		} else {
+		}
+		else {
 			packet = (ENetPacket*)enet_malloc(sizeof(ENetPacket) + dataLength);
 
 			if (packet == NULL)
@@ -1386,7 +1445,8 @@ extern "C" {
 				return NULL;
 
 			packet->data = (enet_uint8*)data;
-		} else {
+		}
+		else {
 			packet = (ENetPacket*)enet_malloc(sizeof(ENetPacket) + dataLength - dataOffset);
 
 			if (packet == NULL)
@@ -1416,11 +1476,11 @@ extern "C" {
 		enet_free(packet);
 	}
 
-/*
-=======================================================================
-	Protocol
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Protocol
+	=======================================================================
+	*/
 
 	static size_t commandSizes[ENET_PROTOCOL_COMMAND_COUNT] = {
 		0,
@@ -1467,48 +1527,48 @@ extern "C" {
 			peer->needsDispatch = 0;
 
 			switch (peer->state) {
-				case ENET_PEER_STATE_CONNECTION_PENDING:
-				case ENET_PEER_STATE_CONNECTION_SUCCEEDED:
-					enet_protocol_change_state(host, peer, ENET_PEER_STATE_CONNECTED);
+			case ENET_PEER_STATE_CONNECTION_PENDING:
+			case ENET_PEER_STATE_CONNECTION_SUCCEEDED:
+				enet_protocol_change_state(host, peer, ENET_PEER_STATE_CONNECTED);
 
-					event->type = ENET_EVENT_TYPE_CONNECT;
-					event->peer = peer;
-					event->data = peer->eventData;
+				event->type = ENET_EVENT_TYPE_CONNECT;
+				event->peer = peer;
+				event->data = peer->eventData;
 
-					return 1;
+				return 1;
 
-				case ENET_PEER_STATE_ZOMBIE:
-					host->recalculateBandwidthLimits = 1;
-					event->type = ENET_EVENT_TYPE_DISCONNECT;
-					event->peer = peer;
-					event->data = peer->eventData;
+			case ENET_PEER_STATE_ZOMBIE:
+				host->recalculateBandwidthLimits = 1;
+				event->type = ENET_EVENT_TYPE_DISCONNECT;
+				event->peer = peer;
+				event->data = peer->eventData;
 
-					enet_peer_reset(peer);
+				enet_peer_reset(peer);
 
-					return 1;
+				return 1;
 
-				case ENET_PEER_STATE_CONNECTED:
-					if (enet_list_empty(&peer->dispatchedCommands))
-						continue;
+			case ENET_PEER_STATE_CONNECTED:
+				if (enet_list_empty(&peer->dispatchedCommands))
+					continue;
 
-					event->packet = enet_peer_receive(peer, &event->channelID);
+				event->packet = enet_peer_receive(peer, &event->channelID);
 
-					if (event->packet == NULL)
-						continue;
+				if (event->packet == NULL)
+					continue;
 
-					event->type = ENET_EVENT_TYPE_RECEIVE;
-					event->peer = peer;
+				event->type = ENET_EVENT_TYPE_RECEIVE;
+				event->peer = peer;
 
-					if (!enet_list_empty(&peer->dispatchedCommands)) {
-						peer->needsDispatch = 1;
+				if (!enet_list_empty(&peer->dispatchedCommands)) {
+					peer->needsDispatch = 1;
 
-						enet_list_insert(enet_list_end(&host->dispatchQueue), &peer->dispatchList);
-					}
+					enet_list_insert(enet_list_end(&host->dispatchQueue), &peer->dispatchList);
+				}
 
-					return 1;
+				return 1;
 
-				default:
-					break;
+			default:
+				break;
 			}
 		}
 
@@ -1528,7 +1588,8 @@ extern "C" {
 			event->type = ENET_EVENT_TYPE_CONNECT;
 			event->peer = peer;
 			event->data = peer->eventData;
-		} else {
+		}
+		else {
 			enet_protocol_dispatch_state(host, peer, peer->state == ENET_PEER_STATE_CONNECTING ? ENET_PEER_STATE_CONNECTION_SUCCEEDED : ENET_PEER_STATE_CONNECTION_PENDING);
 		}
 	}
@@ -1539,13 +1600,15 @@ extern "C" {
 
 		if (peer->state != ENET_PEER_STATE_CONNECTING && peer->state < ENET_PEER_STATE_CONNECTION_SUCCEEDED) {
 			enet_peer_reset(peer);
-		} else if (event != NULL) {
+		}
+		else if (event != NULL) {
 			event->type = ENET_EVENT_TYPE_DISCONNECT;
 			event->peer = peer;
 			event->data = 0;
 
 			enet_peer_reset(peer);
-		} else {
+		}
+		else {
 			peer->eventData = 0;
 
 			enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
@@ -1558,13 +1621,15 @@ extern "C" {
 
 		if (peer->state != ENET_PEER_STATE_CONNECTING && peer->state < ENET_PEER_STATE_CONNECTION_SUCCEEDED) {
 			enet_peer_reset(peer);
-		} else if (event != NULL) {
+		}
+		else if (event != NULL) {
 			event->type = ENET_EVENT_TYPE_DISCONNECT_TIMEOUT;
 			event->peer = peer;
 			event->data = 0;
 
 			enet_peer_reset(peer);
-		} else {
+		}
+		else {
 			peer->eventData = 0;
 
 			enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
@@ -1680,7 +1745,7 @@ extern "C" {
 		enet_uint32 mtu, windowSize;
 		ENetChannel* channel;
 		size_t channelCount, duplicatePeers = 0;
-		ENetPeer* currentPeer, *peer = NULL;
+		ENetPeer* currentPeer, * peer = NULL;
 		ENetProtocol verifyCommand;
 		channelCount = ENET_NET_TO_HOST_32(command->connect.channelCount);
 
@@ -1691,7 +1756,8 @@ extern "C" {
 			if (currentPeer->state == ENET_PEER_STATE_DISCONNECTED) {
 				if (peer == NULL)
 					peer = currentPeer;
-			} else if (currentPeer->state != ENET_PEER_STATE_CONNECTING && in6_equal(currentPeer->address.ipv6, host->receivedAddress.ipv6)) {
+			}
+			else if (currentPeer->state != ENET_PEER_STATE_CONNECTING && in6_equal(currentPeer->address.ipv6, host->receivedAddress.ipv6)) {
 				if (currentPeer->address.port == host->receivedAddress.port && currentPeer->connectID == command->connect.connectID)
 					return NULL;
 
@@ -1809,24 +1875,24 @@ extern "C" {
 
 		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
 			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
-			return -1;
+			return ENET_PROTOCOL_SEND_FAIL;
 		}
-			
+
 
 		dataLength = ENET_NET_TO_HOST_16(command->sendReliable.dataLength);
 		*currentData += dataLength;
 
 		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
 			ENET_LOG_ERROR("data length is wacko");
-			return -1;
+			return ENET_PACKET_DATA_LENGTH_WEIRDNESS;
 		}
-			
+
 
 		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL) {
 			ENET_LOG_ERROR("Could not queue incoming command, it returned NULL");
-			return -1;
+			return ENET_PEER_QUEUE_INCOMING_FAILURE;
 		}
-			
+
 
 		return 0;
 	}
@@ -1837,16 +1903,16 @@ extern "C" {
 
 		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
 			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
-			return -1;
+			return ENET_PROTOCOL_SEND_FAIL;
 		}
-			
+
 
 		dataLength = ENET_NET_TO_HOST_16(command->sendUnsequenced.dataLength);
 		*currentData += dataLength;
 
-		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
 			ENET_LOG_ERROR("data length is wacko");
-			return -1;
+			return ENET_PACKET_DATA_LENGTH_WEIRDNESS;
 		}
 
 		unsequencedGroup = ENET_NET_TO_HOST_16(command->sendUnsequenced.unsequencedGroup);
@@ -1864,13 +1930,14 @@ extern "C" {
 			peer->incomingUnsequencedGroup = unsequencedGroup - index;
 
 			memset(peer->unsequencedWindow, 0, sizeof(peer->unsequencedWindow));
-		} else if (peer->unsequencedWindow[index / 32] & (1 << (index % 32))) {
+		}
+		else if (peer->unsequencedWindow[index / 32] & (1 << (index % 32))) {
 			return 0;
 		}
-		
+
 		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendUnsequenced), dataLength, ENET_PACKET_FLAG_UNSEQUENCED, 0) == NULL) {
 			ENET_LOG_ERROR("Could not queue incoming command, it returned NULL");
-			return -1;
+			return ENET_PEER_QUEUE_INCOMING_FAILURE;
 		}
 
 		peer->unsequencedWindow[index / 32] |= 1 << (index % 32);
@@ -1883,20 +1950,20 @@ extern "C" {
 
 		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
 			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
-			return -1;
+			return ENET_PROTOCOL_SEND_FAIL;
 		}
 
 		dataLength = ENET_NET_TO_HOST_16(command->sendUnreliable.dataLength);
 		*currentData += dataLength;
 
-		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+		if (dataLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
 			ENET_LOG_ERROR("data length is wacko");
-			return -1;
+			return ENET_PACKET_DATA_LENGTH_WEIRDNESS;
 		}
 
 		if (enet_peer_queue_incoming_command(peer, command, (const enet_uint8*)command + sizeof(ENetProtocolSendUnreliable), dataLength, 0, 0) == NULL) {
 			ENET_LOG_ERROR("Could not queue incoming command, it returned NULL");
-			return -1;
+			return ENET_PEER_QUEUE_INCOMING_FAILURE;
 		}
 
 		return 0;
@@ -1911,15 +1978,15 @@ extern "C" {
 
 		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
 			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
-			return -1;
+			return ENET_PROTOCOL_SEND_FAIL;
 		}
 
 		fragmentLength = ENET_NET_TO_HOST_16(command->sendFragment.dataLength);
 		*currentData += fragmentLength;
 
-		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > &host->receivedData[host->receivedDataLength]) {
+		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
 			ENET_LOG_ERROR("data length is wacko");
-			return -1;
+			return ENET_PACKET_DATA_LENGTH_WEIRDNESS;
 		}
 
 		channel = &peer->channels[command->header.channelID];
@@ -1940,7 +2007,7 @@ extern "C" {
 
 		if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT || fragmentNumber >= fragmentCount || totalLength > host->maximumPacketSize || fragmentOffset >= totalLength || fragmentLength > totalLength - fragmentOffset) {
 			ENET_LOG_ERROR("Some fragment weirdness going on here");
-			return -1;
+			return ENET_PACKET_DATA_FRAGMENT_WEIRDNESS;
 		}
 
 
@@ -1950,7 +2017,8 @@ extern "C" {
 			if (startSequenceNumber >= channel->incomingReliableSequenceNumber) {
 				if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
 					continue;
-			} else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+			}
+			else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
 				break;
 			}
 
@@ -1960,7 +2028,7 @@ extern "C" {
 
 				if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount) {
 					ENET_LOG_ERROR("Some fragment weirdness going on here");
-					return -1;
+					return ENET_PACKET_DATA_FRAGMENT_WEIRDNESS;
 				}
 
 
@@ -1977,9 +2045,9 @@ extern "C" {
 
 			if (startCommand == NULL) {
 				ENET_LOG_ERROR("startCommand was NULL.");
-				return -1;
+				return ENET_PACKET_STARTCMD_NULL;
 			}
-				
+
 		}
 
 		if ((startCommand->fragments[fragmentNumber / 32] & (1 << (fragmentNumber % 32))) == 0) {
@@ -2007,7 +2075,7 @@ extern "C" {
 
 		if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
 			ENET_LOG_ERROR("channel id is greater than the peer's channel count or the peer isn't in connected state and isn't pending disconnection later");
-			return -1;
+			return ENET_PROTOCOL_SEND_FAIL;
 		}
 
 		fragmentLength = ENET_NET_TO_HOST_16(command->sendFragment.dataLength);
@@ -2015,7 +2083,7 @@ extern "C" {
 
 		if (fragmentLength > host->maximumPacketSize || *currentData < host->receivedData || *currentData > & host->receivedData[host->receivedDataLength]) {
 			ENET_LOG_ERROR("fragment data length is wacko");
-			return -1;
+			return ENET_PACKET_DATA_LENGTH_WEIRDNESS;
 		}
 
 		channel = &peer->channels[command->header.channelID];
@@ -2040,56 +2108,57 @@ extern "C" {
 
 		if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT || fragmentNumber >= fragmentCount || totalLength > host->maximumPacketSize || fragmentOffset >= totalLength || fragmentLength > totalLength - fragmentOffset) {
 			ENET_LOG_ERROR("Exceeded maximum number of fragments, the total length is more than the packet size, the offset is out of bounds or the fragment is too big");
-			return -1;
+			return ENET_PEER_SENDFAIL_FRAGMENTOVERLOAD;
 		}
-			
 
-			for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingUnreliableCommands)); currentCommand != enet_list_end(&channel->incomingUnreliableCommands); currentCommand = enet_list_previous(currentCommand)) {
-				ENetIncomingCommand* incomingCommand = (ENetIncomingCommand*)currentCommand;
 
-				if (reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
-					if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
-						continue;
-				} else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
-					break;
-				}
+		for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingUnreliableCommands)); currentCommand != enet_list_end(&channel->incomingUnreliableCommands); currentCommand = enet_list_previous(currentCommand)) {
+			ENetIncomingCommand* incomingCommand = (ENetIncomingCommand*)currentCommand;
 
-				if (incomingCommand->reliableSequenceNumber < reliableSequenceNumber)
-					break;
-
-				if (incomingCommand->reliableSequenceNumber > reliableSequenceNumber)
+			if (reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+				if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
 					continue;
-
-				if (incomingCommand->unreliableSequenceNumber <= startSequenceNumber) {
-					if (incomingCommand->unreliableSequenceNumber < startSequenceNumber)
-						break;
-
-					if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount) {
-						ENET_LOG_ERROR("Some fragment weirdness going on here");
-						return -1;
-					}
-						
-
-					startCommand = incomingCommand;
-
-					break;
-				}
+			}
+			else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+				break;
 			}
 
-			if (startCommand == NULL) {
-				startCommand = enet_peer_queue_incoming_command(peer, command, NULL, totalLength,
+			if (incomingCommand->reliableSequenceNumber < reliableSequenceNumber)
+				break;
+
+			if (incomingCommand->reliableSequenceNumber > reliableSequenceNumber)
+				continue;
+
+			if (incomingCommand->unreliableSequenceNumber <= startSequenceNumber) {
+				if (incomingCommand->unreliableSequenceNumber < startSequenceNumber)
+					break;
+
+				if ((incomingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT || totalLength != incomingCommand->packet->dataLength || fragmentCount != incomingCommand->fragmentCount) {
+					ENET_LOG_ERROR("Some fragment weirdness going on here");
+					return ENET_PACKET_DATA_FRAGMENT_WEIRDNESS;
+				}
+
+
+				startCommand = incomingCommand;
+
+				break;
+			}
+		}
+
+		if (startCommand == NULL) {
+			startCommand = enet_peer_queue_incoming_command(peer, command, NULL, totalLength,
 				ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED, fragmentCount);
 
-				if (startCommand == NULL) {
-					ENET_LOG_ERROR("startCommand was NULL");
-					return -1;
-				}
-					
+			if (startCommand == NULL) {
+				ENET_LOG_ERROR("startCommand was NULL");
+				return ENET_PACKET_STARTCMD_NULL;
 			}
 
-			if ((startCommand->fragments[fragmentNumber / 32] & (1 << (fragmentNumber % 32))) == 0) {
-				--startCommand->fragmentsRemaining;
-				startCommand->fragments[fragmentNumber / 32] |= (1 << (fragmentNumber % 32));
+		}
+
+		if ((startCommand->fragments[fragmentNumber / 32] & (1 << (fragmentNumber % 32))) == 0) {
+			--startCommand->fragmentsRemaining;
+			startCommand->fragments[fragmentNumber / 32] |= (1 << (fragmentNumber % 32));
 
 			if (fragmentOffset + fragmentLength > startCommand->packet->dataLength)
 				fragmentLength = startCommand->packet->dataLength - fragmentOffset;
@@ -2106,9 +2175,9 @@ extern "C" {
 	static int enet_protocol_handle_ping(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
 		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
 			ENET_LOG_ERROR("Doing jack squat on a peer that is not connected correctly");
-			return -1;
+			return ENET_PEER_NOT_CONNECTED_CORRECTLY;
 		}
-			
+
 
 		return 0;
 	}
@@ -2116,7 +2185,7 @@ extern "C" {
 	static int enet_protocol_handle_bandwidth_limit(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
 		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
 			ENET_LOG_ERROR("Doing jack squat on a peer that is not connected correctly");
-			return -1;
+			return ENET_PEER_NOT_CONNECTED_CORRECTLY;
 		}
 
 		if (peer->incomingBandwidth != 0)
@@ -2146,7 +2215,7 @@ extern "C" {
 	static int enet_protocol_handle_throttle_configure(ENetHost* host, ENetPeer* peer, const ENetProtocol* command) {
 		if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
 			ENET_LOG_ERROR("Doing jack squat on a peer that is not connected correctly");
-			return -1;
+			return ENET_PEER_NOT_CONNECTED_CORRECTLY;
 		}
 
 		peer->packetThrottleInterval = ENET_NET_TO_HOST_32(command->throttleConfigure.packetThrottleInterval);
@@ -2164,14 +2233,17 @@ extern "C" {
 
 		if (peer->state == ENET_PEER_STATE_CONNECTION_SUCCEEDED || peer->state == ENET_PEER_STATE_DISCONNECTING || peer->state == ENET_PEER_STATE_CONNECTING) {
 			enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
-		} else if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
+		}
+		else if (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER) {
 			if (peer->state == ENET_PEER_STATE_CONNECTION_PENDING)
 				host->recalculateBandwidthLimits = 1;
 
 			enet_peer_reset(peer);
-		} else if (command->header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE) {
+		}
+		else if (command->header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE) {
 			enet_protocol_change_state(host, peer, ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT);
-		} else {
+		}
+		else {
 			enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
 		}
 
@@ -2216,7 +2288,8 @@ extern "C" {
 		if (peer->smoothedRoundTripTime >= peer->roundTripTime) {
 			peer->roundTripTime += (peer->smoothedRoundTripTime - peer->roundTripTime) / 8;
 			peer->roundTripTimeVariance += (peer->smoothedRoundTripTime - peer->roundTripTime) / 4;
-		} else {
+		}
+		else {
 			peer->roundTripTime -= (peer->roundTripTime - peer->smoothedRoundTripTime) / 8;
 			peer->roundTripTimeVariance += (peer->roundTripTime - peer->smoothedRoundTripTime) / 4;
 		}
@@ -2239,36 +2312,36 @@ extern "C" {
 		commandNumber = enet_protocol_remove_sent_reliable_command(peer, receivedReliableSequenceNumber, command->header.channelID);
 
 		switch (peer->state) {
-			case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
-				if (commandNumber != ENET_PROTOCOL_COMMAND_VERIFY_CONNECT) {
-					ENET_LOG_ERROR("Wrong command number. Got %u vs %u", commandNumber, ENET_PROTOCOL_COMMAND_VERIFY_CONNECT);
-					return -1;
-				}
-					
+		case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
+			if (commandNumber != ENET_PROTOCOL_COMMAND_VERIFY_CONNECT) {
+				ENET_LOG_ERROR("Wrong command number. Got %u vs %u", commandNumber, ENET_PROTOCOL_COMMAND_VERIFY_CONNECT);
+				return ENET_PEER_BAD_COMMAND_NUMBER;
+			}
 
-				enet_protocol_notify_connect(host, peer, event);
 
-				break;
+			enet_protocol_notify_connect(host, peer, event);
 
-			case ENET_PEER_STATE_DISCONNECTING:
-				if (commandNumber != ENET_PROTOCOL_COMMAND_DISCONNECT) {
-					ENET_LOG_ERROR("Wrong command number. Got %u vs %u", commandNumber, ENET_PROTOCOL_COMMAND_DISCONNECT);
-					return -1;
-				}
-					
+			break;
 
-				enet_protocol_notify_disconnect(host, peer, event);
+		case ENET_PEER_STATE_DISCONNECTING:
+			if (commandNumber != ENET_PROTOCOL_COMMAND_DISCONNECT) {
+				ENET_LOG_ERROR("Wrong command number. Got %u vs %u", commandNumber, ENET_PROTOCOL_COMMAND_DISCONNECT);
+				return ENET_PEER_BAD_COMMAND_NUMBER;
+			}
 
-				break;
 
-			case ENET_PEER_STATE_DISCONNECT_LATER:
-				if (enet_list_empty(&peer->outgoingReliableCommands) && enet_list_empty(&peer->outgoingUnreliableCommands) && enet_list_empty(&peer->sentReliableCommands))
-					enet_peer_disconnect(peer, peer->eventData);
+			enet_protocol_notify_disconnect(host, peer, event);
 
-				break;
+			break;
 
-			default:
-				break;
+		case ENET_PEER_STATE_DISCONNECT_LATER:
+			if (enet_list_empty(&peer->outgoingReliableCommands) && enet_list_empty(&peer->outgoingUnreliableCommands) && enet_list_empty(&peer->sentReliableCommands))
+				enet_peer_disconnect(peer, peer->eventData);
+
+			break;
+
+		default:
+			break;
 		}
 
 		return 0;
@@ -2288,7 +2361,7 @@ extern "C" {
 
 			enet_protocol_dispatch_state(host, peer, ENET_PEER_STATE_ZOMBIE);
 			ENET_LOG_ERROR("A peer has entered a Zombie state...");
-			return -1;
+			return ENET_PEER_BECAME_ZOMBIE;
 		}
 
 		enet_protocol_remove_sent_reliable_command(peer, 1, 0xFF);
@@ -2337,7 +2410,7 @@ extern "C" {
 		enet_uint16 peerID, flags;
 		enet_uint8 sessionID;
 
-		if (host->receivedDataLength < (size_t)&((ENetProtocolHeader*)0)->sentTime)
+		if (host->receivedDataLength < (size_t) & ((ENetProtocolHeader*)0)->sentTime)
 			return 0;
 
 		header = (ENetProtocolHeader*)host->receivedData;
@@ -2345,16 +2418,18 @@ extern "C" {
 		sessionID = (peerID & ENET_PROTOCOL_HEADER_SESSION_MASK) >> ENET_PROTOCOL_HEADER_SESSION_SHIFT;
 		flags = peerID & ENET_PROTOCOL_HEADER_FLAG_MASK;
 		peerID &= ~(ENET_PROTOCOL_HEADER_FLAG_MASK | ENET_PROTOCOL_HEADER_SESSION_MASK);
-		headerSize = (flags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME ? sizeof(ENetProtocolHeader) : (size_t)&((ENetProtocolHeader*)0)->sentTime);
+		headerSize = (flags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME ? sizeof(ENetProtocolHeader) : (size_t) & ((ENetProtocolHeader*)0)->sentTime);
 
 		if (host->checksumCallback != NULL)
 			headerSize += sizeof(enet_uint32);
 
 		if (peerID == ENET_PROTOCOL_MAXIMUM_PEER_ID) {
 			peer = NULL;
-		} else if (peerID >= host->peerCount) {
+		}
+		else if (peerID >= host->peerCount) {
 			return 0;
-		} else {
+		}
+		else {
 			peer = &host->peers[peerID];
 
 			if (peer->state == ENET_PEER_STATE_DISCONNECTED || peer->state == ENET_PEER_STATE_ZOMBIE || ((!in6_equal(host->receivedAddress.ipv6, peer->address.ipv6) || host->receivedAddress.port != peer->address.port) && peer->address.ipv4.ip.s_addr != INADDR_BROADCAST) || (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID && sessionID != peer->incomingSessionID))
@@ -2362,7 +2437,7 @@ extern "C" {
 		}
 
 		if (host->checksumCallback != NULL) {
-			enet_uint32* checksum = (enet_uint32*)&host->receivedData[headerSize - sizeof(enet_uint32)];
+			enet_uint32* checksum = (enet_uint32*)& host->receivedData[headerSize - sizeof(enet_uint32)];
 			enet_uint32 desiredChecksum = *checksum;
 			ENetBuffer buffer;
 			*checksum = peer != NULL ? peer->connectID : 0;
@@ -2387,7 +2462,7 @@ extern "C" {
 			size_t commandSize;
 			command = (ENetProtocol*)currentData;
 
-			if (currentData + sizeof(ENetProtocolCommandHeader) > &host->receivedData[host->receivedDataLength])
+			if (currentData + sizeof(ENetProtocolCommandHeader) > & host->receivedData[host->receivedDataLength])
 				break;
 
 			commandNumber = command->header.command & ENET_PROTOCOL_COMMAND_MASK;
@@ -2397,7 +2472,7 @@ extern "C" {
 
 			commandSize = commandSizes[commandNumber];
 
-			if (commandSize == 0 || currentData + commandSize > &host->receivedData[host->receivedDataLength])
+			if (commandSize == 0 || currentData + commandSize > & host->receivedData[host->receivedDataLength])
 				break;
 
 			currentData += commandSize;
@@ -2408,87 +2483,87 @@ extern "C" {
 			command->header.reliableSequenceNumber = ENET_NET_TO_HOST_16(command->header.reliableSequenceNumber);
 
 			switch (commandNumber) {
-				case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
-					if (enet_protocol_handle_acknowledge(host, event, peer, command))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_CONNECT:
-					if (peer != NULL)
-						goto commandError;
-
-					if (host->preventConnections == 0) {
-						peer = enet_protocol_handle_connect(host, header, command);
-
-						if (peer == NULL)
-							goto commandError;
-					}
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_VERIFY_CONNECT:
-					if (enet_protocol_handle_verify_connect(host, event, peer, command))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_DISCONNECT:
-					if (enet_protocol_handle_disconnect(host, peer, command))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_PING:
-					if (enet_protocol_handle_ping(host, peer, command))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
-					if (enet_protocol_handle_send_reliable(host, peer, command, &currentData))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
-					if (enet_protocol_handle_send_unreliable(host, peer, command, &currentData))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
-					if (enet_protocol_handle_send_unsequenced(host, peer, command, &currentData))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
-					if (enet_protocol_handle_send_fragment(host, peer, command, &currentData))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT:
-					if (enet_protocol_handle_bandwidth_limit(host, peer, command))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE:
-					if (enet_protocol_handle_throttle_configure(host, peer, command))
-						goto commandError;
-
-					break;
-
-				case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
-					if (enet_protocol_handle_send_unreliable_fragment(host, peer, command, &currentData))
-						goto commandError;
-
-					break;
-
-				default:
+			case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
+				if (enet_protocol_handle_acknowledge(host, event, peer, command))
 					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_CONNECT:
+				if (peer != NULL)
+					goto commandError;
+
+				if (host->preventConnections == 0) {
+					peer = enet_protocol_handle_connect(host, header, command);
+
+					if (peer == NULL)
+						goto commandError;
+				}
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_VERIFY_CONNECT:
+				if (enet_protocol_handle_verify_connect(host, event, peer, command))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_DISCONNECT:
+				if (enet_protocol_handle_disconnect(host, peer, command))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_PING:
+				if (enet_protocol_handle_ping(host, peer, command))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+				if (enet_protocol_handle_send_reliable(host, peer, command, &currentData))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
+				if (enet_protocol_handle_send_unreliable(host, peer, command, &currentData))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
+				if (enet_protocol_handle_send_unsequenced(host, peer, command, &currentData))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
+				if (enet_protocol_handle_send_fragment(host, peer, command, &currentData))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT:
+				if (enet_protocol_handle_bandwidth_limit(host, peer, command))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE:
+				if (enet_protocol_handle_throttle_configure(host, peer, command))
+					goto commandError;
+
+				break;
+
+			case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
+				if (enet_protocol_handle_send_unreliable_fragment(host, peer, command, &currentData))
+					goto commandError;
+
+				break;
+
+			default:
+				goto commandError;
 			}
 
 			if (peer != NULL && (command->header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE) != 0) {
@@ -2500,27 +2575,27 @@ extern "C" {
 				sentTime = ENET_NET_TO_HOST_16(header->sentTime);
 
 				switch (peer->state) {
-					case ENET_PEER_STATE_DISCONNECTING:
-					case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
-					case ENET_PEER_STATE_DISCONNECTED:
-					case ENET_PEER_STATE_ZOMBIE:
-						break;
+				case ENET_PEER_STATE_DISCONNECTING:
+				case ENET_PEER_STATE_ACKNOWLEDGING_CONNECT:
+				case ENET_PEER_STATE_DISCONNECTED:
+				case ENET_PEER_STATE_ZOMBIE:
+					break;
 
-					case ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT:
-						if ((command->header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_DISCONNECT)
-							enet_peer_queue_acknowledgement(peer, command, sentTime);
-
-						break;
-
-					default:
+				case ENET_PEER_STATE_ACKNOWLEDGING_DISCONNECT:
+					if ((command->header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_DISCONNECT)
 						enet_peer_queue_acknowledgement(peer, command, sentTime);
 
-						break;
+					break;
+
+				default:
+					enet_peer_queue_acknowledgement(peer, command, sentTime);
+
+					break;
 				}
 			}
 		}
 
-		commandError:
+	commandError:
 
 		if (event != NULL && event->type != ENET_EVENT_TYPE_NONE)
 			return 1;
@@ -2543,9 +2618,9 @@ extern "C" {
 
 			if (receivedLength < 0) {
 				ENET_LOG_ERROR("received length was negative: %i", receivedLength);
-				return -1;
+				return ENET_PACKET_DATA_LENGTH_NEGATIVE;
 			}
-				
+
 
 			if (receivedLength == 0)
 				return 0;
@@ -2557,31 +2632,31 @@ extern "C" {
 
 			if (host->interceptCallback != NULL) {
 				switch (host->interceptCallback(host, (void*)event)) {
-					case 1:
-						if (event != NULL && event->type != ENET_EVENT_TYPE_NONE)
-							return 1;
+				case 1:
+					if (event != NULL && event->type != ENET_EVENT_TYPE_NONE)
+						return 1;
 
-						continue;
+					continue;
 
-					case -1:
-						ENET_LOG_ERROR("intercept callback failure");
-						return -1;
+				case -1:
+					ENET_LOG_ERROR("intercept callback failure");
+					return ENET_HOST_INTERCEPT_FAILURE;
 
-					default:
-						break;
+				default:
+					break;
 				}
 			}
 
 			switch (enet_protocol_handle_incoming_commands(host, event)) {
-				case 1:
-					return 1;
+			case 1:
+				return 1;
 
-				case -1:
-					ENET_LOG_ERROR("enet_protocol_handle_incoming_commands failure");
-					return -1;
+			case -1:
+				ENET_LOG_ERROR("enet_protocol_handle_incoming_commands failure");
+				return ENET_PEER_QUEUE_INCOMING_FAILURE;
 
-				default:
-					break;
+			default:
+				break;
 			}
 		}
 
@@ -2696,10 +2771,11 @@ extern "C" {
 				host->packetSize += buffer->dataLength;
 
 				enet_list_insert(enet_list_end(&peer->sentUnreliableCommands), outgoingCommand);
-			} else {
+			}
+			else {
 				enet_free(outgoingCommand);
 			}
-			
+
 			++command;
 			++buffer;
 		}
@@ -2889,7 +2965,8 @@ extern "C" {
 
 				if (currentPeer->packetLossEpoch == 0) {
 					currentPeer->packetLossEpoch = host->serviceTime;
-				} else if (ENET_TIME_DIFFERENCE(host->serviceTime, currentPeer->packetLossEpoch) >= ENET_PEER_PACKET_LOSS_INTERVAL && currentPeer->packetsSent > 0) {
+				}
+				else if (ENET_TIME_DIFFERENCE(host->serviceTime, currentPeer->packetLossEpoch) >= ENET_PEER_PACKET_LOSS_INTERVAL && currentPeer->packetsSent > 0) {
 					enet_uint32 packetLoss = currentPeer->packetsLost * ENET_PEER_PACKET_LOSS_SCALE / currentPeer->packetsSent;
 
 					ENET_LOG_TRACE(
@@ -2910,7 +2987,8 @@ extern "C" {
 					if (packetLoss >= currentPeer->packetLoss) {
 						currentPeer->packetLoss += (packetLoss - currentPeer->packetLoss) / 8;
 						currentPeer->packetLossVariance += (packetLoss - currentPeer->packetLoss) / 4;
-					} else {
+					}
+					else {
 						currentPeer->packetLoss -= (currentPeer->packetLoss - packetLoss) / 8;
 						currentPeer->packetLossVariance += (currentPeer->packetLoss - packetLoss) / 4;
 					}
@@ -2925,8 +3003,9 @@ extern "C" {
 				if (host->headerFlags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME) {
 					header->sentTime = ENET_HOST_TO_NET_16(host->serviceTime & 0xFFFF);
 					host->buffers->dataLength = sizeof(ENetProtocolHeader);
-				} else {
-					host->buffers->dataLength = (size_t)&((ENetProtocolHeader*)0)->sentTime;
+				}
+				else {
+					host->buffers->dataLength = (size_t) & ((ENetProtocolHeader*)0)->sentTime;
 				}
 
 				if (currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID)
@@ -2935,7 +3014,7 @@ extern "C" {
 				header->peerID = ENET_HOST_TO_NET_16(currentPeer->outgoingPeerID | host->headerFlags);
 
 				if (host->checksumCallback != NULL) {
-					enet_uint32* checksum = (enet_uint32*)&headerData[host->buffers->dataLength];
+					enet_uint32* checksum = (enet_uint32*)& headerData[host->buffers->dataLength];
 					*checksum = currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID ? currentPeer->connectID : 0;
 					host->buffers->dataLength += sizeof(enet_uint32);
 					*checksum = host->checksumCallback(host->buffers, host->bufferCount);
@@ -2948,9 +3027,9 @@ extern "C" {
 
 				if (sentLength < 0) {
 					ENET_LOG_ERROR("sentLength was negative: %i", sentLength);
-					return -1;
+					return ENET_PACKET_DATA_LENGTH_NEGATIVE;
 				}
-					
+
 
 				host->totalSentData += sentLength;
 				currentPeer->totalDataSent += sentLength;
@@ -2988,15 +3067,15 @@ extern "C" {
 			event->packet = NULL;
 
 			switch (enet_protocol_dispatch_incoming_commands(host, event)) {
-				case 1:
-					return 1;
+			case 1:
+				return 1;
 
-				case -1:
-					ENET_LOG_ERROR("Error dispatching incoming packets");
-					return -1;
+			case -1:
+				ENET_LOG_ERROR("Error dispatching incoming packets");
+				return ENET_DISPATCH_INCOMING_FAILURE;
 
-				default:
-					break;
+			default:
+				break;
 			}
 		}
 
@@ -3008,52 +3087,52 @@ extern "C" {
 				enet_host_bandwidth_throttle(host);
 
 			switch (enet_protocol_send_outgoing_commands(host, event, 1)) {
-				case 1:
-					return 1;
+			case 1:
+				return 1;
 
-				case -1:
-					ENET_LOG_ERROR("Error sending outgoing packets");
-					return -1;
+			case -1:
+				ENET_LOG_ERROR("Error sending outgoing packets");
+				return ENET_SERVICE_SEND_OUTGOING_FAILURE;
 
-				default:
-					break;
+			default:
+				break;
 			}
 
 			switch (enet_protocol_receive_incoming_commands(host, event)) {
-				case 1:
-					return 1;
+			case 1:
+				return 1;
 
-				case -1:
-					ENET_LOG_ERROR("Error receiving incoming packets");
-					return -1;
+			case -1:
+				ENET_LOG_ERROR("Error receiving incoming packets");
+				return ENET_SERVICE_RECEIVE_INCOMING_FAILURE;
 
-				default:
-					break;
+			default:
+				break;
 			}
 
 			switch (enet_protocol_send_outgoing_commands(host, event, 1)) {
-				case 1:
-					return 1;
+			case 1:
+				return 1;
 
-				case -1:
-					ENET_LOG_ERROR("Error dispatching outgoing packets!");
-					return -1;
+			case -1:
+				ENET_LOG_ERROR("Error dispatching outgoing packets!");
+				return ENET_DISPATCH_OUTGOING_FAILURE;
 
-				default:
-					break;
+			default:
+				break;
 			}
 
 			if (event != NULL) {
 				switch (enet_protocol_dispatch_incoming_commands(host, event)) {
-					case 1:
-						return 1;
+				case 1:
+					return 1;
 
-					case -1:
-						ENET_LOG_ERROR("Error dispatching incoming packets!");
-						return -1;
+				case -1:
+					ENET_LOG_ERROR("Error dispatching incoming packets!");
+					return ENET_DISPATCH_INCOMING_FAILURE;
 
-					default:
-						break;
+				default:
+					break;
 				}
 			}
 
@@ -3083,11 +3162,11 @@ extern "C" {
 		return 0;
 	}
 
-/*
-=======================================================================
-	Peer
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Peer
+	=======================================================================
+	*/
 
 	void enet_peer_throttle_configure(ENetPeer* peer, enet_uint32 interval, enet_uint32 acceleration, enet_uint32 deceleration, enet_uint32 threshold) {
 		ENetProtocol command;
@@ -3107,14 +3186,16 @@ extern "C" {
 	int enet_peer_throttle(ENetPeer* peer, enet_uint32 rtt) {
 		if (peer->lastRoundTripTime <= peer->lastRoundTripTimeVariance) {
 			peer->packetThrottle = peer->packetThrottleLimit;
-		} else if (rtt < peer->lastRoundTripTime) {
+		}
+		else if (rtt < peer->lastRoundTripTime) {
 			peer->packetThrottle += peer->packetThrottleAcceleration;
 
 			if (peer->packetThrottle > peer->packetThrottleLimit)
 				peer->packetThrottle = peer->packetThrottleLimit;
 
 			return 1;
-		} else if (rtt > peer->lastRoundTripTime + peer->packetThrottleThreshold + 2 * peer->lastRoundTripTimeVariance) {
+		}
+		else if (rtt > peer->lastRoundTripTime + peer->packetThrottleThreshold + 2 * peer->lastRoundTripTimeVariance) {
 			if (peer->packetThrottle > peer->packetThrottleDeceleration)
 				peer->packetThrottle -= peer->packetThrottleDeceleration;
 			else
@@ -3132,11 +3213,11 @@ extern "C" {
 		ENetProtocol command;
 		size_t fragmentLength;
 
-		if (peer->state != ENET_PEER_STATE_CONNECTED || channelID >= peer->channelCount || packet->dataLength > peer->host->maximumPacketSize) {			
+		if (peer->state != ENET_PEER_STATE_CONNECTED || channelID >= peer->channelCount || packet->dataLength > peer->host->maximumPacketSize) {
 			ENET_LOG_ERROR("Cannot send data. Peer is not connected, the channel id is above the maximum channels supported or the packet data length is above the maximum packet size");
-			return -1;
+			return ENET_PEER_SENDFAIL_GENERIC;
 		}
-			
+
 
 		fragmentLength = peer->mtu - sizeof(ENetProtocolHeader) - sizeof(ENetProtocolSendFragment);
 
@@ -3152,14 +3233,15 @@ extern "C" {
 
 			if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT) {
 				ENET_LOG_ERROR("Cannot send data. Too many fragments (%u vs %u)", fragmentCount, ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT);
-				return -1;
+				return ENET_PEER_SENDFAIL_FRAGMENTOVERLOAD;
 			}
-				
+
 
 			if ((packet->flags & (ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED)) == ENET_PACKET_FLAG_UNRELIABLE_FRAGMENTED && channel->outgoingUnreliableSequenceNumber < 0xFFFF) {
 				commandNumber = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT;
 				startSequenceNumber = ENET_HOST_TO_NET_16(channel->outgoingUnreliableSequenceNumber + 1);
-			} else {
+			}
+			else {
 				commandNumber = ENET_PROTOCOL_COMMAND_SEND_FRAGMENT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
 				startSequenceNumber = ENET_HOST_TO_NET_16(channel->outgoingReliableSequenceNumber + 1);
 			}
@@ -3180,7 +3262,7 @@ extern "C" {
 					}
 
 					ENET_LOG_ERROR("Cannot send data. A fragment was null.");
-					return -1;
+					return ENET_PEER_SENDFAIL_FRAGMENTNULL;
 				}
 
 				fragment->fragmentOffset = fragmentOffset;
@@ -3214,19 +3296,21 @@ extern "C" {
 		if ((packet->flags & (ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNSEQUENCED)) == ENET_PACKET_FLAG_UNSEQUENCED) {
 			command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED | ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED;
 			command.sendUnsequenced.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
-		} else if (packet->flags & ENET_PACKET_FLAG_RELIABLE || channel->outgoingUnreliableSequenceNumber >= 0xFFFF) {
+		}
+		else if (packet->flags & ENET_PACKET_FLAG_RELIABLE || channel->outgoingUnreliableSequenceNumber >= 0xFFFF) {
 			command.header.command = ENET_PROTOCOL_COMMAND_SEND_RELIABLE | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
 			command.sendReliable.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
-		} else {
+		}
+		else {
 			command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE;
 			command.sendUnreliable.dataLength = ENET_HOST_TO_NET_16(packet->dataLength);
 		}
 
 		if (enet_peer_queue_outgoing_command(peer, &command, packet, 0, packet->dataLength) == NULL) {
 			ENET_LOG_ERROR("a queued outgoing command was NULL");
-			return -1;
+			return ENET_PEER_QUEUE_OUTGOING_NULL;
 		}
-			
+
 
 		if (packet->flags & ENET_PACKET_FLAG_INSTANT)
 			enet_host_flush(peer->host);
@@ -3244,7 +3328,7 @@ extern "C" {
 		incomingCommand = (ENetIncomingCommand*)enet_list_remove(enet_list_begin(&peer->dispatchedCommands));
 
 		if (channelID != NULL)
-			*channelID = incomingCommand->command.header.channelID;
+			* channelID = incomingCommand->command.header.channelID;
 
 		packet = incomingCommand->packet;
 		--packet->referenceCount;
@@ -3474,7 +3558,8 @@ extern "C" {
 			enet_peer_on_disconnect(peer);
 
 			peer->state = ENET_PEER_STATE_DISCONNECTING;
-		} else {
+		}
+		else {
 			enet_host_flush(peer->host);
 			enet_peer_reset(peer);
 		}
@@ -3484,7 +3569,8 @@ extern "C" {
 		if ((peer->state == ENET_PEER_STATE_CONNECTED || peer->state == ENET_PEER_STATE_DISCONNECT_LATER) && !(enet_list_empty(&peer->outgoingReliableCommands) && enet_list_empty(&peer->outgoingUnreliableCommands) && enet_list_empty(&peer->sentReliableCommands))) {
 			peer->state = ENET_PEER_STATE_DISCONNECT_LATER;
 			peer->eventData = data;
-		} else {
+		}
+		else {
 			enet_peer_disconnect(peer, data);
 		}
 	}
@@ -3526,16 +3612,19 @@ extern "C" {
 			++peer->outgoingReliableSequenceNumber;
 			outgoingCommand->reliableSequenceNumber = peer->outgoingReliableSequenceNumber;
 			outgoingCommand->unreliableSequenceNumber = 0;
-		} else if (outgoingCommand->command.header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE) {
+		}
+		else if (outgoingCommand->command.header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE) {
 			++channel->outgoingReliableSequenceNumber;
 			channel->outgoingUnreliableSequenceNumber = 0;
 			outgoingCommand->reliableSequenceNumber = channel->outgoingReliableSequenceNumber;
 			outgoingCommand->unreliableSequenceNumber = 0;
-		} else if (outgoingCommand->command.header.command & ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED) {
+		}
+		else if (outgoingCommand->command.header.command & ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED) {
 			++peer->outgoingUnsequencedGroup;
 			outgoingCommand->reliableSequenceNumber = 0;
 			outgoingCommand->unreliableSequenceNumber = 0;
-		} else {
+		}
+		else {
 			if (outgoingCommand->fragmentOffset == 0)
 				++channel->outgoingUnreliableSequenceNumber;
 
@@ -3550,18 +3639,18 @@ extern "C" {
 		outgoingCommand->command.header.reliableSequenceNumber = ENET_HOST_TO_NET_16(outgoingCommand->reliableSequenceNumber);
 
 		switch (outgoingCommand->command.header.command & ENET_PROTOCOL_COMMAND_MASK) {
-			case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
-				outgoingCommand->command.sendUnreliable.unreliableSequenceNumber = ENET_HOST_TO_NET_16(outgoingCommand->unreliableSequenceNumber);
+		case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
+			outgoingCommand->command.sendUnreliable.unreliableSequenceNumber = ENET_HOST_TO_NET_16(outgoingCommand->unreliableSequenceNumber);
 
-				break;
+			break;
 
-			case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
-				outgoingCommand->command.sendUnsequenced.unsequencedGroup = ENET_HOST_TO_NET_16(peer->outgoingUnsequencedGroup);
+		case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
+			outgoingCommand->command.sendUnsequenced.unsequencedGroup = ENET_HOST_TO_NET_16(peer->outgoingUnsequencedGroup);
 
-				break;
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 
 		if (outgoingCommand->command.header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE)
@@ -3605,19 +3694,21 @@ extern "C" {
 					continue;
 				}
 
-			if (startCommand != currentCommand) {
-				enet_list_move(enet_list_end(&peer->dispatchedCommands), startCommand, enet_list_previous(currentCommand));
+				if (startCommand != currentCommand) {
+					enet_list_move(enet_list_end(&peer->dispatchedCommands), startCommand, enet_list_previous(currentCommand));
 
-				if (!peer->needsDispatch) {
-					enet_list_insert(enet_list_end(&peer->host->dispatchQueue), &peer->dispatchList);
+					if (!peer->needsDispatch) {
+						enet_list_insert(enet_list_end(&peer->host->dispatchQueue), &peer->dispatchList);
 
-					peer->needsDispatch = 1;
+						peer->needsDispatch = 1;
+					}
+
+					droppedCommand = currentCommand;
 				}
-
-				droppedCommand = currentCommand;
-			} else if (droppedCommand != currentCommand)
-				droppedCommand = enet_list_previous(currentCommand);
-			} else {
+				else if (droppedCommand != currentCommand)
+					droppedCommand = enet_list_previous(currentCommand);
+			}
+			else {
 				enet_uint16 reliableWindow = incomingCommand->reliableSequenceNumber / ENET_PEER_RELIABLE_WINDOW_SIZE;
 				enet_uint16 currentWindow = channel->incomingReliableSequenceNumber / ENET_PEER_RELIABLE_WINDOW_SIZE;
 
@@ -3716,74 +3807,76 @@ extern "C" {
 		}
 
 		switch (command->header.command & ENET_PROTOCOL_COMMAND_MASK) {
-			case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
-			case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
-				if (reliableSequenceNumber == channel->incomingReliableSequenceNumber)
-					goto discardCommand;
+		case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
+		case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+			if (reliableSequenceNumber == channel->incomingReliableSequenceNumber)
+				goto discardCommand;
 
-				for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingReliableCommands)); currentCommand != enet_list_end(&channel->incomingReliableCommands); currentCommand = enet_list_previous(currentCommand)) {
-					incomingCommand = (ENetIncomingCommand*)currentCommand;
+			for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingReliableCommands)); currentCommand != enet_list_end(&channel->incomingReliableCommands); currentCommand = enet_list_previous(currentCommand)) {
+				incomingCommand = (ENetIncomingCommand*)currentCommand;
 
-					if (reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
-						if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
-							continue;
-					} else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
-						break;
-					}
-
-					if (incomingCommand->reliableSequenceNumber <= reliableSequenceNumber) {
-						if (incomingCommand->reliableSequenceNumber < reliableSequenceNumber)
-							break;
-
-						goto discardCommand;
-					}
+				if (reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+					if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
+						continue;
+				}
+				else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+					break;
 				}
 
-				break;
-
-			case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
-			case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
-				unreliableSequenceNumber = ENET_NET_TO_HOST_16(command->sendUnreliable.unreliableSequenceNumber);
-
-				if (reliableSequenceNumber == channel->incomingReliableSequenceNumber && unreliableSequenceNumber <= channel->incomingUnreliableSequenceNumber)
-					goto discardCommand;
-
-				for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingUnreliableCommands)); currentCommand != enet_list_end(&channel->incomingUnreliableCommands); currentCommand = enet_list_previous(currentCommand)) {
-					incomingCommand = (ENetIncomingCommand*)currentCommand;
-
-					if ((command->header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED)
-						continue;
-
-					if (reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
-						if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
-							continue;
-					} else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
-						break;
-					}
-
+				if (incomingCommand->reliableSequenceNumber <= reliableSequenceNumber) {
 					if (incomingCommand->reliableSequenceNumber < reliableSequenceNumber)
 						break;
 
-					if (incomingCommand->reliableSequenceNumber > reliableSequenceNumber)
+					goto discardCommand;
+				}
+			}
+
+			break;
+
+		case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
+		case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
+			unreliableSequenceNumber = ENET_NET_TO_HOST_16(command->sendUnreliable.unreliableSequenceNumber);
+
+			if (reliableSequenceNumber == channel->incomingReliableSequenceNumber && unreliableSequenceNumber <= channel->incomingUnreliableSequenceNumber)
+				goto discardCommand;
+
+			for (currentCommand = enet_list_previous(enet_list_end(&channel->incomingUnreliableCommands)); currentCommand != enet_list_end(&channel->incomingUnreliableCommands); currentCommand = enet_list_previous(currentCommand)) {
+				incomingCommand = (ENetIncomingCommand*)currentCommand;
+
+				if ((command->header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED)
+					continue;
+
+				if (reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+					if (incomingCommand->reliableSequenceNumber < channel->incomingReliableSequenceNumber)
 						continue;
-
-					if (incomingCommand->unreliableSequenceNumber <= unreliableSequenceNumber) {
-						if (incomingCommand->unreliableSequenceNumber < unreliableSequenceNumber)
-							break;
-
-						goto discardCommand;
-					}
+				}
+				else if (incomingCommand->reliableSequenceNumber >= channel->incomingReliableSequenceNumber) {
+					break;
 				}
 
-				break;
+				if (incomingCommand->reliableSequenceNumber < reliableSequenceNumber)
+					break;
 
-			case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
-				currentCommand = enet_list_end(&channel->incomingUnreliableCommands);
+				if (incomingCommand->reliableSequenceNumber > reliableSequenceNumber)
+					continue;
 
-				break;
+				if (incomingCommand->unreliableSequenceNumber <= unreliableSequenceNumber) {
+					if (incomingCommand->unreliableSequenceNumber < unreliableSequenceNumber)
+						break;
 
-			default:
-				goto discardCommand;
+					goto discardCommand;
+				}
+			}
+
+			break;
+
+		case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
+			currentCommand = enet_list_end(&channel->incomingUnreliableCommands);
+
+			break;
+
+		default:
+			goto discardCommand;
 		}
 
 		if (peer->totalWaitingData >= peer->host->maximumWaitingData)
@@ -3828,21 +3921,21 @@ extern "C" {
 		enet_list_insert(enet_list_next(currentCommand), incomingCommand);
 
 		switch (command->header.command & ENET_PROTOCOL_COMMAND_MASK) {
-			case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
-			case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
-				enet_peer_dispatch_incoming_reliable_commands(peer, channel);
+		case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
+		case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+			enet_peer_dispatch_incoming_reliable_commands(peer, channel);
 
-				break;
+			break;
 
-			default:
-				enet_peer_dispatch_incoming_unreliable_commands(peer, channel);
+		default:
+			enet_peer_dispatch_incoming_unreliable_commands(peer, channel);
 
-				break;
+			break;
 		}
 
 		return incomingCommand;
 
-		discardCommand:
+	discardCommand:
 
 		if (fragmentCount > 0)
 			goto notifyError;
@@ -3852,7 +3945,7 @@ extern "C" {
 
 		return &dummyCommand;
 
-		notifyError:
+	notifyError:
 
 		if (packet != NULL && packet->referenceCount == 0)
 			enet_packet_destroy(packet);
@@ -3860,11 +3953,11 @@ extern "C" {
 		return NULL;
 	}
 
-/*
-=======================================================================
-	Host
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Host
+	=======================================================================
+	*/
 
 	ENetHost* enet_host_create(const ENetAddress* address, size_t peerCount, size_t channelLimit, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth, int bufferSize) {
 		ENetHost* host;
@@ -3898,7 +3991,7 @@ extern "C" {
 		if (host->socket == ENET_SOCKET_NULL || (address != NULL && enet_socket_bind(host->socket, address) < 0)) {
 			if (host->socket != ENET_SOCKET_NULL)
 				enet_socket_destroy(host->socket);
-			
+
 			enet_free(host->peers);
 			enet_free(host);
 
@@ -4261,7 +4354,8 @@ extern "C" {
 
 			if (bandwidth == 0) {
 				bandwidthLimit = 0;
-			} else {
+			}
+			else {
 				while (peersRemaining > 0 && needsAdjustment != 0) {
 					needsAdjustment = 0;
 					bandwidthLimit = bandwidth / peersRemaining;
@@ -4299,11 +4393,11 @@ extern "C" {
 		}
 	}
 
-/*
-=======================================================================
-	Address
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Address
+	=======================================================================
+	*/
 
 	int enet_address_set_host_ip(ENetAddress* address, const char* ip) {
 		int type = AF_INET6;
@@ -4317,15 +4411,15 @@ extern "C" {
 
 		if (!inet_pton(type, ip, destination)) {
 			ENET_LOG_ERROR("inet_pton failure");
-			return -1;
+			return ENET_INET_PTON_FAILURE;
 		}
-			
+
 
 		return 0;
 	}
 
 	int enet_address_set_host(ENetAddress* address, const char* name) {
-		struct addrinfo hints, *resultList = NULL, *result = NULL;
+		struct addrinfo hints, * resultList = NULL, * result = NULL;
 
 		memset(&hints, 0, sizeof(hints));
 
@@ -4333,9 +4427,9 @@ extern "C" {
 
 		if (getaddrinfo(name, NULL, &hints, &resultList) != 0) {
 			ENET_LOG_ERROR("Could not getaddrinfo");
-			return -1;
+			return ENET_GETADDRINFO_FAILURE;
 		}
-			
+
 
 		for (result = resultList; result != NULL; result = result->ai_next) {
 			if (result->ai_addr != NULL && result->ai_addrlen >= sizeof(struct sockaddr_in)) {
@@ -4350,7 +4444,8 @@ extern "C" {
 					freeaddrinfo(resultList);
 
 					return 0;
-				} else if (result->ai_family == AF_INET6) {
+				}
+				else if (result->ai_family == AF_INET6) {
 					struct sockaddr_in6* sin = (struct sockaddr_in6*)result->ai_addr;
 
 					address->ipv6 = sin->sin6_addr;
@@ -4371,9 +4466,9 @@ extern "C" {
 	int enet_address_get_host_ip(const ENetAddress* address, char* ip, size_t ipLength) {
 		if (inet_ntop(AF_INET6, &address->ipv6, ip, ipLength) == NULL) {
 			ENET_LOG_ERROR("inet_ntop failure (was NULL)");
-			return -1;
+			return ENET_INET_PTON_FAILURE;
 		}
-			
+
 
 		if (enet_array_is_zeroed(address->ipv4.zeros, sizeof(address->ipv4.zeros)) == 0 && address->ipv4.ffff == 0xFFFF)
 			enet_string_copy(ip, ip + 7, ipLength);
@@ -4391,656 +4486,657 @@ extern "C" {
 		sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
 		sin.sin6_addr = address->ipv6;
 
-		err = getnameinfo((struct sockaddr*)&sin, sizeof(sin), name, nameLength, NULL, 0, NI_NAMEREQD);
+		err = getnameinfo((struct sockaddr*) & sin, sizeof(sin), name, nameLength, NULL, 0, NI_NAMEREQD);
 
 		if (!err) {
 			if (name != NULL && nameLength > 0 && !memchr(name, '\0', nameLength)) {
 				ENET_LOG_ERROR("something funky going on here");
-				return -1;
+				return ENET_HOST_FUNKYSTUFF;
 			}
-				
 
-			return 0;
+			return ENET_HOST_RANDOMERROR;
 		}
 
 		if (err != EAI_NONAME) {
 			ENET_LOG_ERROR("some error occurred: %i", err);
 			return -1;
 		}
-			
+
 
 		return enet_address_get_host_ip(address, name, nameLength);
 	}
 
-/*
-=======================================================================
-	Platform-specific (Unix)
-=======================================================================
-*/
+	/*
+	=======================================================================
+		Platform-specific (Unix)
+	=======================================================================
+	*/
 
-	#ifndef _WIN32
-		int enet_initialize(void) {
-			return 0;
+#ifndef _WIN32
+	int enet_initialize(void) {
+		return 0;
+	}
+
+	void enet_deinitialize(void) { }
+
+	enet_uint64 enet_host_random_seed(void) {
+		struct timeval timeVal;
+
+		gettimeofday(&timeVal, NULL);
+
+		return (timeVal.tv_sec * 1000) ^ (timeVal.tv_usec / 1000);
+	}
+
+	int enet_socket_bind(ENetSocket socket, const ENetAddress* address) {
+		struct sockaddr_in6 sin;
+
+		memset(&sin, 0, sizeof(struct sockaddr_in6));
+
+		sin.sin6_family = AF_INET6;
+
+		if (address != NULL) {
+			sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
+			sin.sin6_addr = address->ipv6;
+		}
+		else {
+			sin.sin6_port = 0;
+			sin.sin6_addr = ENET_HOST_ANY;
 		}
 
-		void enet_deinitialize(void) { }
+		return bind(socket, (struct sockaddr*) & sin, sizeof(struct sockaddr_in6));
+	}
 
-		enet_uint64 enet_host_random_seed(void) {
+	int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
+		struct sockaddr_in6 sin;
+		socklen_t sinLength = sizeof(struct sockaddr_in6);
+
+		if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
+			ENET_LOG_ERROR("getsockname failure");
+			return ENET_GETSOCKINFO_FAILURE;
+		}
+
+
+		address->ipv6 = sin.sin6_addr;
+		address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
+
+		return 0;
+	}
+
+	int enet_socket_listen(ENetSocket socket, int backlog) {
+		return listen(socket, backlog < 0 ? SOMAXCONN : backlog);
+	}
+
+	ENetSocket enet_socket_create(ENetSocketType type) {
+		int socketType = (type == ENET_SOCKET_TYPE_DATAGRAM ? SOCK_DGRAM : SOCK_STREAM);
+
+#ifdef SOCK_CLOEXEC
+		socketType |= SOCK_CLOEXEC;
+#endif
+
+		return socket(PF_INET6, socketType, 0);
+	}
+
+	int enet_socket_set_option(ENetSocket socket, ENetSocketOption option, int value) {
+		int result = -1;
+
+		switch (option) {
+		case ENET_SOCKOPT_NONBLOCK:
+			result = fcntl(socket, F_SETFL, (value ? O_NONBLOCK : 0) | (fcntl(socket, F_GETFL) & ~O_NONBLOCK));
+
+			break;
+
+		case ENET_SOCKOPT_BROADCAST:
+			result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_REUSEADDR:
+			result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_RCVBUF:
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_SNDBUF:
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_RCVTIMEO: {
 			struct timeval timeVal;
 
-			gettimeofday(&timeVal, NULL);
+			timeVal.tv_sec = value / 1000;
+			timeVal.tv_usec = (value % 1000) * 1000;
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)& timeVal, sizeof(struct timeval));
 
-			return (timeVal.tv_sec * 1000) ^ (timeVal.tv_usec / 1000);
+			break;
 		}
 
-		int enet_socket_bind(ENetSocket socket, const ENetAddress* address) {
-			struct sockaddr_in6 sin;
+		case ENET_SOCKOPT_SNDTIMEO: {
+			struct timeval timeVal;
 
-			memset(&sin, 0, sizeof(struct sockaddr_in6));
+			timeVal.tv_sec = value / 1000;
+			timeVal.tv_usec = (value % 1000) * 1000;
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)& timeVal, sizeof(struct timeval));
 
-			sin.sin6_family = AF_INET6;
-
-			if (address != NULL) {
-				sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
-				sin.sin6_addr = address->ipv6;
-			} else {
-				sin.sin6_port = 0;
-				sin.sin6_addr = ENET_HOST_ANY;
-			}
-
-			return bind(socket, (struct sockaddr*)&sin, sizeof(struct sockaddr_in6));
+			break;
 		}
 
-		int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
-			struct sockaddr_in6 sin;
-			socklen_t sinLength = sizeof(struct sockaddr_in6);
+		case ENET_SOCKOPT_NODELAY:
+			result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)& value, sizeof(int));
 
-			if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
-				ENET_LOG_ERROR("getsockname failure");
-				return -1;
-			}
-				
+			break;
 
+		case ENET_SOCKOPT_IPV6_V6ONLY:
+			result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)& value, sizeof(int));
+
+			break;
+
+		default:
+			break;
+		}
+
+		return result == -1 ? -1 : 0;
+	}
+
+	int enet_socket_get_option(ENetSocket socket, ENetSocketOption option, int* value) {
+		int result = -1;
+		socklen_t len;
+
+		switch (option) {
+		case ENET_SOCKOPT_ERROR:
+			len = sizeof(int);
+			result = getsockopt(socket, SOL_SOCKET, SO_ERROR, value, &len);
+
+			break;
+
+		default:
+			break;
+		}
+
+		return result == -1 ? -1 : 0;
+	}
+
+	int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
+		int result = -1;
+		struct sockaddr_in6 sin;
+
+		memset(&sin, 0, sizeof(struct sockaddr_in6));
+
+		sin.sin6_family = AF_INET6;
+		sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
+		sin.sin6_addr = address->ipv6;
+
+		result = connect(socket, (struct sockaddr*) & sin, sizeof(struct sockaddr_in6));
+
+		if (result == -1 && errno == EINPROGRESS)
+			return 0;
+
+		return result;
+	}
+
+	ENetSocket enet_socket_accept(ENetSocket socket, ENetAddress* address) {
+		int result = -1;
+		struct sockaddr_in6 sin;
+		socklen_t sinLength = sizeof(struct sockaddr_in6);
+
+		result = accept(socket, address != NULL ? (struct sockaddr*) & sin : NULL, address != NULL ? &sinLength : NULL);
+
+		if (result == -1)
+			return ENET_SOCKET_NULL;
+
+		if (address != NULL) {
 			address->ipv6 = sin.sin6_addr;
 			address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
-
-			return 0;
 		}
 
-		int enet_socket_listen(ENetSocket socket, int backlog) {
-			return listen(socket, backlog < 0 ? SOMAXCONN : backlog);
-		}
+		return result;
+	}
 
-		ENetSocket enet_socket_create(ENetSocketType type) {
-			int socketType = (type == ENET_SOCKET_TYPE_DATAGRAM ? SOCK_DGRAM : SOCK_STREAM);
+	int enet_socket_shutdown(ENetSocket socket, ENetSocketShutdown how) {
+		return shutdown(socket, (int)how);
+	}
 
-			#ifdef SOCK_CLOEXEC
-				socketType |= SOCK_CLOEXEC;
-			#endif
+	void enet_socket_destroy(ENetSocket socket) {
+		if (socket != ENET_SOCKET_NULL)
+			close(socket);
+	}
 
-			return socket(PF_INET6, socketType, 0);
-		}
+	int enet_socket_send(ENetSocket socket, const ENetAddress* address, const ENetBuffer* buffers, size_t bufferCount) {
+		struct msghdr msgHdr;
+		struct sockaddr_in6 sin;
+		int sentLength;
 
-		int enet_socket_set_option(ENetSocket socket, ENetSocketOption option, int value) {
-			int result = -1;
+		memset(&msgHdr, 0, sizeof(struct msghdr));
 
-			switch (option) {
-				case ENET_SOCKOPT_NONBLOCK:
-					result = fcntl(socket, F_SETFL, (value ? O_NONBLOCK : 0) | (fcntl(socket, F_GETFL) & ~O_NONBLOCK));
-
-					break;
-
-				case ENET_SOCKOPT_BROADCAST:
-					result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_REUSEADDR:
-					result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_RCVBUF:
-					result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_SNDBUF:
-					result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_RCVTIMEO: {
-					struct timeval timeVal;
-
-					timeVal.tv_sec = value / 1000;
-					timeVal.tv_usec = (value % 1000) * 1000;
-					result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeVal, sizeof(struct timeval));
-
-					break;
-				}
-
-				case ENET_SOCKOPT_SNDTIMEO: {
-					struct timeval timeVal;
-
-					timeVal.tv_sec = value / 1000;
-					timeVal.tv_usec = (value % 1000) * 1000;
-					result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeVal, sizeof(struct timeval));
-
-					break;
-				}
-
-				case ENET_SOCKOPT_NODELAY:
-					result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_IPV6_V6ONLY:
-					result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&value, sizeof(int));
-
-					break;
-
-				default:
-					break;
-			}
-
-			return result == -1 ? -1 : 0;
-		}
-
-		int enet_socket_get_option(ENetSocket socket, ENetSocketOption option, int* value) {
-			int result = -1;
-			socklen_t len;
-
-			switch (option) {
-				case ENET_SOCKOPT_ERROR:
-					len = sizeof(int);
-					result = getsockopt(socket, SOL_SOCKET, SO_ERROR, value, &len);
-
-					break;
-
-				default:
-					break;
-			}
-
-			return result == -1 ? -1 : 0;
-		}
-
-		int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
-			int result = -1;
-			struct sockaddr_in6 sin;
-
+		if (address != NULL) {
 			memset(&sin, 0, sizeof(struct sockaddr_in6));
 
 			sin.sin6_family = AF_INET6;
 			sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
 			sin.sin6_addr = address->ipv6;
+			msgHdr.msg_name = &sin;
+			msgHdr.msg_namelen = sizeof(struct sockaddr_in6);
+		}
 
-			result = connect(socket, (struct sockaddr*)&sin, sizeof(struct sockaddr_in6));
+		msgHdr.msg_iov = (struct iovec*)buffers;
+		msgHdr.msg_iovlen = bufferCount;
+		sentLength = sendmsg(socket, &msgHdr, MSG_NOSIGNAL);
 
-			if (result == -1 && errno == EINPROGRESS)
+		if (sentLength == -1) {
+			if (errno == EWOULDBLOCK)
 				return 0;
 
-			return result;
+			ENET_LOG_ERROR("sentLength weirdness");
+			return ENET_SOCKET_SEND_WEIRDNESS;
 		}
 
-		ENetSocket enet_socket_accept(ENetSocket socket, ENetAddress* address) {
-			int result = -1;
-			struct sockaddr_in6 sin;
-			socklen_t sinLength = sizeof(struct sockaddr_in6);
+		return sentLength;
+	}
 
-			result = accept(socket, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? &sinLength : NULL);
+	int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buffers, size_t bufferCount) {
+		struct msghdr msgHdr;
+		struct sockaddr_in6 sin;
+		int recvLength;
 
-			if (result == -1)
-				return ENET_SOCKET_NULL;
+		memset(&msgHdr, 0, sizeof(struct msghdr));
 
-			if (address != NULL) {
-				address->ipv6 = sin.sin6_addr;
-				address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
-			}
-
-			return result;
+		if (address != NULL) {
+			msgHdr.msg_name = &sin;
+			msgHdr.msg_namelen = sizeof(struct sockaddr_in6);
 		}
 
-		int enet_socket_shutdown(ENetSocket socket, ENetSocketShutdown how) {
-			return shutdown(socket, (int)how);
-		}
+		msgHdr.msg_iov = (struct iovec*)buffers;
+		msgHdr.msg_iovlen = bufferCount;
+		recvLength = recvmsg(socket, &msgHdr, MSG_NOSIGNAL);
 
-		void enet_socket_destroy(ENetSocket socket) {
-			if (socket != ENET_SOCKET_NULL)
-				close(socket);
-		}
-
-		int enet_socket_send(ENetSocket socket, const ENetAddress* address, const ENetBuffer* buffers, size_t bufferCount) {
-			struct msghdr msgHdr;
-			struct sockaddr_in6 sin;
-			int sentLength;
-
-			memset(&msgHdr, 0, sizeof(struct msghdr));
-
-			if (address != NULL) {
-				memset(&sin, 0, sizeof(struct sockaddr_in6));
-
-				sin.sin6_family = AF_INET6;
-				sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
-				sin.sin6_addr = address->ipv6;
-				msgHdr.msg_name = &sin;
-				msgHdr.msg_namelen = sizeof(struct sockaddr_in6);
-			}
-
-			msgHdr.msg_iov = (struct iovec*)buffers;
-			msgHdr.msg_iovlen = bufferCount;
-			sentLength = sendmsg(socket, &msgHdr, MSG_NOSIGNAL);
-
-			if (sentLength == -1) {
-				if (errno == EWOULDBLOCK)
-					return 0;
-
-				ENET_LOG_ERROR("sentLength weirdness");
-				return -1;
-			}
-
-			return sentLength;
-		}
-
-		int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buffers, size_t bufferCount) {
-			struct msghdr msgHdr;
-			struct sockaddr_in6 sin;
-			int recvLength;
-
-			memset(&msgHdr, 0, sizeof(struct msghdr));
-
-			if (address != NULL) {
-				msgHdr.msg_name = &sin;
-				msgHdr.msg_namelen = sizeof(struct sockaddr_in6);
-			}
-
-			msgHdr.msg_iov = (struct iovec*)buffers;
-			msgHdr.msg_iovlen = bufferCount;
-			recvLength = recvmsg(socket, &msgHdr, MSG_NOSIGNAL);
-
-			if (recvLength == -1) {
-				if (errno == EWOULDBLOCK)
-					return 0;
-
-				ENET_LOG_ERROR("recvLength weirdness");
-				return -1;
-			}
-
-			if (msgHdr.msg_flags & MSG_TRUNC) {
-				ENET_LOG_ERROR("message was truncated...");
-				return -1;
-			}
-				
-
-			if (address != NULL) {
-				address->ipv6 = sin.sin6_addr;
-				address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
-			}
-
-			return recvLength;
-		}
-
-		int enet_socket_set_select(ENetSocket maxSocket, ENetSocketSet* readSet, ENetSocketSet* writeSet, enet_uint32 timeout) {
-			struct timeval timeVal;
-
-			timeVal.tv_sec = timeout / 1000;
-			timeVal.tv_usec = (timeout % 1000) * 1000;
-
-			return select(maxSocket + 1, readSet, writeSet, NULL, &timeVal);
-		}
-
-		int enet_socket_wait(ENetSocket socket, enet_uint32* condition, enet_uint64 timeout) {
-			struct pollfd pollSocket;
-			int pollCount;
-
-			pollSocket.fd = socket;
-			pollSocket.events = 0;
-
-			if (*condition & ENET_SOCKET_WAIT_SEND)
-				pollSocket.events |= POLLOUT;
-
-			if (*condition & ENET_SOCKET_WAIT_RECEIVE)
-				pollSocket.events |= POLLIN;
-
-			pollCount = poll(&pollSocket, 1, timeout);
-
-			if (pollCount < 0) {
-				if (errno == EINTR && *condition & ENET_SOCKET_WAIT_INTERRUPT) {
-					*condition = ENET_SOCKET_WAIT_INTERRUPT;
-
-					return 0;
-				}
-
-				ENET_LOG_ERROR("pollCount < 0: %i", pollCount);
-				return -1;
-			}
-
-			*condition = ENET_SOCKET_WAIT_NONE;
-
-			if (pollCount == 0)
+		if (recvLength == -1) {
+			if (errno == EWOULDBLOCK)
 				return 0;
 
-			if (pollSocket.revents & POLLOUT)
-				*condition |= ENET_SOCKET_WAIT_SEND;
-
-			if (pollSocket.revents & POLLIN)
-				*condition |= ENET_SOCKET_WAIT_RECEIVE;
-
-			return 0;
-		}
-	#endif
-
-/*
-=======================================================================
-	Platform-specific (Windows)
-=======================================================================
-*/
-
-	#ifdef _WIN32
-		int enet_initialize(void) {
-			WORD versionRequested = MAKEWORD(2, 2);
-			WSADATA wsaData;
-
-			if (WSAStartup(versionRequested, &wsaData)) {
-				ENET_LOG_ERROR("WSAStartup failure");
-				return -1;
-			}
-
-				
-
-			if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
-				ENET_LOG_ERROR("Winsock version mismatch");
-				WSACleanup();
-				return -1;
-			}
-
-			timeBeginPeriod(1);
-			ENET_LOG_TRACE("Initialization");
-			return 0;
+			ENET_LOG_ERROR("recvLength weirdness");
+			return ENET_SOCKET_RECEIVE_WEIRDNESS;
 		}
 
-		void enet_deinitialize(void) {
-			timeEndPeriod(1);
+		if (msgHdr.msg_flags & MSG_TRUNC) {
+			ENET_LOG_ERROR("message was truncated...");
+			return ENET_SOCKET_MSGTRUNCATED;
+		}
+
+
+		if (address != NULL) {
+			address->ipv6 = sin.sin6_addr;
+			address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
+		}
+
+		return recvLength;
+	}
+
+	int enet_socket_set_select(ENetSocket maxSocket, ENetSocketSet* readSet, ENetSocketSet* writeSet, enet_uint32 timeout) {
+		struct timeval timeVal;
+
+		timeVal.tv_sec = timeout / 1000;
+		timeVal.tv_usec = (timeout % 1000) * 1000;
+
+		return select(maxSocket + 1, readSet, writeSet, NULL, &timeVal);
+	}
+
+	int enet_socket_wait(ENetSocket socket, enet_uint32* condition, enet_uint64 timeout) {
+		struct pollfd pollSocket;
+		int pollCount;
+
+		pollSocket.fd = socket;
+		pollSocket.events = 0;
+
+		if (*condition & ENET_SOCKET_WAIT_SEND)
+			pollSocket.events |= POLLOUT;
+
+		if (*condition & ENET_SOCKET_WAIT_RECEIVE)
+			pollSocket.events |= POLLIN;
+
+		pollCount = poll(&pollSocket, 1, timeout);
+
+		if (pollCount < 0) {
+			if (errno == EINTR && *condition & ENET_SOCKET_WAIT_INTERRUPT) {
+				*condition = ENET_SOCKET_WAIT_INTERRUPT;
+
+				return 0;
+			}
+
+			ENET_LOG_ERROR("pollCount < 0: %i", pollCount);
+			return ENET_SOCKET_WAITPOLL_NEGATIVE;
+		}
+
+		*condition = ENET_SOCKET_WAIT_NONE;
+
+		if (pollCount == 0)
+			return 0;
+
+		if (pollSocket.revents & POLLOUT)
+			* condition |= ENET_SOCKET_WAIT_SEND;
+
+		if (pollSocket.revents & POLLIN)
+			* condition |= ENET_SOCKET_WAIT_RECEIVE;
+
+		return 0;
+	}
+#endif
+
+	/*
+	=======================================================================
+		Platform-specific (Windows)
+	=======================================================================
+	*/
+
+#ifdef _WIN32
+	int enet_initialize(void) {
+		WORD versionRequested = MAKEWORD(2, 2);
+		WSADATA wsaData;
+
+		if (WSAStartup(versionRequested, &wsaData)) {
+			ENET_LOG_ERROR("WSAStartup failure");
+			return ENET_SOCKET_WSAFAILED;
+		}
+
+
+
+		if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+			ENET_LOG_ERROR("Winsock version mismatch");
 			WSACleanup();
-			ENET_LOG_TRACE("Deinitialization");
+			return ENET_SOCKET_WINSOCKMISMATCH;
 		}
 
-		enet_uint64 enet_host_random_seed(void) {
-			return (enet_uint64)timeGetTime();
+		timeBeginPeriod(1);
+		ENET_LOG_TRACE("Initialization");
+		return 0;
+	}
+
+	void enet_deinitialize(void) {
+		timeEndPeriod(1);
+		WSACleanup();
+		ENET_LOG_TRACE("Deinitialization");
+	}
+
+	enet_uint64 enet_host_random_seed(void) {
+		return (enet_uint64)timeGetTime();
+	}
+
+	int enet_socket_bind(ENetSocket socket, const ENetAddress* address) {
+		struct sockaddr_in6 sin;
+
+		memset(&sin, 0, sizeof(struct sockaddr_in6));
+
+		sin.sin6_family = AF_INET6;
+
+		if (address != NULL) {
+			sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
+			sin.sin6_addr = address->ipv6;
+		}
+		else {
+			sin.sin6_port = 0;
+			sin.sin6_addr = in6addr_any;
 		}
 
-		int enet_socket_bind(ENetSocket socket, const ENetAddress* address) {
-			struct sockaddr_in6 sin;
+		return bind(socket, (struct sockaddr*) & sin, sizeof(struct sockaddr_in6)) == SOCKET_ERROR ? -1 : 0;
+	}
 
-			memset(&sin, 0, sizeof(struct sockaddr_in6));
+	int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
+		struct sockaddr_in6 sin;
+		int sinLength = sizeof(struct sockaddr_in6);
 
-			sin.sin6_family = AF_INET6;
-
-			if (address != NULL) {
-				sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
-				sin.sin6_addr = address->ipv6;
-			} else {
-				sin.sin6_port = 0;
-				sin.sin6_addr = in6addr_any;
-			}
-
-			return bind(socket, (struct sockaddr*)&sin, sizeof(struct sockaddr_in6)) == SOCKET_ERROR ? -1 : 0;
+		if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
+			ENET_LOG_ERROR("getsockname failure");
+			return ENET_SOCKET_GETSOCKNAME_FAILURE;
 		}
 
-		int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
-			struct sockaddr_in6 sin;
-			int sinLength = sizeof(struct sockaddr_in6);
 
-			if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
-				ENET_LOG_ERROR("getsockname failure");
-				return -1;
-			}
-				
+		address->ipv6 = sin.sin6_addr;
+		address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
 
+		return 0;
+	}
+
+	int enet_socket_listen(ENetSocket socket, int backlog) {
+		return listen(socket, backlog < 0 ? SOMAXCONN : backlog) == SOCKET_ERROR ? -1 : 0;
+	}
+
+	ENetSocket enet_socket_create(ENetSocketType type) {
+		return socket(PF_INET6, type == ENET_SOCKET_TYPE_DATAGRAM ? SOCK_DGRAM : SOCK_STREAM, 0);
+	}
+
+	int enet_socket_set_option(ENetSocket socket, ENetSocketOption option, int value) {
+		int result = SOCKET_ERROR;
+
+		switch (option) {
+		case ENET_SOCKOPT_NONBLOCK: {
+			u_long nonBlocking = (u_long)value;
+
+			result = ioctlsocket(socket, FIONBIO, &nonBlocking);
+
+			break;
+		}
+
+		case ENET_SOCKOPT_BROADCAST:
+			result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_REUSEADDR:
+			result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_RCVBUF:
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_SNDBUF:
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_RCVTIMEO:
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_SNDTIMEO:
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_NODELAY:
+			result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)& value, sizeof(int));
+
+			break;
+
+		case ENET_SOCKOPT_IPV6_V6ONLY:
+			result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)& value, sizeof(int));
+
+			break;
+
+		default:
+			break;
+		}
+
+		return result == SOCKET_ERROR ? -1 : 0;
+	}
+
+	int enet_socket_get_option(ENetSocket socket, ENetSocketOption option, int* value) {
+		int result = SOCKET_ERROR, len;
+
+		switch (option) {
+		case ENET_SOCKOPT_ERROR:
+			len = sizeof(int);
+			result = getsockopt(socket, SOL_SOCKET, SO_ERROR, (char*)value, &len);
+
+			break;
+
+		default:
+			break;
+		}
+
+		return result == SOCKET_ERROR ? -1 : 0;
+	}
+
+	int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
+		int result = -1;
+		struct sockaddr_in6 sin;
+
+		memset(&sin, 0, sizeof(struct sockaddr_in6));
+
+		sin.sin6_family = AF_INET6;
+		sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
+		sin.sin6_addr = address->ipv6;
+		result = connect(socket, (struct sockaddr*) & sin, sizeof(struct sockaddr_in6));
+
+		if (result == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {
+			int winSockWhat = WSAGetLastError();
+			ENET_LOG_ERROR("Socket connect failure, return code: %i, WSAGetLastError: %i", result, winSockWhat);
+			return ENET_SOCKET_WSAFAILED;
+		}
+
+		return 0;
+	}
+
+	ENetSocket enet_socket_accept(ENetSocket socket, ENetAddress* address) {
+		SOCKET result;
+		struct sockaddr_in6 sin;
+		int sinLength = sizeof(struct sockaddr_in6);
+
+		result = accept(socket, address != NULL ? (struct sockaddr*) & sin : NULL, address != NULL ? &sinLength : NULL);
+
+		if (result == INVALID_SOCKET) {
+			ENET_LOG_ERROR("Tried to accept from an invalid socket");
+			return ENET_SOCKET_NULL;
+		}
+
+
+		if (address != NULL) {
 			address->ipv6 = sin.sin6_addr;
 			address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
-
-			return 0;
 		}
 
-		int enet_socket_listen(ENetSocket socket, int backlog) {
-			return listen(socket, backlog < 0 ? SOMAXCONN : backlog) == SOCKET_ERROR ? -1 : 0;
-		}
+		return result;
+	}
 
-		ENetSocket enet_socket_create(ENetSocketType type) {
-			return socket(PF_INET6, type == ENET_SOCKET_TYPE_DATAGRAM ? SOCK_DGRAM : SOCK_STREAM, 0);
-		}
+	int enet_socket_shutdown(ENetSocket socket, ENetSocketShutdown how) {
+		return shutdown(socket, (int)how) == SOCKET_ERROR ? -1 : 0;
+	}
 
-		int enet_socket_set_option(ENetSocket socket, ENetSocketOption option, int value) {
-			int result = SOCKET_ERROR;
+	void enet_socket_destroy(ENetSocket socket) {
+		if (socket != INVALID_SOCKET)
+			closesocket(socket);
+	}
 
-			switch (option) {
-				case ENET_SOCKOPT_NONBLOCK: {
-					u_long nonBlocking = (u_long)value;
+	int enet_socket_send(ENetSocket socket, const ENetAddress* address, const ENetBuffer* buffers, size_t bufferCount) {
+		struct sockaddr_in6 sin;
+		DWORD sentLength;
 
-					result = ioctlsocket(socket, FIONBIO, &nonBlocking);
-
-					break;
-				}
-
-				case ENET_SOCKOPT_BROADCAST:
-					result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_REUSEADDR:
-					result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_RCVBUF:
-					result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_SNDBUF:
-					result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_RCVTIMEO:
-					result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_SNDTIMEO:
-					result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_NODELAY:
-					result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(int));
-
-					break;
-
-				case ENET_SOCKOPT_IPV6_V6ONLY:
-					result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&value, sizeof(int));
-
-					break;
-
-				default:
-					break;
-			}
-
-			return result == SOCKET_ERROR ? -1 : 0;
-		}
-
-		int enet_socket_get_option(ENetSocket socket, ENetSocketOption option, int* value) {
-			int result = SOCKET_ERROR, len;
-
-			switch (option) {
-				case ENET_SOCKOPT_ERROR:
-					len = sizeof(int);
-					result = getsockopt(socket, SOL_SOCKET, SO_ERROR, (char*)value, &len);
-
-					break;
-
-				default:
-					break;
-			}
-
-			return result == SOCKET_ERROR ? -1 : 0;
-		}
-
-		int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
-			int result = -1;
-			struct sockaddr_in6 sin;
-
+		if (address != NULL) {
 			memset(&sin, 0, sizeof(struct sockaddr_in6));
 
 			sin.sin6_family = AF_INET6;
 			sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
 			sin.sin6_addr = address->ipv6;
-			result = connect(socket, (struct sockaddr*)&sin, sizeof(struct sockaddr_in6));
-
-			if (result == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {
-				int winSockWhat = WSAGetLastError();
-				ENET_LOG_ERROR("Socket connect failure, return code: %i, WSAGetLastError: %i", result, winSockWhat);
-				return -1;
-			}
-				
-			return 0;
 		}
 
-		ENetSocket enet_socket_accept(ENetSocket socket, ENetAddress* address) {
-			SOCKET result;
-			struct sockaddr_in6 sin;
-			int sinLength = sizeof(struct sockaddr_in6);
+		if (WSASendTo(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &sentLength, 0, address != NULL ? (struct sockaddr*) & sin : NULL, address != NULL ? sizeof(struct sockaddr_in6) : 0, NULL, NULL) == SOCKET_ERROR)
+			return (WSAGetLastError() == WSAEWOULDBLOCK) ? 0 : -1;
 
-			result = accept(socket, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? &sinLength : NULL);
+		return (int)sentLength;
+	}
 
-			if (result == INVALID_SOCKET) {
-				ENET_LOG_ERROR("Tried to accept from an invalid socket");
-				return ENET_SOCKET_NULL;
-			}
-				
+	int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buffers, size_t bufferCount) {
+		INT sinLength = sizeof(struct sockaddr_in6);
+		DWORD flags = 0, recvLength;
+		struct sockaddr_in6 sin;
 
-			if (address != NULL) {
-				address->ipv6 = sin.sin6_addr;
-				address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
-			}
+		if (WSARecvFrom(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &recvLength, &flags, address != NULL ? (struct sockaddr*) & sin : NULL, address != NULL ? &sinLength : NULL, NULL, NULL) == SOCKET_ERROR) {
 
-			return result;
-		}
+			int retCode = WSAGetLastError();
 
-		int enet_socket_shutdown(ENetSocket socket, ENetSocketShutdown how) {
-			return shutdown(socket, (int)how) == SOCKET_ERROR ? -1 : 0;
-		}
-
-		void enet_socket_destroy(ENetSocket socket) {
-			if (socket != INVALID_SOCKET)
-				closesocket(socket);
-		}
-
-		int enet_socket_send(ENetSocket socket, const ENetAddress* address, const ENetBuffer* buffers, size_t bufferCount) {
-			struct sockaddr_in6 sin;
-			DWORD sentLength;
-
-			if (address != NULL) {
-				memset(&sin, 0, sizeof(struct sockaddr_in6));
-
-				sin.sin6_family = AF_INET6;
-				sin.sin6_port = ENET_HOST_TO_NET_16(address->port);
-				sin.sin6_addr = address->ipv6;
-			}
-
-			if (WSASendTo(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &sentLength, 0, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? sizeof(struct sockaddr_in6) : 0, NULL, NULL) == SOCKET_ERROR)
-				return (WSAGetLastError() == WSAEWOULDBLOCK) ? 0 : -1;
-
-			return (int)sentLength;
-		}
-
-		int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buffers, size_t bufferCount) {
-			INT sinLength = sizeof(struct sockaddr_in6);
-			DWORD flags = 0, recvLength;
-			struct sockaddr_in6 sin;
-
-			if (WSARecvFrom(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &recvLength, &flags, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? &sinLength : NULL, NULL, NULL) == SOCKET_ERROR) {
-
-				int retCode = WSAGetLastError();
-
-				switch (retCode) {
-					case WSAEWOULDBLOCK:
-					case WSAECONNRESET:
-						return 0;
-				}
-
-				ENET_LOG_ERROR("Socket receive failure, WSA return code %d", retCode);
-				return -1;
-			}
-
-			if (flags & MSG_PARTIAL) {
-				ENET_LOG_ERROR("Socket receive message was partial??");
-				return -1;
-			}
-				
-			if (address != NULL) {
-				address->ipv6 = sin.sin6_addr;
-				address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
-			}
-
-			return (int)recvLength;
-		}
-
-		int enet_socket_set_select(ENetSocket maxSocket, ENetSocketSet* readSet, ENetSocketSet* writeSet, enet_uint32 timeout) {
-			struct timeval timeVal;
-
-			timeVal.tv_sec = timeout / 1000;
-			timeVal.tv_usec = (timeout % 1000) * 1000;
-
-			return select(maxSocket + 1, readSet, writeSet, NULL, &timeVal);
-		}
-
-		int enet_socket_wait(ENetSocket socket, enet_uint32* condition, enet_uint64 timeout) {
-			fd_set readSet, writeSet;
-			struct timeval timeVal;
-			int selectCount;
-
-			timeVal.tv_sec = timeout / 1000;
-			timeVal.tv_usec = (timeout % 1000) * 1000;
-
-			FD_ZERO(&readSet);
-			FD_ZERO(&writeSet);
-
-			if (*condition & ENET_SOCKET_WAIT_SEND)
-				FD_SET(socket, &writeSet);
-
-			if (*condition & ENET_SOCKET_WAIT_RECEIVE)
-				FD_SET(socket, &readSet);
-
-			selectCount = select(socket + 1, &readSet, &writeSet, NULL, &timeVal);
-
-			if (selectCount < 0) {
-				ENET_LOG_ERROR("selectCount < 0; was %d", selectCount);
-				return -1;
-			}
-				
-
-			*condition = ENET_SOCKET_WAIT_NONE;
-
-			if (selectCount == 0)
+			switch (retCode) {
+			case WSAEWOULDBLOCK:
+			case WSAECONNRESET:
 				return 0;
+			}
 
-			if (FD_ISSET(socket, &writeSet))
-				*condition |= ENET_SOCKET_WAIT_SEND;
-
-			if (FD_ISSET(socket, &readSet))
-				*condition |= ENET_SOCKET_WAIT_RECEIVE;
-
-			return 0;
+			ENET_LOG_ERROR("Socket receive failure, WSA return code %d", retCode);
+			return ENET_SOCKET_WSAFAILED;
 		}
-	#endif
 
-/*
-=======================================================================
-	Extended functionality
-=======================================================================
-*/
+		if (flags & MSG_PARTIAL) {
+			ENET_LOG_ERROR("Socket receive message was partial??");
+			return ENET_SOCKET_MSGPARTIAL;
+		}
+
+		if (address != NULL) {
+			address->ipv6 = sin.sin6_addr;
+			address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
+		}
+
+		return (int)recvLength;
+	}
+
+	int enet_socket_set_select(ENetSocket maxSocket, ENetSocketSet* readSet, ENetSocketSet* writeSet, enet_uint32 timeout) {
+		struct timeval timeVal;
+
+		timeVal.tv_sec = timeout / 1000;
+		timeVal.tv_usec = (timeout % 1000) * 1000;
+
+		return select(maxSocket + 1, readSet, writeSet, NULL, &timeVal);
+	}
+
+	int enet_socket_wait(ENetSocket socket, enet_uint32* condition, enet_uint64 timeout) {
+		fd_set readSet, writeSet;
+		struct timeval timeVal;
+		int selectCount;
+
+		timeVal.tv_sec = timeout / 1000;
+		timeVal.tv_usec = (timeout % 1000) * 1000;
+
+		FD_ZERO(&readSet);
+		FD_ZERO(&writeSet);
+
+		if (*condition & ENET_SOCKET_WAIT_SEND)
+			FD_SET(socket, &writeSet);
+
+		if (*condition & ENET_SOCKET_WAIT_RECEIVE)
+			FD_SET(socket, &readSet);
+
+		selectCount = select(socket + 1, &readSet, &writeSet, NULL, &timeVal);
+
+		if (selectCount < 0) {
+			ENET_LOG_ERROR("selectCount < 0; was %d", selectCount);
+			return ENET_SOCKET_WAITPOLL_NEGATIVE;
+		}
+
+
+		*condition = ENET_SOCKET_WAIT_NONE;
+
+		if (selectCount == 0)
+			return 0;
+
+		if (FD_ISSET(socket, &writeSet))
+			* condition |= ENET_SOCKET_WAIT_SEND;
+
+		if (FD_ISSET(socket, &readSet))
+			* condition |= ENET_SOCKET_WAIT_RECEIVE;
+
+		return 0;
+	}
+#endif
+
+	/*
+	=======================================================================
+		Extended functionality
+	=======================================================================
+	*/
 
 	void* enet_packet_get_data(const ENetPacket* packet) {
 		return (void*)packet->data;
