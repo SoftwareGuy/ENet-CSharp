@@ -112,14 +112,14 @@ CMakeHelpLink - link to repo or other magical site when error occurs
     <Target Name="CMakeCleanFailed">
         <Warning Text="CMake -- the most common cause of CMake clean errors is file locking (eg. windows console in the build dir)" />
         <Warning Text="CMake -- please unlock or reboot and try cleaning again before filing an issue on github:" />
-        <Warning Text="CMake -- https://github.com/cburns/socklynx" />
+        <Warning Text="CMake -- https://github.com/SoftwareGuy/ENet-CSharp" />
         <Error Text="CMake -- build failed: $(CMakeProjName)" />
     </Target>
 
     <Target Name="CMakeBuildFailed">
         <Warning Text="CMake -- the most common cause of CMake build errors is changing config without cleaning" />
         <Warning Text="CMake -- please try cleaning and building again before filing an issue on github:" />
-        <Warning Text="CMake -- https://github.com/cburns/socklynx" />
+        <Warning Text="CMake -- https://github.com/SoftwareGuy/ENet-CSharp" />
         <Error Text="CMake -- build failed: $(CMakeProjName)" />
     </Target>
 
