@@ -1002,7 +1002,7 @@ namespace ENet
 #if __IOS__ || UNITY_IOS && !UNITY_EDITOR
         // iOS
 		private const string nativeLibrary = "__Internal";
-#elif __APPLE__ || UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#elif __APPLE__ || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         // MacOS
         // Custom ENet Repo builds as libenet.bundle; make sure it's the same.
         private const string nativeLibrary = "libenet";
