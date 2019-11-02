@@ -3083,9 +3083,8 @@ extern "C" {
 		timeout += host->serviceTime;
 
 		do {
-			// Temporary snip by c6burns & Coburn: Investigating reliable UDP being throttled when under heavy stress
-			// if (ENET_TIME_DIFFERENCE(host->serviceTime, host->bandwidthThrottleEpoch) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL)
-			//	enet_host_bandwidth_throttle(host);
+			if (ENET_TIME_DIFFERENCE(host->serviceTime, host->bandwidthThrottleEpoch) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL)
+				enet_host_bandwidth_throttle(host);
 
 			switch (enet_protocol_send_outgoing_commands(host, event, 1)) {
 			case 1:
