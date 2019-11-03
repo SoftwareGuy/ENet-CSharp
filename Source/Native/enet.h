@@ -59,7 +59,7 @@
 	 ENET Error Codes
  =======================================================================
  */
-// General
+ // General
 #define ENET_LIBRARY_TOO_OLD -1
 #define ENET_LIBRARY_MEMALLOC_NULL -2
 // Address and Socket Lookup failures
@@ -295,6 +295,9 @@ extern "C" {
 
 #endif
 
+	// Cherry picked from nxrighthere repo, commit d9ad27e: "Avoid naming collision"
+#define enet_in6_equal(a, b) (memcmp(&a, &b, sizeof(struct in6_addr)) == 0)
+
 	/*
 	=======================================================================
 		Protocol
@@ -512,8 +515,6 @@ extern "C" {
 		};
 		uint16_t port;
 	} ENetAddress;
-
-#define in6_equal(a, b) (memcmp(&a, &b, sizeof(struct in6_addr)) == 0)
 
 	typedef enum _ENetPacketFlag {
 		ENET_PACKET_FLAG_NONE = 0,
@@ -1208,7 +1209,7 @@ extern "C" {
 
 		if (n == 0) {
 			if (length != 0)
-				* d = '\0';
+				*d = '\0';
 
 			while (*s++);
 		}
@@ -1757,7 +1758,7 @@ extern "C" {
 				if (peer == NULL)
 					peer = currentPeer;
 			}
-			else if (currentPeer->state != ENET_PEER_STATE_CONNECTING && in6_equal(currentPeer->address.ipv6, host->receivedAddress.ipv6)) {
+			else if (currentPeer->state != ENET_PEER_STATE_CONNECTING && enet_in6_equal(currentPeer->address.ipv6, host->receivedAddress.ipv6)) {
 				if (currentPeer->address.port == host->receivedAddress.port && currentPeer->connectID == command->connect.connectID)
 					return NULL;
 
@@ -2432,12 +2433,12 @@ extern "C" {
 		else {
 			peer = &host->peers[peerID];
 
-			if (peer->state == ENET_PEER_STATE_DISCONNECTED || peer->state == ENET_PEER_STATE_ZOMBIE || ((!in6_equal(host->receivedAddress.ipv6, peer->address.ipv6) || host->receivedAddress.port != peer->address.port) && peer->address.ipv4.ip.s_addr != INADDR_BROADCAST) || (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID && sessionID != peer->incomingSessionID))
+			if (peer->state == ENET_PEER_STATE_DISCONNECTED || peer->state == ENET_PEER_STATE_ZOMBIE || ((!enet_in6_equal(host->receivedAddress.ipv6, peer->address.ipv6) || host->receivedAddress.port != peer->address.port) && peer->address.ipv4.ip.s_addr != INADDR_BROADCAST) || (peer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID && sessionID != peer->incomingSessionID))
 				return 0;
 		}
 
 		if (host->checksumCallback != NULL) {
-			enet_uint32* checksum = (enet_uint32*)& host->receivedData[headerSize - sizeof(enet_uint32)];
+			enet_uint32* checksum = (enet_uint32*)&host->receivedData[headerSize - sizeof(enet_uint32)];
 			enet_uint32 desiredChecksum = *checksum;
 			ENetBuffer buffer;
 			*checksum = peer != NULL ? peer->connectID : 0;
@@ -3014,7 +3015,7 @@ extern "C" {
 				header->peerID = ENET_HOST_TO_NET_16(currentPeer->outgoingPeerID | host->headerFlags);
 
 				if (host->checksumCallback != NULL) {
-					enet_uint32* checksum = (enet_uint32*)& headerData[host->buffers->dataLength];
+					enet_uint32* checksum = (enet_uint32*)&headerData[host->buffers->dataLength];
 					*checksum = currentPeer->outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID ? currentPeer->connectID : 0;
 					host->buffers->dataLength += sizeof(enet_uint32);
 					*checksum = host->checksumCallback(host->buffers, host->bufferCount);
@@ -3328,7 +3329,7 @@ extern "C" {
 		incomingCommand = (ENetIncomingCommand*)enet_list_remove(enet_list_begin(&peer->dispatchedCommands));
 
 		if (channelID != NULL)
-			* channelID = incomingCommand->command.header.channelID;
+			*channelID = incomingCommand->command.header.channelID;
 
 		packet = incomingCommand->packet;
 		--packet->referenceCount;
@@ -4586,22 +4587,22 @@ extern "C" {
 			break;
 
 		case ENET_SOCKOPT_BROADCAST:
-			result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_REUSEADDR:
-			result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_RCVBUF:
-			result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_SNDBUF:
-			result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(int));
 
 			break;
 
@@ -4610,7 +4611,7 @@ extern "C" {
 
 			timeVal.tv_sec = value / 1000;
 			timeVal.tv_usec = (value % 1000) * 1000;
-			result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)& timeVal, sizeof(struct timeval));
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeVal, sizeof(struct timeval));
 
 			break;
 		}
@@ -4620,18 +4621,18 @@ extern "C" {
 
 			timeVal.tv_sec = value / 1000;
 			timeVal.tv_usec = (value % 1000) * 1000;
-			result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)& timeVal, sizeof(struct timeval));
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeVal, sizeof(struct timeval));
 
 			break;
 		}
 
 		case ENET_SOCKOPT_NODELAY:
-			result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)& value, sizeof(int));
+			result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_IPV6_V6ONLY:
-			result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)& value, sizeof(int));
+			result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&value, sizeof(int));
 
 			break;
 
@@ -4816,10 +4817,10 @@ extern "C" {
 			return 0;
 
 		if (pollSocket.revents & POLLOUT)
-			* condition |= ENET_SOCKET_WAIT_SEND;
+			*condition |= ENET_SOCKET_WAIT_SEND;
 
 		if (pollSocket.revents & POLLIN)
-			* condition |= ENET_SOCKET_WAIT_RECEIVE;
+			*condition |= ENET_SOCKET_WAIT_RECEIVE;
 
 		return 0;
 	}
@@ -4920,42 +4921,42 @@ extern "C" {
 		}
 
 		case ENET_SOCKOPT_BROADCAST:
-			result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_REUSEADDR:
-			result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_RCVBUF:
-			result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_SNDBUF:
-			result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_RCVTIMEO:
-			result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_SNDTIMEO:
-			result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)& value, sizeof(int));
+			result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_NODELAY:
-			result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)& value, sizeof(int));
+			result = setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(int));
 
 			break;
 
 		case ENET_SOCKOPT_IPV6_V6ONLY:
-			result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)& value, sizeof(int));
+			result = setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&value, sizeof(int));
 
 			break;
 
@@ -5123,10 +5124,10 @@ extern "C" {
 			return 0;
 
 		if (FD_ISSET(socket, &writeSet))
-			* condition |= ENET_SOCKET_WAIT_SEND;
+			*condition |= ENET_SOCKET_WAIT_SEND;
 
 		if (FD_ISSET(socket, &readSet))
-			* condition |= ENET_SOCKET_WAIT_RECEIVE;
+			*condition |= ENET_SOCKET_WAIT_RECEIVE;
 
 		return 0;
 	}
