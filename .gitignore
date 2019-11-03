@@ -8,3 +8,5 @@ build*
 Directory.Build.rsp
 Unity
 
+x86_Build/
+UpgradeLog.htm
