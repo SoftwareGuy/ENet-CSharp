@@ -1024,16 +1024,16 @@ namespace ENet
         [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint enet_time_get();
 
-        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern int enet_address_set_host_ip(ref ENetAddress address, string ip);
 
-        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern int enet_address_set_host(ref ENetAddress address, string hostName);
 
-        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern int enet_address_get_host_ip(ENetAddress address, StringBuilder ip, IntPtr ipLength);
 
-        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern int enet_address_get_host(ENetAddress address, StringBuilder hostName, IntPtr nameLength);
 
         [DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
