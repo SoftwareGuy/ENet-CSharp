@@ -29,12 +29,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
-
+// Include the ENET Logging/Tracing Functionality.
 #include "enet_log.h"
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 3
-#define ENET_VERSION_PATCH 0
+#define ENET_VERSION_PATCH 3
 #define ENET_VERSION_CREATE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 #define ENET_VERSION_GET_MAJOR(version) (((version) >> 16) & 0xFF)
 #define ENET_VERSION_GET_MINOR(version) (((version) >> 8) & 0xFF)
@@ -117,109 +117,109 @@
  */
 
 #ifdef _WIN32
-#if defined(_MSC_VER) && defined(ENET_IMPLEMENTATION)
-#pragma warning(disable: 4244) /* 64-bit to 32-bit integer conversion */
-#pragma warning(disable: 4267) /* size_t to integer conversion */
-#endif
+	#if defined(_MSC_VER) && defined(ENET_IMPLEMENTATION)
+		#pragma warning(disable: 4244) /* 64-bit to 32-bit integer conversion */
+		#pragma warning(disable: 4267) /* size_t to integer conversion */
+	#endif
 
-#ifndef ENET_NO_PRAGMA_LINK
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "winmm.lib")
-#endif
+	#ifndef ENET_NO_PRAGMA_LINK
+		#pragma comment(lib, "ws2_32.lib")
+		#pragma comment(lib, "winmm.lib")
+	#endif
 
-#if _MSC_VER >= 1910
- /* It looks like there were changes as of Visual Studio 2017 and there are no 32/64 bit
- versions of _InterlockedExchange[operation], only InterlockedExchange[operation]
- (without leading underscore), so we have to distinguish between compiler versions */
-#define NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
-#endif
+	#if _MSC_VER >= 1910
+		/* It looks like there were changes as of Visual Studio 2017 and there are no 32/64 bit
+		versions of _InterlockedExchange[operation], only InterlockedExchange[operation]
+		(without leading underscore), so we have to distinguish between compiler versions */
+		#define NOT_UNDERSCORED_INTERLOCKED_EXCHANGE
+	#endif
 
-#ifdef __GNUC__
-#if (_WIN32_WINNT < 0x0501)
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
-#endif
+	#ifdef __GNUC__
+		#if (_WIN32_WINNT < 0x0501)
+			#undef _WIN32_WINNT
+			#define _WIN32_WINNT 0x0501
+		#endif
+	#endif
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <mmsystem.h>
-#include <intrin.h>
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#include <mmsystem.h>
+	#include <intrin.h>
 
-#if defined(_WIN32) && defined(_MSC_VER)
-#if _MSC_VER < 1900
-typedef struct timespec {
-	long tv_sec;
-	long tv_nsec;
-};
-#endif
-#define CLOCK_MONOTONIC 0
-#endif
+	#if defined(_WIN32) && defined(_MSC_VER)
+		#if _MSC_VER < 1900
+			typedef struct timespec {
+				long tv_sec;
+				long tv_nsec;
+			};
+		#endif
+	#define CLOCK_MONOTONIC 0
+	#endif
 
-typedef SOCKET ENetSocket;
+	typedef SOCKET ENetSocket;
 
-#define ENET_SOCKET_NULL INVALID_SOCKET
+	#define ENET_SOCKET_NULL INVALID_SOCKET
 
-typedef struct {
-	size_t dataLength;
-	void* data;
-} ENetBuffer;
+	typedef struct {
+		size_t dataLength;
+		void* data;
+	} ENetBuffer;
 
-#define ENET_CALLBACK __cdecl
+	#define ENET_CALLBACK __cdecl
 
-#ifdef ENET_DLL
-#ifdef ENET_IMPLEMENTATION
-#define ENET_API __declspec(dllexport)
+	#ifdef ENET_DLL
+		#ifdef ENET_IMPLEMENTATION
+			#define ENET_API __declspec(dllexport)
+		#else
+			#define ENET_API __declspec(dllimport)
+		#endif
+	#else
+		#define ENET_API extern
+	#endif
 #else
-#define ENET_API __declspec(dllimport)
-#endif
-#else
-#define ENET_API extern
-#endif
-#else
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <poll.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
+	#include <sys/types.h>
+	#include <sys/ioctl.h>
+	#include <sys/time.h>
+	#include <sys/socket.h>
+	#include <poll.h>
+	#include <arpa/inet.h>
+	#include <netinet/in.h>
+	#include <netinet/tcp.h>
+	#include <netdb.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <errno.h>
+	#include <fcntl.h>
 
-#ifdef __APPLE__
-#include <mach/clock.h>
-#include <mach/mach.h>
-#include <Availability.h>
-#endif
+	#ifdef __APPLE__
+		#include <mach/clock.h>
+		#include <mach/mach.h>
+		#include <Availability.h>
+	#endif
 
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL 0
-#endif
+	#ifndef MSG_NOSIGNAL
+		#define MSG_NOSIGNAL 0
+	#endif
 
-#ifdef MSG_MAXIOVLEN
-#define ENET_BUFFER_MAXIMUM MSG_MAXIOVLEN
-#endif
+	#ifdef MSG_MAXIOVLEN
+		#define ENET_BUFFER_MAXIMUM MSG_MAXIOVLEN
+	#endif
 
-typedef int ENetSocket;
+	typedef int ENetSocket;
 
-#define ENET_SOCKET_NULL -1
+	#define ENET_SOCKET_NULL -1
 
-typedef struct {
-	void* data;
-	size_t dataLength;
-} ENetBuffer;
+	typedef struct {
+		void* data;
+		size_t dataLength;
+	} ENetBuffer;
 
-#define ENET_CALLBACK
-#define ENET_API extern
+	#define ENET_CALLBACK
+	#define ENET_API extern
 #endif
 
 #ifndef ENET_BUFFER_MAXIMUM
-#define ENET_BUFFER_MAXIMUM (1 + 2 * ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS)
+	#define ENET_BUFFER_MAXIMUM (1 + 2 * ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS)
 #endif
 
 #define ENET_HOST_ANY in6addr_any
@@ -283,17 +283,6 @@ extern "C" {
 #define enet_list_previous(iterator) ((iterator)->previous)
 #define enet_list_front(list) ((void*)(list)->sentinel.next)
 #define enet_list_back(list) ((void*)(list)->sentinel.previous)
-
-#ifndef IN4ADDR
-#define IN4ADDR
-
-	struct in4_addr {
-		uint8_t zeros[10];
-		uint16_t ffff;
-		struct in_addr ip;
-	};
-
-#endif
 
 	// Cherry picked from nxrighthere repo, commit d9ad27e: "Avoid naming collision"
 #define enet_in6_equal(a, b) (memcmp(&a, &b, sizeof(struct in6_addr)) == 0)
@@ -511,7 +500,11 @@ extern "C" {
 	typedef struct _ENetAddress {
 		union {
 			struct in6_addr ipv6;
-			struct in4_addr ipv4;
+			struct {
+				uint8_t zeros[10];
+				uint16_t ffff;
+				struct in_addr ip;
+			} ipv4;
 		};
 		uint16_t port;
 	} ENetAddress;
@@ -4406,6 +4399,10 @@ extern "C" {
 
 		if (strchr(ip, ':') == NULL) {
 			type = AF_INET;
+
+			// Cherry pick from nx repo, commit c885a64
+			memset(address, 0, sizeof(address->ipv4.zeros));
+
 			address->ipv4.ffff = 0xFFFF;
 			destination = &address->ipv4.ip;
 		}
@@ -4548,17 +4545,29 @@ extern "C" {
 	}
 
 	int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
-		struct sockaddr_in6 sin;
-		socklen_t sinLength = sizeof(struct sockaddr_in6);
+		struct sockaddr_storage sa;
+		socklen_t saLength = sizeof(sa);
 
-		if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
+		if (getsockname(socket, (struct sockaddr*) & sa, &saLength) == -1)
 			ENET_LOG_ERROR("getsockname failure");
 			return ENET_GETSOCKINFO_FAILURE;
 		}
 
+		if (sa.ss_family == AF_INET) {
+			struct sockaddr_in* sin = (struct sockaddr_in*) & sa;
 
-		address->ipv6 = sin.sin6_addr;
-		address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
+			memset(address, 0, sizeof(address->ipv4.zeros));
+
+			address->ipv4.ffff = 0xFFFF;
+			address->ipv4.ip = sin->sin_addr;
+			address->port = ENET_NET_TO_HOST_16(sin->sin_port);
+		}
+		else if (sa.ss_family == AF_INET6) {
+			struct sockaddr_in6* sin = (struct sockaddr_in6*) & sa;
+
+			address->ipv6 = sin->sin6_addr;
+			address->port = ENET_NET_TO_HOST_16(sin->sin6_port);
+		}
 
 		return 0;
 	}
@@ -4885,17 +4894,29 @@ extern "C" {
 	}
 
 	int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
-		struct sockaddr_in6 sin;
-		int sinLength = sizeof(struct sockaddr_in6);
+		struct sockaddr_storage sa;
+		socklen_t saLength = sizeof(sa);
 
-		if (getsockname(socket, (struct sockaddr*) & sin, &sinLength) == -1) {
+		if (getsockname(socket, (struct sockaddr*) & sa, &saLength) == -1) {
 			ENET_LOG_ERROR("getsockname failure");
-			return ENET_SOCKET_GETSOCKNAME_FAILURE;
+			return ENET_GETSOCKINFO_FAILURE;
 		}
 
+		if (sa.ss_family == AF_INET) {
+			struct sockaddr_in* sin = (struct sockaddr_in*) & sa;
 
-		address->ipv6 = sin.sin6_addr;
-		address->port = ENET_NET_TO_HOST_16(sin.sin6_port);
+			memset(address, 0, sizeof(address->ipv4.zeros));
+
+			address->ipv4.ffff = 0xFFFF;
+			address->ipv4.ip = sin->sin_addr;
+			address->port = ENET_NET_TO_HOST_16(sin->sin_port);
+		}
+		else if (sa.ss_family == AF_INET6) {
+			struct sockaddr_in6* sin = (struct sockaddr_in6*) & sa;
+
+			address->ipv6 = sin->sin6_addr;
+			address->port = ENET_NET_TO_HOST_16(sin->sin6_port);
+		}
 
 		return 0;
 	}
