@@ -4548,7 +4548,7 @@ extern "C" {
 		struct sockaddr_storage sa;
 		socklen_t saLength = sizeof(sa);
 
-		if (getsockname(socket, (struct sockaddr*) & sa, &saLength) == -1)
+		if (getsockname(socket, (struct sockaddr*) & sa, &saLength) == -1) {
 			ENET_LOG_ERROR("getsockname failure");
 			return ENET_GETSOCKINFO_FAILURE;
 		}
