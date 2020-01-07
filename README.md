@@ -229,11 +229,8 @@ Credits
 -------
 - c6burns
 - SoftwareGuy (Coburn)
-- The Mirror Development team
-- The Mirror supporters on the Discord
+- The Mirror development and follower crew
 
 Some thanks to:
 - FSE
 - NX
-
-**Copy pasting code and slapping your name on it is bad, mmkay?**
