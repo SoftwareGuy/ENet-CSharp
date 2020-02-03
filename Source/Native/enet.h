@@ -4,7 +4,7 @@
  *	Original copyright (c) 2018 Lee Salzman, Vladyslav Hrytsenko, Dominik Madarász, Stanislav Denisov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
+ *  of this software and associated documentation Reasonable default packet threshold (pt 1)files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
  *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  *  copies of the Software, and to permit persons to whom the Software is
@@ -33,8 +33,8 @@
 #include "enet_log.h"
 
 #define ENET_VERSION_MAJOR 2
-#define ENET_VERSION_MINOR 3
-#define ENET_VERSION_PATCH 3
+#define ENET_VERSION_MINOR 4
+#define ENET_VERSION_PATCH 0
 #define ENET_VERSION_CREATE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 #define ENET_VERSION_GET_MAJOR(version) (((version) >> 16) & 0xFF)
 #define ENET_VERSION_GET_MINOR(version) (((version) >> 8) & 0xFF)
@@ -582,6 +582,7 @@ extern "C" {
 		ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA = 32 * 1024 * 1024,
 		ENET_PEER_DEFAULT_ROUND_TRIP_TIME = 500,
 		ENET_PEER_DEFAULT_PACKET_THROTTLE = 32,
+		ENET_PEER_PACKET_THROTTLE_THRESHOLD = 20,
 		ENET_PEER_PACKET_THROTTLE_SCALE = 32,
 		ENET_PEER_PACKET_THROTTLE_COUNTER = 7,
 		ENET_PEER_PACKET_THROTTLE_ACCELERATION = 2,
@@ -3456,6 +3457,7 @@ extern "C" {
 		peer->packetLoss = 0;
 		peer->packetLossVariance = 0;
 		peer->packetThrottle = ENET_PEER_DEFAULT_PACKET_THROTTLE;
+		peer->packetThrottleThreshold = ENET_PEER_PACKET_THROTTLE_THRESHOLD;
 		peer->packetThrottleLimit = ENET_PEER_PACKET_THROTTLE_SCALE;
 		peer->packetThrottleCounter = 0;
 		peer->packetThrottleEpoch = 0;
