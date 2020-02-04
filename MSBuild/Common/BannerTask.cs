@@ -66,7 +66,7 @@ public class BannerTask : Task
         }
         catch (Exception e)
         {
-            Log.LogError("SockLynx Build Error: " + e.Message);
+            Log.LogError("ENET-CSharp Build Error: " + e.Message);
             _taskSucceeded = false;
         }
 
