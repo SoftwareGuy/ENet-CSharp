@@ -1,5 +1,8 @@
 /*
- *  ENet reliable UDP networking library 
+ *  ENet reliable UDP networking library
+ * 	This is a fork from upstream and is available at http://github.com/SoftwareGuy/ENet-CSharp
+ *
+ *  Copyright (c) 2019-2020 Matt Coburn (SoftwareGuy/Coburn64), Chris Burns (c6burns)
  *  Copyright (c) 2018 Lee Salzman, Vladyslav Hrytsenko, Dominik Madarász, Stanislav Denisov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy

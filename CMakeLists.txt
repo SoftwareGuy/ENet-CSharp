@@ -33,7 +33,7 @@ set(ENET_SRCDIR "Source/Native")
 set(ENET_SRCS
 	${ENET_SRCDIR}/enet.c
 	${ENET_SRCDIR}/enet.h
-	${ENET_SRCDIR}/enet_log.h
+	${ENET_SRCDIR}/custom/enet_logging.h
 )
 
 if(ENET_DEBUG)

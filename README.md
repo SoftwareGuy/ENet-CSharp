@@ -2,23 +2,18 @@
   <img src="https://i.imgur.com/CxkUxTs.png" alt="alt logo">
 </p>
 
-[![PayPal](https://drive.google.com/uc?id=1OQrtNBVJehNVxgPf6T6yX1wIysz1ElLR)](https://www.paypal.me/coburn64)
+[![Ko-Fi](https://img.shields.io/badge/Donate-Ko--Fi-red)](https://ko-fi.com/coburn) 
+[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue)](https://paypal.me/coburn64)
+![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)
+_**Please consider a donation (see the Ko-Fi button above) if this project is useful to you.**_
 
-Welcome to a improved/refactored version of nxrighthere's ENET-CSharp repository. This repo started out as a clone of NX's repository but has since had some extras that the original repository did not. Some cherry picked commits are included from NX when deemed they are worthy of being blended into the repository.
 
-Some features included in this repository include:
+This is a improved/refactored version of ENet-CSharp. Due to unfortunate circumstances between two development entities, the upstream repository was archived and is only updated when patches are applied (all development work is done in private). Since you cannot interact with archived repositories outside of code-related things, this repository acts as a workaround to those issues.
 
-- Proper implementation of ENET_DEBUG definition, allowing logging output to be written to `enet_log.txt` for further diagnosis and troubleshooting
-- Code cleanups and optimizations for better performance
-- Supposedly-a-bug tickets actually get analyzed and if it's really a bug, it'll get fixed
-- We won't randomly close issue tickets for no apparent reason
-- And a bunch of other shit that this version superior and worthwhile using.
-
-If you want to know what started this repository, go [read my blog 
-post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition) as it'll detail the whole show. It's a good read.
+Unlike the upstream repository code of conduct where issue tickets were closed randomly for no reason, if you have a problem with ENet-CSharp, we'll be able to investigate. We also have a proper implementation of the `ENET_DEBUG` definition, allowing logging output to be written to `enet_log.txt` for further diagnosis and troubleshooting. Code cleanups and optimizations for better performance are included, and if someone files a supposedly-a-bug tickets actually get analyzed and if it's really a bug, it'll get fixed.
 
 ### Compatibility with Upstream
-Don't even try using this version of ENET and ENET-CSharp with the upstream repository. It'll likely look at you strange and catch fire. Just don't.
+Don't use the upstream releases with the code in this repository. You will most likely get crashes or weird things happening.
 
 ### Building
 You can use the IDE of Visual Studio to build if you like. The following will be oriented for power users and command line heroes.
@@ -38,7 +33,7 @@ Unlike upstream, this repo has a complete build system that harnesses the power 
 
 You will see an anime babe appear followed by [Ignorance](https://github.com/SoftwareGuy/Ignorance) ASCII art. 
 
-CMake will fire up, configure itself after inspecting your build environment and hopefully spit out a binary blob inside a `Unity/Plugins` directory. On Windows, this will be a DLL, on Mac it will be a BUNDLE and on Linux it will be a shared object (`.so`). This can be used with Unity or another thing like a C# NET Core application or even other C/C++ apps. 
+CMake will fire up, configure itself after inspecting your build environment and hopefully spit out a binary blob inside a `Unity/Plugins` directory. On Windows, this will be a DLL, on Mac it will be a `.bundle` file and on Linux it will be a shared object (`.so`). This can be used with Unity or another thing like a C# NET Core application or even other C/C++ apps. 
 
 #### Testing
 - `dotnet test` will run some sanity checks and make sure ENET initializes, data is received and sent correctly, etc.
@@ -208,9 +203,10 @@ Usage is almost the same as in the .NET environment, except that the console fun
 Multi-threading
 --------
 ### Strategy
-The best-known strategy is to use ENet in an independent I/O thread. This can be achieved by using Threads and enqueuing packets to be sent and received back and forth via ConcurrentQueues. 
+The best-known strategy is to use ENet in an independent I/O thread. This can be achieved by using Threads and enqueuing packets to be sent and received back and forth via ConcurrentQueues (this is what [Ignorance](https://github.com/SoftwareGuy/Ignorance) uses). In fact, some internal testing showed that ENet had very impressive performance using a thread and ConcurrentQueues approach to network I/O, even faster than RingBuffers/Disruptors. Use whatever queue system you feel comfortable with, just make sure you empty the queues as fast as possible in your applications.
 
-In fact, some internal testing showed that ENET had very impressive performance using a thread and ConcurrentQueues approach to network I/O, even faster than RingBuffers/Disruptors. Please be beware that using Threads inside a Unity environment can be problematic and can lead to the Unity Editor or built games randomly crashing without any warning. Use them with caution!
+Threading in Unity was problematic but later versions (2018.3+) have proven to be fine. 
+Please beware that using Threads inside a Unity environment can be problematic and can lead to the Unity Editor or built games randomly crashing without any warning. Use them with caution!
 
 ### Functionality
 In general, ENet is not thread-safe, but some of its functions can be used safely if the user is careful enough:
@@ -227,10 +223,14 @@ See `DOCUMENTATION.md` [here](https://github.com/SoftwareGuy/ENet-CSharp/blob/ma
 
 Credits
 -------
+- Coburn
 - c6burns
-- SoftwareGuy (Coburn)
-- The Mirror development and follower crew
+- Katori
+- Mirror Team & Discord Members
 
 Some thanks to:
-- FSE
-- NX
+- FSE (actually a helpful person when he's in a good mood)
+- NX (well, he had the original ENet-CSharp repo I manually forked)
+
+Psst... If you want to know what started this repository, go [read my blog 
+post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition) as it'll detail the whole show. It's a good read.

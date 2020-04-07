@@ -1,5 +1,5 @@
-#ifndef ENET_LOG_H
-#define ENET_LOG_H
+#ifndef ENET_LOGGING_H
+#define ENET_LOGGING_H
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -44,6 +44,7 @@ static inline void enet_log(enum enet_log_type type, const char *func, int line,
 	vfprintf(enet_log_fp, fmt, args);
 	va_end(args);
 
+	fprintf(enet_log_fp, "\n");
 	fflush(enet_log_fp);
 }
 
