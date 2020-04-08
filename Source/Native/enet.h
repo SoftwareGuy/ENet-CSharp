@@ -2577,7 +2577,8 @@ static int enet_protocol_receive_incoming_commands(ENetHost* host, ENetEvent* ev
 		}
 	}
 
-	return -1;
+	// Fix as described here: https://github.com/lsalzman/enet/pull/120
+	return 0;
 }
 
 static void enet_protocol_send_acknowledgements(ENetHost* host, ENetPeer* peer) {
@@ -3873,6 +3874,7 @@ notifyError:
 */
 
 ENetHost* enet_host_create(const ENetAddress* address, size_t peerCount, size_t channelLimit, uint32_t incomingBandwidth, uint32_t outgoingBandwidth, int bufferSize) {
+	ENET_LOG_TRACE("ENET Host being created.");
 	ENetHost* host;
 	ENetPeer* currentPeer;
 
@@ -4000,6 +4002,8 @@ ENetHost* enet_host_create(const ENetAddress* address, size_t peerCount, size_t 
 }
 
 void enet_host_destroy(ENetHost* host) {
+	ENET_LOG_TRACE("ENET Host being destroyed.");
+
 	ENetPeer* currentPeer;
 
 	if (host == NULL)
@@ -4023,6 +4027,8 @@ void enet_host_prevent_connections(ENetHost* host, uint8_t state) {
 }
 
 ENetPeer* enet_host_connect(ENetHost* host, const ENetAddress* address, size_t channelCount, uint32_t data) {
+	ENET_LOG_TRACE("Connection to host going up");
+
 	ENetPeer* currentPeer;
 	ENetChannel* channel;
 	ENetProtocol command;
@@ -4697,9 +4703,11 @@ int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buf
 		return -1;
 	}
 
+	
 	if (msgHdr.msg_flags & MSG_TRUNC) {
 		ENET_LOG_ERROR("this enet message header was truncated...\n");
-		return -1;
+		// commit 5f0e1b475caa019157c3cf881a8d08009150f1e2 from upstream
+		return -2;
 	}
 
 
@@ -4950,7 +4958,7 @@ int enet_socket_connect(ENetSocket socket, const ENetAddress* address) {
 		return -1;
 	}
 
-
+	ENET_LOG_TRACE("Socket Connect");
 	return 0;
 }
 
@@ -4987,7 +4995,7 @@ void enet_socket_destroy(ENetSocket socket) {
 
 int enet_socket_send(ENetSocket socket, const ENetAddress* address, const ENetBuffer* buffers, size_t bufferCount) {
 	struct sockaddr_in6 sin;
-	DWORD sentLength;
+	DWORD sentLength = 0;
 
 	if (address != NULL) {
 		memset(&sin, 0, sizeof(struct sockaddr_in6));
@@ -5005,7 +5013,7 @@ int enet_socket_send(ENetSocket socket, const ENetAddress* address, const ENetBu
 
 int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buffers, size_t bufferCount) {
 	INT sinLength = sizeof(struct sockaddr_in6);
-	DWORD flags = 0, recvLength;
+	DWORD flags = 0, recvLength = 0;
 	struct sockaddr_in6 sin;
 
 	if (WSARecvFrom(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &recvLength, &flags, address != NULL ? (struct sockaddr*) & sin : NULL, address != NULL ? &sinLength : NULL, NULL, NULL) == SOCKET_ERROR) {
@@ -5023,7 +5031,7 @@ int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buf
 
 	if (flags & MSG_PARTIAL) {
 		ENET_LOG_ERROR("Partial socket receive message");
-		return -1;
+		return -2;
 	}
 
 	if (address != NULL) {

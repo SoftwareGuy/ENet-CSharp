@@ -4,17 +4,18 @@
     <id>ENet-CSharp</id>
     <version>2.2.9</version>
     <title>ENet-CSharp</title>
-    <authors>Stanislav Denisov</authors>
-    <owners>nxrighthere</owners>
+    <authors>Matt Coburn</authors>
+    <owners>coburn64</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="file">license\license.txt</license>
-    <projectUrl>https://github.com/nxrighthere/ENet-CSharp</projectUrl>
+    <projectUrl>https://github.com/SoftwareGuy/ENet-CSharp</projectUrl>
     <description>Reliable UDP networking library extended for the .NET environment</description>
     <summary></summary>
     <releaseNotes></releaseNotes>
-    <copyright>(c) 2019 Stanislav Denisov</copyright>
+    <copyright>(c) 2019-2020 Matt Coburn</copyright>
     <tags>networking udp protocol ipv4 ipv6 gamedev</tags>
   </metadata>
+  <!--
   <files>
     <file src="build\ENet-CSharp.targets" target="build\ENet-CSharp.targets" />
     <file src="lib\net35\ENet-CSharp.dll" target="lib\net35\ENet-CSharp.dll" />
@@ -25,4 +26,5 @@
     <file src="runtimes\osx\native\enet.dylib" target="runtimes\osx\native\enet.dylib" />
     <file src="runtimes\win\native\enet.dll" target="runtimes\win\native\enet.dll" />
   </files>
+  -->
 </package>
