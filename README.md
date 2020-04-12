@@ -21,16 +21,16 @@ You can use the IDE of Visual Studio to build if you like. The following will be
 
 Unlike upstream, this repo has a complete build system that harnesses the power of `MSBuild`. 
 
-- Ensure you have dotnet 2.2 SDK at least installed. You can use 2.1 since it's LTS but ehh...
-- **If you are building on Windows:** Make sure you have Visual Studio 2017/2019 installed, C++ Support, Windows 10 SDK and CMake. CMake sometimes doesn't get automatically installed with Visual Studio, so you may need to grab it manually.
-- **If you are building on Mac:** Make sure you have Xcode CLI Tools installed (XCode might also be required).
-- Clone a fresh copy of this Git Repo somewhere on your workstation's filesystem.
+- Ensure you have a Dotnet SDK at least installed.
+- **If you are building on Windows:** Make sure you have Visual Studio 2017/2019 installed, C++ Support, Windows 10 SDK and CMake. CMake sometimes doesn't get automatically installed with Visual Studio, so you may need to grab it manually. Ensure it's a recent version.
+- **If you are building on Mac OS:** Make sure you have Xcode CLI Tools installed (XCode might also be required).
 - **If you are building on Linux:** Make sure you have your repositories' `build-essential` and `cmake` package installed. On Debian and Ubuntu-based distros, you can do `sudo apt -y build-essential cmake` to install the required things.
-- **If you are building for iOS or Android:** Hold up. We haven't implemented that yet... You'll have to proceed on foot since they use toolchains.
+- **If you are building for Android:** Easiest way is to go into `Sources/Native` and run when `ndk-build`. A fresh batch of ENET DLLs should then be spat out.
+- **If you are building for iOS:** You can use the toolchain definition included under the mobile folder of this repository. Some manual compiling is required - an automated batch script will be provided later.
+- **If you are building for Consoles:** Unfortunately, I don't have any instructions here. Please let me know how you go and I'll add some here.
+- Clone a fresh copy of this Git Repo somewhere on your workstation's filesystem.
 - Open a command prompt/terminal and change directory into the newly cloned git repository.
-- Run `dotnet build`.
-
-**Protip:** You can append `-c Release` or `-c Debug` to your `dotnet build` command to build a release binary or a debug binary of ENET's C library.
+- Run `dotnet build`. **Protip:** You can append `-c Release` or `-c Debug` to your `dotnet build` command to build a release binary or a debug binary of ENET's C library.
 
 You will see an anime babe appear followed by [Ignorance](https://github.com/SoftwareGuy/Ignorance) ASCII art. 
 
@@ -98,5 +98,4 @@ Some thanks to:
 - FSE (actually a helpful person when he's in a good mood)
 - NX (well, he had the original ENet-CSharp repo I manually forked)
 
-Psst... If you want to know what started this repository, go [read my blog 
-post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition) as it'll detail the whole show. It's a good read.
+Psst... If you want to know what started this repository, go [read my blog post](https://www.coburnsdomain.com/2019/03/getting-blocked-from-an-upstream-github-repo-nx-edition) as it'll detail the whole show. It's a good read.

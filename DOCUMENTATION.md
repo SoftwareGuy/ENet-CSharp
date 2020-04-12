@@ -50,18 +50,12 @@ Definitions of peer states for `Peer.State` property:
 
 ### Delegates
 #### Memory callbacks
-Provides per application events.
 
-`AllocCallback(IntPtr size)` notifies when a memory is requested for allocation. Expects pointer to the newly allocated memory.
-
-`FreeCallback(IntPtr memory)` notifies when the memory can be freed.
-
-`NoMemoryCallback()` notifies when memory is not enough.
+No longer available in this fork.
 
 #### Packet callbacks
-Provides per packet events.
 
-`PacketFreeCallback(Packet packet)` notifies when a packet is being destroyed.
+No longer available in this fork.
 
 ### Structures
 #### Address
@@ -105,7 +99,7 @@ Contains a managed pointer to the packet.
 
 `Packet.HasReferences` checks references to the packet.
 
-`Packet.SetFreeCallback(PacketFreeCallback callback)` set callback to notify the programmer when an appropriate packet is being destroyed. A pointer `IntPtr` to a callback can be used instead of a reference to a delegate.
+`Packet.SetFreeCallback(PacketFreeCallback callback)` - No longer available.
 
 `Packet.Create(byte[] data, int offset, int length, PacketFlags flags)` creates a packet that may be sent to a peer. The offset parameter indicates the starting point of data in an array, the length is the ending point of data in an array. All parameters are optional. Multiple packet flags can be specified at once. A pointer `IntPtr` to a native buffer can be used instead of a reference to a byte array.
 
