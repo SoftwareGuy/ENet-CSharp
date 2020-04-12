@@ -31,6 +31,7 @@
 #include <time.h>
 // Include the ENET Logging/Tracing Functionality.
 #include "enet_log.h"
+#include "enet_malloc.h"
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 4
@@ -245,15 +246,6 @@ extern "C" {
 	typedef uint32_t ENetVersion;
 
 	typedef fd_set ENetSocketSet;
-
-	typedef struct _ENetCallbacks {
-		void* (ENET_CALLBACK* malloc)(size_t size);
-		void (ENET_CALLBACK* free)(void* memory);
-		void (ENET_CALLBACK* noMemory)(void);
-	} ENetCallbacks;
-
-	extern void* enet_malloc(size_t);
-	extern void enet_free(void*);
 
 	typedef struct _ENetListNode {
 		struct _ENetListNode* next;
@@ -747,8 +739,10 @@ extern "C" {
 	=======================================================================
 	*/
 
+	ENET_API void *enet_mem_acquire(size_t sz) { return enet_malloc(sz); }
+	ENET_API void enet_mem_release(void *alloc) { enet_free(alloc); }
+
 	ENET_API int enet_initialize(void);
-	ENET_API int enet_initialize_with_callbacks(ENetVersion, const ENetCallbacks*);
 	ENET_API void enet_deinitialize(void);
 	ENET_API ENetVersion enet_linked_version(void);
 	ENET_API int enet_array_is_zeroed(const uint8_t*, int);
@@ -1059,56 +1053,6 @@ extern "C" {
 #endif
 #undef AT_HAVE_ATOMICS
 #endif
-
-	/*
-	=======================================================================
-		Callbacks
-	=======================================================================
-	*/
-
-	static ENetCallbacks callbacks = {
-		malloc,
-		free,
-		abort
-	};
-
-	int enet_initialize_with_callbacks(ENetVersion version, const ENetCallbacks* inits) {
-		if (version < ENET_VERSION_CREATE(1, 3, 0))
-		{
-			ENET_LOG_ERROR("ENET version is too old\n");
-			return ENET_LIBRARY_TOO_OLD;
-		}
-
-
-		if (inits->malloc != NULL || inits->free != NULL) {
-			if (inits->malloc == NULL || inits->free == NULL) {
-				ENET_LOG_ERROR("memory allocator or free thingy is NULL\n");
-				return ENET_LIBRARY_MEMALLOC_NULL;
-			}
-
-
-			callbacks.malloc = inits->malloc;
-			callbacks.free = inits->free;
-		}
-
-		if (inits->noMemory != NULL)
-			callbacks.noMemory = inits->noMemory;
-
-		return enet_initialize();
-	}
-
-	void* enet_malloc(size_t size) {
-		void* memory = callbacks.malloc(size);
-
-		if (memory == NULL)
-			callbacks.noMemory();
-
-		return memory;
-	}
-
-	void enet_free(void* memory) {
-		callbacks.free(memory);
-	}
 
 	/*
 	=======================================================================
