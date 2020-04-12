@@ -5,6 +5,7 @@ build*
 **/bin
 **/obj
 .vs
+.vscode
 Directory.Build.rsp
 Unity
 
