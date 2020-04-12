@@ -5,6 +5,7 @@
 [![Ko-Fi](https://img.shields.io/badge/Donate-Ko--Fi-red)](https://ko-fi.com/coburn) 
 [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue)](https://paypal.me/coburn64)
 ![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)
+
 _**Please consider a donation (see the Ko-Fi button above) if this project is useful to you.**_
 
 
@@ -60,142 +61,7 @@ It is recommended to clean the repository work space before building.
 ### Code Examples/Quick Start
 A good idea is to check out the [common mistakes during integration](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/COMMON-MISTAKES.md) documentation.
 
-##### A server code example:
-```c#
-using (Host server = new Host()) {
-	Address address = new Address();
-
-	address.Port = port;
-	server.Create(address, maxClients);
-
-	Event netEvent;
-
-	while (!Console.KeyAvailable) {
-		bool polled = false;
-
-		while (!polled) {
-			if (server.CheckEvents(out netEvent) <= 0) {
-				if (server.Service(15, out netEvent) <= 0)
-					break;
-
-				polled = true;
-			}
-
-			switch (netEvent.Type) {
-				case EventType.None:
-					break;
-
-				case EventType.Connect:
-					Console.WriteLine($"Client connected - ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}");
-					break;
-
-				case EventType.Disconnect:
-					Console.WriteLine($"Client disconnected - ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}");
-					break;
-
-				case EventType.Timeout:
-					Console.WriteLine($"Client timeout - ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}");
-					break;
-
-				case EventType.Receive:
-					Console.WriteLine($"Packet received from peer ID: {netEvent.Peer.ID}, IP: {netEvent.Peer.IP}, Channel ID: {netEvent.ChannelID}, Data length: {netEvent.Packet.Length}");
-					netEvent.Packet.Dispose();
-					break;
-			}
-		}
-	}
-
-	server.Flush();
-}
-```
-
-##### A client code sample:
-```c#
-using (Host client = new Host()) {
-	Address address = new Address();
-
-	address.SetHost(ip);
-	address.Port = port;
-	client.Create();
-
-	Peer peer = client.Connect(address);
-
-	Event netEvent;
-
-	while (!Console.KeyAvailable) {
-		bool polled = false;
-
-		while (!polled) {
-			if (client.CheckEvents(out netEvent) <= 0) {
-				if (client.Service(15, out netEvent) <= 0)
-					break;
-
-				polled = true;
-			}
-
-			switch (netEvent.Type) {
-				case EventType.None:
-					break;
-
-				case EventType.Connect:
-					Console.WriteLine("Client connected to server");
-					break;
-
-				case EventType.Disconnect:
-					Console.WriteLine("Client disconnected from server");
-					break;
-
-				case EventType.Timeout:
-					Console.WriteLine("Client connection timeout");
-					break;
-
-				case EventType.Receive:
-					Console.WriteLine($"Packet received from server - Channel ID: {netEvent.ChannelID}, Data length: {netEvent.Packet.Length}");
-					netEvent.Packet.Dispose();
-					break;
-			}
-		}
-	}
-
-	client.Flush();
-}
-```
-
-##### Create and send a new packet:
-```csharp
-Packet packet = default(Packet);
-byte[] data = new byte[64];
-
-packet.Create(data);
-peer.Send(channelID, ref packet);
-```
-
-##### Copy payload from a packet:
-```csharp
-byte[] buffer = new byte[1024];
-
-netEvent.Packet.CopyTo(buffer);
-```
-
-##### (Pro-tier) Using a custom memory allocator:
-```csharp
-AllocCallback OnMemoryAllocate = (size) => {
-	return Marshal.AllocHGlobal(size);
-};
-
-FreeCallback OnMemoryFree = (memory) => {
-	Marshal.FreeHGlobal(memory);
-};
-
-NoMemoryCallback OnNoMemory = () => {
-	throw new OutOfMemoryException();
-};
-
-Callbacks callbacks = new Callbacks(OnMemoryAllocate, OnMemoryFree, OnNoMemory);
-
-if (ENet.Library.Initialize(callbacks))
-	Console.WriteLine("ENet successfully initialized using a custom memory allocator");
-```
+Looking for example code and gotta go fast? No problem, got you [covered here](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/QUICKSTART-EXAMPLES.md).
 
 ### Unity
 Usage is almost the same as in the .NET environment, except that the console functions must be replaced with functions provided by Unity. If the `Host.Service()` will be called in a game loop, then make sure that the timeout parameter set to 0 which means non-blocking. Also, make sure Unity runs in the background by enabling the ***Run in Background*** player setting.
