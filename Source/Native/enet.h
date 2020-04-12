@@ -34,8 +34,9 @@
 #include <stdint.h>
 #include <time.h>
 
- // include the ENET Logger code.
+ // include custom data.
 #include "custom/enet_logging.h"
+#include "enet_malloc.h"
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 4
@@ -677,7 +678,9 @@ extern "C" {
 	*/
 
 	ENET_API int enet_initialize(void);
-	ENET_API int enet_initialize_with_callbacks(ENetVersion, const ENetCallbacks*);
+	ENET_API void* enet_mem_acquire(size_t sz) { return enet_malloc(sz); }
+	ENET_API void enet_mem_release(void* alloc) { enet_free(alloc); }
+
 	ENET_API void enet_deinitialize(void);
 	ENET_API ENetVersion enet_linked_version(void);
 	ENET_API int enet_array_is_zeroed(const uint8_t*, int);
@@ -990,57 +993,7 @@ problem. */
 
 /*
 =======================================================================
-	Callbacks
-=======================================================================
-*/
-
-static ENetCallbacks callbacks = {
-	malloc,
-	free,
-	abort
-};
-
-int enet_initialize_with_callbacks(ENetVersion version, const ENetCallbacks* inits) {
-	if (version < ENET_VERSION_CREATE(1, 3, 0)) {
-		ENET_LOG_ERROR("ENET version is too old");
-		return -1;
-	}
-
-	if (inits->malloc != NULL || inits->free != NULL) {
-		if (inits->malloc == NULL || inits->free == NULL) {
-			ENET_LOG_ERROR("Memory allocator/free mechanism is NULL");
-			return -1;
-		}
-
-
-		callbacks.malloc = inits->malloc;
-		callbacks.free = inits->free;
-	}
-
-	if (inits->noMemory != NULL)
-		callbacks.noMemory = inits->noMemory;
-
-	return enet_initialize();
-}
-
-void* enet_malloc(size_t size) {
-	void* memory = callbacks.malloc(size);
-
-	if (memory == NULL)
-		callbacks.noMemory();
-
-	return memory;
-}
-
-void enet_free(void* memory) {
-	callbacks.free(memory);
-}
-
-/*
-=======================================================================
-
 	List
-
 =======================================================================
 */
 
@@ -1092,9 +1045,7 @@ size_t enet_list_size(ENetList* list) {
 
 /*
 =======================================================================
-
 	Utilities
-
 =======================================================================
 */
 
@@ -1115,9 +1066,7 @@ int enet_array_is_zeroed(const uint8_t* array, int length) {
 
 /*
 =======================================================================
-
 	Time
-
 =======================================================================
 */
 
@@ -1236,9 +1185,7 @@ uint32_t enet_time_get(void) {
 
 /*
 =======================================================================
-
 	Checksum
-
 =======================================================================
 */
 
@@ -1300,9 +1247,7 @@ uint32_t enet_crc32(const ENetBuffer* buffers, size_t bufferCount) {
 
 /*
 =======================================================================
-
 	Packet
-
 =======================================================================
 */
 
@@ -1382,9 +1327,7 @@ void enet_packet_destroy(ENetPacket* packet) {
 
 /*
 =======================================================================
-
 	Protocol
-
 =======================================================================
 */
 
