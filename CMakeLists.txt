@@ -24,12 +24,17 @@ set(ENET_LIB_NAME enet)
 cmake_minimum_required(VERSION 3.1)
 project(${ENET_LIB_NAME} LANGUAGES C)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(ENET_MIMALLOC OFF CACHE BOOL "Add mimalloc heap allocators to enet")
+
 set(ENET_DEBUG OFF CACHE BOOL "Do debug things")
 set(ENET_PLUGIN_DIR_BASE "${CMAKE_CURRENT_SOURCE_DIR}/Unity/Plugins")
 set(ENET_PLUGIN_DIR_ARCH "x86_64")
 set(ENET_DEFINES -DENET_NO_PRAGMA_LINK -DENET_DLL)
+set(ENET_LINK_LIBS "")
 set(ENET_DEPS "")
 set(ENET_SRCDIR "Source/Native")
+set(ENET_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps)
 set(ENET_SRCS
 	${ENET_SRCDIR}/enet.c
 	${ENET_SRCDIR}/enet.h
@@ -38,6 +43,10 @@ set(ENET_SRCS
 
 if(ENET_DEBUG)
     list(APPEND ENET_DEFINES -DENET_DEBUG)
+endif()
+
+if(NOT EXISTS ${ENET_DEPS_DIR})
+	file(MAKE_DIRECTORY ${ENET_DEPS_DIR})
 endif()
 
 if(MSVC)
@@ -51,12 +60,33 @@ if(MSVC)
 	endforeach()
 
     list(APPEND ENET_DEFINES -D_CRT_SECURE_NO_WARNINGS)
-	list(APPEND ENET_DEPS Ws2_32 Winmm)
+    list(APPEND ENET_LINK_LIBS Ws2_32 Winmm)
 endif()
+
+# mimalloc support
+#
+# build mimalloc
+if(ENET_MIMALLOC)
+    if(NOT EXISTS ${ENET_DEPS_DIR}/mimalloc)
+        execute_process(COMMAND git clone https://github.com/microsoft/mimalloc WORKING_DIRECTORY ${ENET_DEPS_DIR})
+    endif()
+
+    add_custom_target(mimalloc_update
+        COMMAND git checkout master
+        COMMAND git pull
+        WORKING_DIRECTORY ${ENET_DEPS_DIR}/mimalloc
+    )
+
+    include_directories(${ENET_DEPS_DIR}/mimalloc/include)
+    add_subdirectory(${ENET_DEPS_DIR}/mimalloc)
+
+    list(APPEND ENET_DEFINES -DENET_MIMALLOC)
+    list(APPEND ENET_LINK_LIBS mimalloc-static)
+endif(ENET_MIMALLOC)
 
 include_directories(${ENET_SRCDIR})
 add_library(${ENET_LIB_NAME} SHARED ${ENET_SRCS})
-target_link_libraries(${ENET_LIB_NAME} ${ENET_DEPS})
+target_link_libraries(${ENET_LIB_NAME} ${ENET_LINK_LIBS})
 target_compile_definitions(${ENET_LIB_NAME} PRIVATE ${ENET_DEFINES})
 
 set(ENET_PLUGIN_DIR ${ENET_PLUGIN_DIR_BASE}/${ENET_PLUGIN_DIR_ARCH})
