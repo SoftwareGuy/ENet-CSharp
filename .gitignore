@@ -8,6 +8,7 @@ build*
 .vscode
 Directory.Build.rsp
 Unity
+deps/
 
 x86_Build/
 UpgradeLog.htm
