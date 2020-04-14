@@ -87,6 +87,14 @@ API Documentation
 --------
 See `DOCUMENTATION.md` [here](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/DOCUMENTATION.md).
 
+Supporters
+--------
+This fork is used by and supported by [Oiran Studio](http://www.oiran.studio).
+
+<p align="left"> 
+  <img src="http://www.oiran.studio/OiranFanFinal_Colour_Mini.png" alt="Oiran Studio Logo">
+</p>
+
 Credits
 -------
 - Coburn
