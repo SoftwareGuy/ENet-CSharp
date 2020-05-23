@@ -21,7 +21,6 @@
  */
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Diagnostics;
 using ENet;
@@ -57,23 +56,6 @@ public class UnitTests
     [TearDown]
     public void TestCleanup()
     {
-    }
-
-    [Test]
-    public void MallocAndFree()
-    {
-        Stack<IntPtr> allocs = new Stack<IntPtr>();
-        for (int i = 0; i < 1024; i++)
-        {
-            IntPtr alloc = ENet.Library.Malloc(1024);
-            Assert.NotNull(alloc);
-            allocs.Push(alloc);
-        }
-
-        while (allocs.Count > 0)
-        {
-            ENet.Library.Free(allocs.Pop());
-        }
     }
 
     [Test]
