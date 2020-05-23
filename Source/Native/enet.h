@@ -1211,12 +1211,13 @@ uint32_t enet_time_get(void) {
 
 	struct timespec ts;
 
-#ifdef CLOCK_MONOTONIC_RAW
-	clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-#else
+	// [Replay from a past commit... >>]
+	// c6: what the [redacted] fuck is clock_monotonic_raw??????
+	// c6: just use clock monotonic
+	// Coburn: sir yes sir	
 	clock_gettime(CLOCK_MONOTONIC, &ts);
-#endif
-
+	// [End replay]
+	
 	static const uint64_t ns_in_s = 1000 * 1000 * 1000;
 	static const uint64_t ns_in_ms = 1000 * 1000;
 
