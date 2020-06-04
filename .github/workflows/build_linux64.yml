@@ -7,31 +7,21 @@ on:
     branches: [ experiments-with-ghactions ]
 
 jobs:
-  wtfisthis:
-    name: Path lister
-    runs-on: ubuntu-latest
-    steps:
-      - name: Output results
-        run: |
-          ls -alR ..
-          
-    #build:
-    #runs-on: ubuntu-latest
-    #steps:
-      #- uses: ashutoshvarma/action-cmake-build@master
-        #with:
-          #source-dir: ${{ runner.workspace }}/../
-          #build-dir: ${{ runner.workspace }}/LinuxBuild
-          # will set the CC & CXX for cmake
-          #cc: gcc
-          #cxx: g++
-          # build-type: Release
-          
-          # Extra options pass to cmake while configuring project
-          # configure-options:
-          # run-test: false
-          # ctest-options: -R mytest
-          # install the build using cmake --install
-          # install-build: true
-          # run build using '-j [parallel]' to use multiple threads to build
-          # parallel: 
+    build:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v2
+        
+        - name: Build with CMake
+            uses: ashutoshvarma/action-cmake-build@master
+            with:
+                source-dir: ${{ runner.workspace }}
+                build-dir: ${{ runner.workspace }}/build
+                # will set the CC & CXX for cmake
+                cc: gcc
+                cxx: g++
+                build-type: Release
+                
+        - name: Show our results
+            run: |            
+                ls -alR ./build/
