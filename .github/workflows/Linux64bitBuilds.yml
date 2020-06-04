@@ -1,0 +1,58 @@
+name: Build Binaries for Linux64
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+    build_release:
+        runs-on: ubuntu-latest
+        steps:
+        
+        - uses: actions/checkout@v2
+        
+        - name: Build Linux64 Binary with CMake
+          uses: ashutoshvarma/action-cmake-build@master
+          with:
+            build-dir: ${{ runner.workspace }}/build
+            cc: gcc
+            cxx: g++
+            build-type: Release
+                
+        #- name: Show our results
+          #run: |
+              #ls -alR ${{ runner.workspace }}/build
+              
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v2
+          with:
+            name: Linux64-Release-Binary
+            path: ${{ runner.workspace }}/build/libenet.so
+            
+    build_debug:
+        runs-on: ubuntu-latest
+        steps:
+        
+        - uses: actions/checkout@v2
+        
+        - name: Build Linux64 Binary with CMake
+          uses: ashutoshvarma/action-cmake-build@master
+          with:
+            build-dir: ${{ runner.workspace }}/build
+            cc: gcc
+            cxx: g++
+            build-type: Debug
+            configure-options: -DENET_DEBUG=ON
+                
+        #- name: Show our results
+          #run: |
+              #ls -alR ${{ runner.workspace }}/build
+              
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v2
+          with:
+            name: Linux64-Debug-Binary
+            path: ${{ runner.workspace }}/build/libenet.so
+    

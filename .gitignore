@@ -1,6 +1,6 @@
 README.md
 Source/Native/build/
-build*
+build_cmake_enet/
 *.bak
 **/bin
 **/obj
