@@ -10,18 +10,19 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
+        
         - uses: actions/checkout@v2
         
         - name: Build with CMake
-            uses: ashutoshvarma/action-cmake-build@master
-            with:
-                source-dir: ${{ runner.workspace }}
-                build-dir: ${{ runner.workspace }}/build
-                # will set the CC & CXX for cmake
-                cc: gcc
-                cxx: g++
-                build-type: Release
+          uses: ashutoshvarma/action-cmake-build@master
+          with:
+            source-dir: ${{ runner.workspace }}
+            build-dir: ${{ runner.workspace }}/build
+            # will set the CC & CXX for cmake
+            cc: gcc
+            cxx: g++
+            build-type: Release
                 
         - name: Show our results
-            run: |            
-                ls -alR ./build/
+          run: |            
+              ls -alR ./build/
