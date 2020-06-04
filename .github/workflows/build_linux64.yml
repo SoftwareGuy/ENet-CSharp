@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: ashutoshvarma/action-cmake-build@master
         with:
-            default: ${{ github.workspace }}
+          default: ${{ github.workspace }}
           build-dir: ${{ runner.workspace }}/build
           # will set the CC & CXX for cmake
           cc: gcc
