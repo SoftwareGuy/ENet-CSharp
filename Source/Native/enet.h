@@ -36,6 +36,10 @@
 
  // include the ENET Logger code.
 #include "custom/enet_logging.h"
+// Fix for pre-macOS 10.12 or pre-iOS 10.0 devices.
+#if __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000)
+	#include "custom/enet_iosFixes.h"
+#endif
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 4
@@ -1192,25 +1196,6 @@ int clock_gettime(int X, struct timespec* tv) {
 #define CLOCK_MONOTONIC 0
 #endif
 
-// Fix for pre-macOS 10.12 or pre-iOS 10.0 devices.
-#if __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000)
-
-int preiOS10_clock_get_time(int X, struct timespec* ts) {
-    clock_serv_t cclock;
-    mach_timespec_t mts;
-
-    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
-    clock_get_time(cclock, &mts);
-    mach_port_deallocate(mach_task_self(), cclock);
-
-    ts->tv_sec = mts.tv_sec;
-    ts->tv_nsec = mts.tv_nsec;
-
-    return 0;
-}
-
-#endif
-
 uint32_t enet_time_get(void) {
 	static uint64_t start_time_ns = 0;
 
@@ -1220,14 +1205,13 @@ uint32_t enet_time_get(void) {
 	// c6: what the [redacted] fuck is clock_monotonic_raw?????? just use clock monotonic
 	// Coburn: sir yes sir
     // [End replay]
-    // attempt 2 at fixing a pre-iOS 10 bug (ugh!)
+    // preiOS10_clock_get_time is defined in enet_iosFixes.h now
 #if __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000)
     preiOS10_clock_get_time(CLOCK_MONOTONIC, &ts);
 #else
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 #endif
 
-	
 	static const uint64_t ns_in_s = 1000 * 1000 * 1000;
 	static const uint64_t ns_in_ms = 1000 * 1000;
 
