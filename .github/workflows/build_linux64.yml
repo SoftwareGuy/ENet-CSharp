@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: ashutoshvarma/action-cmake-build@master
         with:
-          source-dir: ${{ runner.workspace }}
+          source-dir: ${{ runner.workspace }}/../
           build-dir: ${{ runner.workspace }}/LinuxBuild
           # will set the CC & CXX for cmake
           cc: gcc
