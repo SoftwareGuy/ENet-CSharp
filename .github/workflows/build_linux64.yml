@@ -26,3 +26,9 @@ jobs:
         - name: Show our results
           run: |
               ls -alR ${{ runner.workspace }}/build
+              
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v2
+          with:
+            name: Linux64-Release-Binary
+            path: ${{ runner.workspace }}/build/libenet.so
