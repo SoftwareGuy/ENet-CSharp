@@ -13,8 +13,7 @@ jobs:
     steps:
       - name: Output results
         run: |
-          ls -alr .
-          ls -alr ..
+          ls -alR ..
           
     #build:
     #runs-on: ubuntu-latest
