@@ -1,0 +1,27 @@
+name: Build Binaries for Linux64
+
+on:
+  push:
+    branches: [ experiments-with-ghactions ]
+  pull_request:
+    branches: [ experiments-with-ghactions ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ashutoshvarma/action-cmake-build@master
+        with:
+          build-dir: ${{ runner.workspace }}/build
+          # will set the CC & CXX for cmake
+          cc: gcc
+          cxx: g++
+          build-type: Release
+          # Extra options pass to cmake while configuring project
+          # configure-options:
+          run-test: false
+          # ctest-options: -R mytest
+          # install the build using cmake --install
+          # install-build: true
+          # run build using '-j [parallel]' to use multiple threads to build
+          # parallel: 
