@@ -8,6 +8,7 @@ OLDDIR=$(pwd)
 CMAKE=$(which cmake)
 CODE_ROOT=$(pwd)
 UPPER_ROOT="$(pwd)/.."
+DEBUG_STATUS=0
 
 # Change this to OS64 for ARM64 only builds, OS for ARMv7 + ARM64 builds
 DEV_TYPE="OS"
@@ -37,7 +38,15 @@ fi
 if [ -f $CMAKE ]
 then
 	echo "Setting up Xcode project for building..."
-	cmake $CODE_ROOT -B$CODE_ROOT/build -G Xcode -DCMAKE_TOOLCHAIN_FILE=$UPPER_ROOT/MobileToolchains/ios.toolchain.cmake -DPLATFORM=OS -DENABLE_ARC=0 -DENABLE_VISIBILITY=0 -DENET_DEBUG=1 -DENET_STATIC=1 -DENET_SHARED=0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO	
+	
+	if [ $BUILD_TYPE == "Debug" ]
+	then
+		echo "*** DEBUG TARGET: RESULTING LIBRARY WILL BE A DEBUG BUILD ***"
+		echo ""
+		DEBUG_STATUS=1
+	fi
+	
+	cmake $CODE_ROOT -B$CODE_ROOT/build -G Xcode -DCMAKE_TOOLCHAIN_FILE=$UPPER_ROOT/MobileToolchains/ios.toolchain.cmake -DPLATFORM=OS -DENABLE_ARC=0 -DENABLE_VISIBILITY=0 -DENET_DEBUG=$DEBUG_STATUS -DENET_STATIC=1 -DENET_SHARED=0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO	
 	
 	if [ $? -eq 0 ] 
 	then
@@ -48,11 +57,12 @@ then
 		then
 			[ ! -d Release-iphoneos ] && rm -rvf Release-iphoneos && mkdir Release-iphoneos
 			[ ! -d Debug-iphoneos ] && rm -rvf Debug-iphoneos && mkdir Debug-iphoneos
-			xcodebuild -configuration Release
+			xcodebuild -configuration $BUILD_TYPE
 		
 			if [ $? -eq 0 ]
 			then
 				echo "*** SUCCESSFUL BUILD! ***"
+				echo ""
 				echo "Good show, good show. Nicely done."
 				echo "You'll find the static library under the respective folder, "
 				echo "ie. Release-iphoneos or Debug-iphoneos . You may also want "
@@ -66,7 +76,6 @@ then
 		else
 			echo "*** ERROR: You don't seem to have XCode installed correctly!"
 			echo "*** How do you expect this script to compile ENET?"
-
 		fi
 
 	else
@@ -85,5 +94,6 @@ fi
 cd $pwd
 
 # Bye bye.
+echo ""
 echo "Thanks for using SoftwareGuy's fork of ENet-CSharp!"
 echo "Support the fork at http://github.com/SoftwareGuy/ENet-CSharp"
