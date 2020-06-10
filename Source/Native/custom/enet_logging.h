@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+// TODO: Make better filenames; ie. enet_log.pid.txt
 #define ENET_LOG_FILE "enet_log.txt"
 
 static FILE *enet_log_fp = NULL;
@@ -29,24 +30,38 @@ static const char *const enet_log_type_names[] = {
 
 static inline void enet_log(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
 {
-	if (!enet_log_fp) enet_log_fp = fopen(ENET_LOG_FILE, "a");
-	if (!enet_log_fp) return;
-
 	va_list args;
 	time_t tstamp = time(NULL);
 	struct tm *local_time = localtime(&tstamp);
 	char time_buf[64];
 
 	time_buf[strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_time)] = '\0';
-	fprintf(enet_log_fp, "%s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
 
+#if ENET_ON_APPLE_IOS
+	// https://github.com/SoftwareGuy/ENet-CSharp/issues/15
+	// iOS Debugging - File Access Permission (#blameApple)
+	// Can't write to files without the file permission... so don't do that if we're on Apple.
+
+	// Prefix
+	printf("%s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
+
+	va_start(args, fmt);	
+	vprintf(fmt, args);	
+	va_end(args);
+
+	printf("\n");
+#else
+	// Open the log file
+	if (!enet_log_fp) enet_log_fp = fopen(ENET_LOG_FILE, "a");
+	if (!enet_log_fp) return;
+
+	fprintf(enet_log_fp, "%s [%s] [%s:%d] \n", time_buf, enet_log_type_names[type], func, line);
 	va_start(args, fmt);
 	vfprintf(enet_log_fp, fmt, args);
 	va_end(args);
 
-	fprintf(enet_log_fp, "\n");
 	fflush(enet_log_fp);
+#endif
+
 }
-
-
 #endif
