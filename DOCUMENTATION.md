@@ -51,11 +51,15 @@ Definitions of peer states for `Peer.State` property:
 ### Delegates
 #### Memory callbacks
 
-No longer available in this fork.
+`AllocCallback(IntPtr size)` notifies when a memory is requested for allocation. Expects pointer to the newly allocated memory. A reference to the delegate should be preserved from being garbage collected.
+
+`FreeCallback(IntPtr memory)` notifies when the memory can be freed. A reference to the delegate should be preserved from being garbage collected.
+
+`NoMemoryCallback()` notifies when memory is not enough. A reference to the delegate should be preserved from being garbage collected.
 
 #### Packet callbacks
 
-No longer available in this fork.
+`PacketFreeCallback(Packet packet)` notifies when a packet is being destroyed. A reference to the delegate should be preserved from being garbage collected.
 
 ### Structures
 #### Address
@@ -110,7 +114,7 @@ Contains a managed pointer to the peer and cached ID.
 
 `Peer.IsSet` returns a state of the managed pointer.
 
-`Peer.ID` returns a peer ID.
+`Peer.ID` returns a peer ID. It's always zero on the client side.
 
 `Peer.IP` returns an IP address in a printable form.
 

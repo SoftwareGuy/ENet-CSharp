@@ -24,7 +24,7 @@ set(ENET_LIB_NAME enet)
 cmake_minimum_required(VERSION 3.1)
 project(${ENET_LIB_NAME} LANGUAGES C)
 
-set(ENET_DEBUG OFF CACHE BOOL "Do debug things")
+set(ENET_DEBUG OFF CACHE BOOL "Enables debug and trace logging")
 set(ENET_PLUGIN_DIR_BASE "${CMAKE_CURRENT_SOURCE_DIR}/Unity/Plugins")
 set(ENET_PLUGIN_DIR_ARCH "x86_64")
 set(ENET_DEFINES -DENET_NO_PRAGMA_LINK -DENET_DLL)
