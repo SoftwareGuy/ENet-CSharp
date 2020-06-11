@@ -3883,7 +3883,7 @@ extern "C" {
 		host->socket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
 
 		if (host->socket != ENET_SOCKET_NULL) {
-			ENET_LOG_TRACE("Switching socket to IPv6 version 6 only mode");
+			ENET_LOG_TRACE("Switching socket to IPv4 & IPv6 dual stack mode");
 			enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
 		}
 
