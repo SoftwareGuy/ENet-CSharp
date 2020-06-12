@@ -34,6 +34,6 @@ Always flush the host before the end of a session to ensure that all queued pack
 
 ### Unreliable packets are dropped significantly under simulation of latency.
 
-If the simulated delay/ping is applied in the middle of the process, but not before connection establishment, then unreliable packets will be throttled if simulated latency exceeds the threshold (20 ms by default between service updates). See the description of `Peer.ConfigureThrottle()` [here](https://github.com/SoftwareGuy/ENet-CSharp/DOCUMENTATION.md) for details and parameters tuning.
+If the simulated delay/ping is applied in the middle of the process, but not before connection establishment, then unreliable packets will be throttled if simulated latency exceeds the threshold (20 ms by default between service updates). See the description of `Peer.ConfigureThrottle()` [here](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/DOCUMENTATION.md) for details and parameters tuning.
 
 This document will be updated as time goes on.
