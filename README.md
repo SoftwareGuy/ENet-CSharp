@@ -5,6 +5,8 @@
 [![Ko-Fi](https://img.shields.io/badge/Donate-Ko--Fi-red)](https://ko-fi.com/coburn) 
 [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue)](https://paypal.me/coburn64)
 ![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)
+![Build for Linux 64bit](https://github.com/SoftwareGuy/ENet-CSharp/workflows/Build%20for%20Linux%2064bit/badge.svg)
+![Build for Apple iOS](https://github.com/SoftwareGuy/ENet-CSharp/workflows/Build%20for%20Apple%20iOS/badge.svg)
 
 _**Please consider a donation (see the Ko-Fi button above) if this project is useful to you.**_
 
