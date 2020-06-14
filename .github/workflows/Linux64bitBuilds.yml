@@ -7,37 +7,36 @@ on:
     branches: [ master ]
 
 jobs:
-    build_release:
+    build_release_linux64:
+        name: Linux 64Bit (Release)
         runs-on: ubuntu-latest
         steps:
         
         - uses: actions/checkout@v2
         
-        - name: Build Linux64 Binary with CMake
+        - name: Run CMake to configure and create a Release build
           uses: ashutoshvarma/action-cmake-build@master
           with:
             build-dir: ${{ runner.workspace }}/build
             cc: gcc
             cxx: g++
             build-type: Release
-                
-        #- name: Show our results
-          #run: |
-              #ls -alR ${{ runner.workspace }}/build
-              
-        - name: Upload artifacts
+            configure-options: -DENET_DEBUG=OFF
+
+        - name: Upload release build artifact
           uses: actions/upload-artifact@v2
           with:
             name: Linux64-Release-Binary
             path: ${{ runner.workspace }}/build/libenet.so
             
-    build_debug:
+    build_debug_linux64:
+        name: Linux 64Bit (Debug)
         runs-on: ubuntu-latest
         steps:
         
         - uses: actions/checkout@v2
         
-        - name: Build Linux64 Binary with CMake
+        - name: Run CMake to configure and create a Debug build.
           uses: ashutoshvarma/action-cmake-build@master
           with:
             build-dir: ${{ runner.workspace }}/build
@@ -45,14 +44,31 @@ jobs:
             cxx: g++
             build-type: Debug
             configure-options: -DENET_DEBUG=ON
-                
-        #- name: Show our results
-          #run: |
-              #ls -alR ${{ runner.workspace }}/build
-              
-        - name: Upload artifacts
+
+        - name: Upload debug build artifact
           uses: actions/upload-artifact@v2
           with:
             name: Linux64-Debug-Binary
             path: ${{ runner.workspace }}/build/libenet.so
     
+    build_apple_mobile:
+        name: Apple iOS (Release)
+        runs-on: macos-latest
+        steps:
+        
+        - name: Checkout Code
+        - uses: actions/checkout@v2
+        
+        - name: Setup XCode (with latest Apple SDK)
+          uses: maxim-lobanov/setup-xcode@1.0
+          with:
+            xcode-version: latest
+        
+        - name: Run repository build script
+          run: |
+            cd ${{ runner.workspace }}/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
+            
+        - name: Debug print the work directory and end it all.
+          run: |
+            ls -alR ${{ runner.workspace }}/Build-iOS
+        
