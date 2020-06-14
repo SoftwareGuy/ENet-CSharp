@@ -92,7 +92,7 @@ jobs:
             asset_path: ${{ runner.workspace }}/ReleaseTemp/Release.zip
             asset_name: libenet-release-linux64.zip
             asset_content_type: application/zip
-             
+
         - name: Upload Debug Asset
           id: upload-debug-asset 
           uses: actions/upload-release-asset@v1
@@ -104,11 +104,11 @@ jobs:
             asset_path: ${{ runner.workspace }}/ReleaseTemp/Debug.zip
             asset_name: libenet-debug-linux64.zip
             asset_content_type: application/zip
-            
+
     build_apple_mobile:
-      needs: build_linux64
-      runs-on: macos-latest
-      steps:
+        needs: build_linux64
+        runs-on: macos-latest
+        steps:
       
         - name: Setup XCode (with latest Apple SDK)
           uses: maxim-lobanov/setup-xcode@1.0
