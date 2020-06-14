@@ -1,0 +1,48 @@
+name: Build for Apple iOS
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+    build_apple_mobile:
+        name: Apple iOS (Debug and Release)
+        runs-on: macos-latest
+        steps:       
+        
+        - name: Setup XCode (with latest Apple SDK)
+          uses: maxim-lobanov/setup-xcode@1.0
+          with:
+            xcode-version: latest
+
+        - name: Checkout Code
+          uses: actions/checkout@v2
+
+        - name: Make temp directories.
+          run: |
+            mkdir -p ${{ runner.workspace }}/temp/Release
+            mkdir -p ${{ runner.workspace }}/temp/Debug
+            
+        - name: Run repository build script in Release mode
+          run: |            
+            cd $GITHUB_WORKSPACE/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
+            cp -rv $GITHUB_WORKSPACE/Build-iOS/build/Release-iphoneos/libenet.a ${{ runner.workspace }}/temp/Release
+            
+        - name: Run repository build script in Debug mode
+          run: |
+            cd $GITHUB_WORKSPACE/Build-iOS; sed -i '' 's/BUILD_TYPE="Release"/BUILD_TYPE="Debug"/g' Build-iOS.command ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
+            cp -rv $GITHUB_WORKSPACE/Build-iOS/build/Debug-iphoneos/libenet.a ${{ runner.workspace }}/temp/Debug/
+
+        - name: Upload release build artifact
+          uses: actions/upload-artifact@v2
+          with:
+            name: iOS-enet-Release
+            path: ${{ runner.workspace }}/temp/Release/libenet.a
+            
+        - name: Upload debug build artifact
+          uses: actions/upload-artifact@v2
+          with:
+            name: iOS-enet-Debug
+            path: ${{ runner.workspace }}/temp/Debug/libenet.a

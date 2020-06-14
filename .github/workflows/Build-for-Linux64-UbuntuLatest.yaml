@@ -1,4 +1,4 @@
-name: Build Binaries for Linux64
+name: Build for Linux 64bit
 
 on:
   push:
@@ -50,25 +50,3 @@ jobs:
           with:
             name: Linux64-Debug-Binary
             path: ${{ runner.workspace }}/build/libenet.so
-    
-    build_apple_mobile:
-        name: Apple iOS (Release)
-        runs-on: macos-latest
-        steps:
-        
-        - name: Checkout Code
-          uses: actions/checkout@v2
-        
-        - name: Setup XCode (with latest Apple SDK)
-          uses: maxim-lobanov/setup-xcode@1.0
-          with:
-            xcode-version: latest
-        
-        - name: Run repository build script
-          run: |
-            cd ${{ runner.workspace }}/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
-            
-        - name: Debug print the work directory and end it all.
-          run: |
-            ls -alR ${{ runner.workspace }}/Build-iOS
-        
