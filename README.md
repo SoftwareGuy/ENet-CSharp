@@ -5,8 +5,7 @@
 [![Ko-Fi](https://img.shields.io/badge/Donate-Ko--Fi-red)](https://ko-fi.com/coburn) 
 [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue)](https://paypal.me/coburn64)
 ![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)
-![Build for Linux 64bit](https://github.com/SoftwareGuy/ENet-CSharp/workflows/Build%20for%20Linux%2064bit/badge.svg)
-![Build for Apple iOS](https://github.com/SoftwareGuy/ENet-CSharp/workflows/Build%20for%20Apple%20iOS/badge.svg)
+![Master Build](https://github.com/SoftwareGuy/ENet-CSharp/workflows/Master%20Build/badge.svg)
 
 _**Please consider a donation (see the Ko-Fi button above) if this project is useful to you.**_
 
@@ -20,10 +19,8 @@ Unlike the upstream repository code of conduct where issue tickets were closed r
 ## Compatibility with Upstream
 Don't use the upstream releases with the code in this repository. You will most likely get crashes or weird things happening.
 
-## Building
-You can use the IDE of Visual Studio to build if you like. The following will be oriented for power users and command line heroes.
-
-Unlike upstream, this repo has a complete build system that harnesses the power of `MSBuild`. Ensure you have a Dotnet SDK at least installed.
+## Building your own binaries
+If you don't want to take the automatically built libraries in the releases section, you can use the Visual Studio MSBuild engine to build if you like. However the following will be oriented for power users and command line heroes, and requires NET Core SDK 2.2 to work correctly.
 
 ### Desktop Compile
 
@@ -40,9 +37,9 @@ Unlike upstream, this repo has a complete build system that harnesses the power 
 - **Apple iOS:** Using **Terminal.app** on your MacOS device, navigate to the `Build-iOS` directory and run the command file found inside. You might need to make it executable, however. It will try to auto-pilot a build for you, just make sure you have CMake installed for MacOS and a recent Xcode installation. Library code signing will be disabled for the build.
 
 ### Console
-- **Nintendo Switch:** A old guide is available [here](). However, it will require some modification to work with the Switch OS and Nintendo's own SDK. Since said SDK is under NDA, limited public info can be provided.
+- **Nintendo Switch:** A old guide is available [here](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/BUILD-FOR-SWITCH.txt). However, it will require some modification to work with the Switch OS and Nintendo's own SDK. Since said SDK is under NDA, limited public info can be provided.
 
-- **Playstation 4/Vita:** An Enet Vita port exists already, however I am not planning to add support for the Vita to this repository. PS4 is a question mark.
+- **Playstation 4/Vita:** An Vita port exists already, however I am not planning to add support for the Vita to this repository. PS4 is obviously no go as well.
 
 - **Other console not listed:** Open a issue ticket and I'll gladly add your steps for your platform here.
 
