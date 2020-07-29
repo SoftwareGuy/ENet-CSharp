@@ -7,8 +7,8 @@
 
 // Apple Specific things.
 #if __APPLE__
-	#include <TargetConditionals.h>
-	#include <CoreFoundation/CoreFoundation.h>
+	#include <TargetConditionals.h> // <-- Not needed?
+    #include <asl.h>
 #endif
 
 // TODO: Make better filenames; ie. enet_log.pid.txt
@@ -42,33 +42,31 @@ static inline void enet_log(enum enet_log_type type, const char *func, int line,
 	struct tm *local_time = localtime(&tstamp);
 	char time_buf[64];
 
-	time_buf[strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_time)] = '\0';
-
 #if __APPLE__
 	// Logging has changed, hopefully this will dump it into your Console.app
 	// on macOS/iOS.
-	
+    char logStringBuf[512];
+    
 	// Prefix
-	printf("Enet: %s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
-
-	va_start(args, fmt);
-	// TESTING
-	AppleNSLog(fmt, args);
-	// vprintf(fmt, args);	
+    va_start(args, fmt);
+    vsprintf(logStringBuf, fmt, args);
+    asl_log(NULL, NULL, ASL_LEVEL_ERR, "%s", logStringBuf);
 	va_end(args);
-
-	printf("\n");
 #else
+    // Timestamp
+    time_buf[strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_time)] = '\0';
+    
 	// Open the log file
 	if (!enet_log_fp) enet_log_fp = fopen(ENET_LOG_FILE, "a");
 	if (!enet_log_fp) return;
 
+    // Print the log into the file
 	fprintf(enet_log_fp, "%s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
 	va_start(args, fmt);
 	vfprintf(enet_log_fp, fmt, args);
 	va_end(args);
-
 	fprintf(enet_log_fp, "\n");
+    // Close the file
 	fflush(enet_log_fp);
 #endif
 
