@@ -35,6 +35,7 @@ set(ENET_SRCS
 	${ENET_SRCDIR}/enet.h
 	${ENET_SRCDIR}/custom/enet_logging.h
 	${ENET_SRCDIR}/custom/enet_iosFixes.h
+	${ENET_SRCDIR}/custom/enet_apple_logging.h
 )
 
 if(ENET_DEBUG)

@@ -1,15 +1,18 @@
 #ifndef ENET_LOGGING_H
 #define ENET_LOGGING_H
 
+// Include basic things used for our logging facility.
 #include <stdarg.h>
 #include <stdio.h>
 
+// Apple Specific things.
 #if __APPLE__
 	#include <TargetConditionals.h>
+	#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 // TODO: Make better filenames; ie. enet_log.pid.txt
-#define ENET_LOG_FILE "enet_log.txt"
+#define ENET_LOG_FILE "enet_debug.log"
 
 static FILE *enet_log_fp = NULL;
 
@@ -41,16 +44,17 @@ static inline void enet_log(enum enet_log_type type, const char *func, int line,
 
 	time_buf[strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_time)] = '\0';
 
-#if __APPLE__ && TARGET_OS_IPHONE
-	// https://github.com/SoftwareGuy/ENet-CSharp/issues/15
-	// iOS Debugging - File Access Permission (#blameApple)
-	// Can't write to files without the file permission... so don't do that if we're on Apple.
-
+#if __APPLE__
+	// Logging has changed, hopefully this will dump it into your Console.app
+	// on macOS/iOS.
+	
 	// Prefix
-	printf("%s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
+	printf("Enet: %s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
 
-	va_start(args, fmt);	
-	vprintf(fmt, args);	
+	va_start(args, fmt);
+	// TESTING
+	AppleNSLog(fmt, args);
+	// vprintf(fmt, args);	
 	va_end(args);
 
 	printf("\n");
