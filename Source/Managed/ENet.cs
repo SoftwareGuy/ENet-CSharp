@@ -943,16 +943,30 @@ namespace ENet {
 
 	[SuppressUnmanagedCodeSecurity]
 	internal static class Native {
-#if __IOS__ || UNITY_IOS && !UNITY_EDITOR
+		// This should address Unity usage and bug #66: Platform specific Enet / libenet
+		// https://github.com/SoftwareGuy/Ignorance/issues/66
+#if UNITY_EDITOR
+		// We are inside the Unity Editor.
+	#if UNITY_EDITOR_OSX
+		// Unity Editor on macOS needs to use libenet.
+		private const string nativeLibrary = "libenet";
+	#else
+		// TODO: Check if Linux requires 'libenet' too. (Apparently not?)
+		private const string nativeLibrary = "enet";
+	#endif
+#else
+		// We're not inside the Unity Editor.
+	#if __APPLE__ && !(__IOS__ || UNITY_IOS)
+		// Use libenet on macOS.
+		private const string nativeLibrary = "libenet";
+	#elif __IOS__ || UNITY_IOS
         // We're building for a certain mobile fruity OS.
 		private const string nativeLibrary = "__Internal";
-#elif __APPLE__ || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-        // We're building for a certain fruity OS.
-        private const string nativeLibrary = "libenet";
-#else
-        // Assume everything else, Windows et al...		
+	#else
+        // Assume everything else, Windows et al... TODO: Linux check		
         private const string nativeLibrary = "enet";
-#endif	
+	#endif	
+#endif
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int enet_initialize();
