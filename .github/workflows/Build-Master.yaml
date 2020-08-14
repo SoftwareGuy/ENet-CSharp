@@ -76,7 +76,7 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            tag_name: autobuild-${{ steps.buildnumber.outputs.build_number }}
+            tag_name: build-number-${{ steps.buildnumber.outputs.build_number }}
             release_name: ENET Native Libraries (Autobuild ${{ steps.buildnumber.outputs.build_number }})
             body: This is an automatic build of ENET for various operating systems. Please do not mix and match ENET native binaries as code differences between forks may cause crashes. The release archive contains one for use in shipping, while the debug archive has logging facilities.
             draft: false
