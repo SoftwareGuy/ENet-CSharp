@@ -126,7 +126,7 @@ In general, ENet is not thread-safe, but some of its functions can be used safel
 
 ### Supporters
 
-This fork is supported, used, mantained and supported by [Oiran Studio](http://www.oiran.studio).
+This fork is supported, used and mantained by [Oiran Studio](http://www.oiran.studio).
 
 <p align="left"> 
   <img src="http://www.oiran.studio/OiranFanFinal_Colour_Mini.png" alt="Oiran Studio Logo">
