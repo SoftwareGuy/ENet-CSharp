@@ -921,10 +921,20 @@ namespace ENet {
 		public const uint version = (2 << 16) | (4 << 8) | (0);
 
 		public static bool Initialize() {
+			if (Native.enet_linked_version() != version)
+				throw new InvalidOperationException("You're trying to use an incompatible version of Enet with this Managed Library.");
+
 			return Native.enet_initialize() == 0;
 		}
 
 		public static bool Initialize(Callbacks callbacks) {
+			if(callbacks == null) 
+				throw new ArgumentNullException("callbacks");
+			
+			if (Native.enet_linked_version() != version)
+				throw new InvalidOperationException("You're trying to use an incompatible version of Enet with this Managed Library.");
+
+			
 			ENetCallbacks nativeCallbacks = callbacks.NativeData;
 
 			return Native.enet_initialize_with_callbacks(version, ref nativeCallbacks) == 0;
@@ -979,6 +989,9 @@ namespace ENet {
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void enet_deinitialize();
 
+		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern uint enet_linked_version();
+		
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern uint enet_time_get();
 

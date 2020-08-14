@@ -17,6 +17,8 @@ The original C library both this fork and upstreams' fork is based on is located
 A slightly longer description is that this is a improved and refactored version of ENET-CSharp. A fork of a fork, if you want to call it that. This fork started since the upstream fork was originally archived, disabling the ability to report issues and submit pull requests.
 The upstream developer also made some questionable choices (including blacklisting/blocking myself and numerous others). As a result, this fork was made and allows developers to ask questions and submit pull requests to improve the implementation.
 
+Please note that while upstream may have a *newer* version number compared to this fork, upstream Enet native commits will be cherry picked. So you'll get best of both worlds.
+
 ## Native Library Features
 
 - Lightweight and straightforward
