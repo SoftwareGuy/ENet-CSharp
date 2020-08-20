@@ -3,10 +3,9 @@ name: Master Build
 on:
   push:
 # Leaving this here for classic build behaviour;
-# May want to go back to a build per commit at some point.
-#    branches: [ master ]
-    tags: 
-        - 'build-ready'
+    branches: [ master ]
+#    tags: 
+#        - 'build-ready'
 
 jobs:
 # START LINUX BUILD JOB
@@ -32,7 +31,7 @@ jobs:
             mkdir -p ${{ runner.workspace }}/ReleaseTemp/Release
             mkdir -p ${{ runner.workspace }}/ReleaseTemp/Debug
 
-        - name: CMake: Configure and build release binary.
+        - name: Configure and build release binary.
           uses: ashutoshvarma/action-cmake-build@master
           with:
             build-dir: ${{ runner.workspace }}/build-release
@@ -41,7 +40,7 @@ jobs:
             build-type: Release
             configure-options: -DENET_DEBUG=0
 
-        - name: CMake: Configure and build debug build.
+        - name: Configure and build debug binary.
           uses: ashutoshvarma/action-cmake-build@master
           with:
             build-dir: ${{ runner.workspace }}/build-debug
@@ -82,7 +81,7 @@ jobs:
             draft: false
             prerelease: false
 
-        - name: Release: Upload release library
+        - name: Upload release library
           id: upload-release-asset 
           uses: actions/upload-release-asset@v1
           env:
@@ -93,7 +92,7 @@ jobs:
             asset_name: libenet-release-linux64.zip
             asset_content_type: application/zip
 
-        - name: Release: Upload debug library
+        - name: Upload debug library
           id: upload-debug-asset 
           uses: actions/upload-release-asset@v1
           env:
@@ -155,7 +154,7 @@ jobs:
 #            name: enet-iOS-Debug
 #            path: ${{ runner.workspace }}/temp/Debug/libenet.zip
 
-        - name: Release: Upload release library
+        - name: Upload release library
           id: upload-release-asset 
           uses: actions/upload-release-asset@v1
           env:
@@ -166,7 +165,7 @@ jobs:
             asset_name: libenet-release-iOS.zip
             asset_content_type: application/zip
 
-        - name: Release: Upload debug library
+        - name: Upload debug library
           id: upload-debug-asset 
           uses: actions/upload-release-asset@v1
           env:
