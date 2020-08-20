@@ -4645,13 +4645,16 @@ extern "C" {
 		msgHdr.msg_iovlen = bufferCount;
 		sentLength = sendmsg(socket, &msgHdr, MSG_NOSIGNAL);
 
-		if (sentLength == -1) {
-			ENET_LOG_ERROR("sendMsg result is negative, returned code is %i.", errno);
-
-			if (errno == EWOULDBLOCK)
+		if (sentLength == -1) {		
+			if (errno == EWOULDBLOCK) {
+				// This would block, that's okay, just let enet do it's thing.
 				return 0;
+			}
+			else {
+				ENET_LOG_ERROR("sendMsg result is negative, returned code is %i.", errno);
+				return -1;
+			}
 
-			return -1;
 		}
 
 		return sentLength;
@@ -4983,10 +4986,21 @@ extern "C" {
 		}
 
 		if (WSASendTo(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &sentLength, 0, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? sizeof(struct sockaddr_in6) : 0, NULL, NULL) == SOCKET_ERROR) {
-			ENET_LOG_ERROR("WSASendTo reported an error. Error code returned was %i.", WSAGetLastError());
-			return (WSAGetLastError() == WSAEWOULDBLOCK) ? 0 : -1;
+			// Stash the return code.
+			int WSAReturnCode = WSAGetLastError();
+
+			if (WSAReturnCode != WSAEWOULDBLOCK) {
+				// Error occurred and it wasn't a "This would block" response.
+				ENET_LOG_ERROR("WSASendTo reported an error, code returned was %i.", WSAReturnCode);
+				return -1;
+			}
+			else {
+				return 0;
+			}
+
+			// Commented out for backup purposes
+			// return (WSAReturnCode == WSAEWOULDBLOCK) ? 0 : -1;
 		}
-			
 
 		return (int)sentLength;
 	}
