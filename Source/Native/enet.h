@@ -3849,7 +3849,7 @@ extern "C" {
 */
 
 	ENetHost* enet_host_create(const ENetAddress* address, size_t peerCount, size_t channelLimit, uint32_t incomingBandwidth, uint32_t outgoingBandwidth, int bufferSize) {
-		ENET_LOG_TRACE("ENET Host being created.");
+		ENET_LOG_TRACE("Creating Enet Host.");
 		ENetHost* host;
 		ENetPeer* currentPeer;
 
@@ -3891,7 +3891,7 @@ extern "C" {
 		
 			if (host->socket == ENET_SOCKET_NULL || (address != NULL && socketBindResult < 0)) {
 			if (host->socket != ENET_SOCKET_NULL) {
-				ENET_LOG_TRACE("Destroying old socket");
+				ENET_LOG_TRACE("Destroying an old socket");
 				enet_socket_destroy(host->socket);
 			}
 
@@ -3903,23 +3903,23 @@ extern "C" {
 		}
 
 
-		ENET_LOG_TRACE("START: Buffer Setup");
+		ENET_LOG_TRACE("START: Setting up buffers");
 		if (bufferSize > ENET_HOST_BUFFER_SIZE_MAX)
 			bufferSize = ENET_HOST_BUFFER_SIZE_MAX;
 		else if (bufferSize < ENET_HOST_BUFFER_SIZE_MIN)
 			bufferSize = ENET_HOST_BUFFER_SIZE_MIN;
 
-		ENET_LOG_TRACE("START: Setup socket options");
+		ENET_LOG_TRACE("START: Setting up our socket");
 		enet_socket_set_option(host->socket, ENET_SOCKOPT_NONBLOCK, 1);
 		enet_socket_set_option(host->socket, ENET_SOCKOPT_BROADCAST, 1);
 		enet_socket_set_option(host->socket, ENET_SOCKOPT_RCVBUF, bufferSize);
 		enet_socket_set_option(host->socket, ENET_SOCKOPT_SNDBUF, bufferSize);
 
-		ENET_LOG_TRACE("START: Address Setup");
+		ENET_LOG_TRACE("START: Setting up Enet Address");
 		if (address != NULL && enet_socket_get_address(host->socket, &host->address) < 0)
 			host->address = *address;
 
-		ENET_LOG_TRACE("START: Channels Setup");
+		ENET_LOG_TRACE("START: Setting up Enet Channels.");
 		if (!channelLimit || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT)
 			channelLimit = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT;
 		else if (channelLimit < ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT)
@@ -3954,7 +3954,7 @@ extern "C" {
 		host->maximumWaitingData = ENET_HOST_DEFAULT_MAXIMUM_WAITING_DATA;
 		host->interceptCallback = NULL;
 
-		ENET_LOG_TRACE("Clearing dispatch queue");
+		ENET_LOG_TRACE("START: Clearing dispatch queue");
 		enet_list_clear(&host->dispatchQueue);
 
 		for (currentPeer = host->peers; currentPeer < &host->peers[host->peerCount]; ++currentPeer) {
@@ -3972,12 +3972,12 @@ extern "C" {
 			enet_peer_reset(currentPeer);
 		}
 
-		ENET_LOG_TRACE("SHOWTIME: Host created successfully.");
+		ENET_LOG_TRACE("START: It's showtime. ENet host successfully created.");
 		return host;
 	}
 
 	void enet_host_destroy(ENetHost* host) {
-		ENET_LOG_TRACE("ENET Host being destroyed.");
+		ENET_LOG_TRACE("A ENet host is being destroyed.");
 
 		ENetPeer* currentPeer;
 
@@ -4002,7 +4002,7 @@ extern "C" {
 	}
 
 	ENetPeer* enet_host_connect(ENetHost* host, const ENetAddress* address, size_t channelCount, uint32_t data) {
-		ENET_LOG_TRACE("Connection to host going up");
+		ENET_LOG_TRACE("A Enet host is trying to establish a connection.");
 
 		ENetPeer* currentPeer;
 		ENetChannel* channel;
@@ -4646,6 +4646,8 @@ extern "C" {
 		sentLength = sendmsg(socket, &msgHdr, MSG_NOSIGNAL);
 
 		if (sentLength == -1) {
+			ENET_LOG_ERROR("sendMsg result is negative, returned code is %i.", errno);
+
 			if (errno == EWOULDBLOCK)
 				return 0;
 
@@ -4680,7 +4682,7 @@ extern "C" {
 
 	
 		if (msgHdr.msg_flags & MSG_TRUNC) {
-			ENET_LOG_ERROR("this enet message header was truncated...\n");
+			ENET_LOG_ERROR("Message header was truncated.");
 			// commit 5f0e1b475caa019157c3cf881a8d08009150f1e2 from upstream
 			return -2;
 		}
@@ -4980,8 +4982,11 @@ extern "C" {
 			sin.sin6_addr = address->ipv6;
 		}
 
-		if (WSASendTo(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &sentLength, 0, address != NULL ? (struct sockaddr*) & sin : NULL, address != NULL ? sizeof(struct sockaddr_in6) : 0, NULL, NULL) == SOCKET_ERROR)
+		if (WSASendTo(socket, (LPWSABUF)buffers, (DWORD)bufferCount, &sentLength, 0, address != NULL ? (struct sockaddr*)&sin : NULL, address != NULL ? sizeof(struct sockaddr_in6) : 0, NULL, NULL) == SOCKET_ERROR) {
+			ENET_LOG_ERROR("WSASendTo reported an error. Error code returned was %i.", WSAGetLastError());
 			return (WSAGetLastError() == WSAEWOULDBLOCK) ? 0 : -1;
+		}
+			
 
 		return (int)sentLength;
 	}
@@ -4995,12 +5000,12 @@ extern "C" {
 			int retCode = WSAGetLastError();
 
 			switch (WSAGetLastError()) {
-			case WSAEWOULDBLOCK:
-			case WSAECONNRESET:
-				return 0;
+				case WSAEWOULDBLOCK:
+				case WSAECONNRESET:
+					return 0;
 			}
 
-			ENET_LOG_ERROR("Socket receive failure, WSA return code %d", retCode);
+			ENET_LOG_ERROR("Socket receive failure, WSA return code %i", retCode);
 			return -1;
 		}
 
@@ -5046,7 +5051,7 @@ extern "C" {
 		selectCount = select(socket + 1, &readSet, &writeSet, NULL, &timeVal);
 
 		if (selectCount < 0) {
-			ENET_LOG_ERROR("selectCount < 0; was %d", selectCount);
+			ENET_LOG_ERROR("selectCount < 0; was %i", selectCount);
 			return -1;
 		}
 
