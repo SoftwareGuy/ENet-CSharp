@@ -38,7 +38,7 @@ namespace ENet {
 		NoAllocate = 1 << 2,
 		UnreliableFragmented = 1 << 3,
 		Instant = 1 << 4,
-		Crucial = 1 << 5,
+		Unthrottled = 1 << 5,
 		Sent =  1 << 8
 	}
 
@@ -90,6 +90,7 @@ namespace ENet {
 	public delegate void FreeCallback(IntPtr memory);
 	public delegate void NoMemoryCallback();
 	public delegate void PacketFreeCallback(Packet packet);
+	public delegate int InterceptCallback(ref Event @event, IntPtr receivedData, int receivedDataLength);
 
 	internal static class ArrayPool {
 		[ThreadStatic]
@@ -645,6 +646,19 @@ namespace ENet {
 
 			Native.enet_host_channel_limit(nativeHost, (IntPtr)channelLimit);
 		}
+		public void SetInterceptCallback(IntPtr callback)
+		{
+			IsCreated();
+
+			Native.enet_host_set_intercept_callback(nativeHost, callback);
+		}
+
+		public void SetInterceptCallback(InterceptCallback callback)
+		{
+			IsCreated();
+
+			Native.enet_host_set_intercept_callback(nativeHost, Marshal.GetFunctionPointerForDelegate(callback));
+		}
 
 		public void Flush() {
 			IsCreated();
@@ -764,6 +778,16 @@ namespace ENet {
 				IsCreated();
 
 				return Native.enet_peer_get_packets_lost(nativePeer);
+			}
+		}
+
+		public float PacketsThrottle
+		{
+			get
+			{
+				IsCreated();
+
+				return Native.enet_peer_get_packets_throttle(nativePeer);
 			}
 		}
 
@@ -908,7 +932,7 @@ namespace ENet {
 		public const uint maxChannelCount = 0xFF;
 		public const uint maxPeers = 0xFFF;
 		public const uint maxPacketSize = 32 * 1024 * 1024;
-		public const uint throttleThreshold = 20;
+		public const uint throttleThreshold = 40;
 		public const uint throttleScale = 32;
 		public const uint throttleAcceleration = 2;
 		public const uint throttleDeceleration = 2;
@@ -1086,6 +1110,9 @@ namespace ENet {
 		internal static extern uint enet_host_get_bytes_received(IntPtr host);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void enet_host_set_intercept_callback(IntPtr host, IntPtr callback);
+
+		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void enet_host_flush(IntPtr host);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
@@ -1129,6 +1156,9 @@ namespace ENet {
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern ulong enet_peer_get_packets_lost(IntPtr peer);
+
+		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern float enet_peer_get_packets_throttle(IntPtr peer);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern ulong enet_peer_get_bytes_sent(IntPtr peer);
