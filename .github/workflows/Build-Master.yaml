@@ -103,10 +103,22 @@ jobs:
             mkdir ${{ runner.workspace }}\DebugOut
             mkdir ${{ runner.workspace }}\ReleaseOut
 
-        - name: Investigate.
-          run: |
-            dir $GITHUB_WORKSPACE
-            dir ${{ runner.workspace }}
+# DEBUGGING - This shit really does my head in!
+#        - name: Investigate.
+#          run: |
+#            dir $GITHUB_WORKSPACE
+#            dir ${{ runner.workspace }}
+
+        - name: Build Debug configuration Enet
+          run: |            
+            cd ${{ runner.workspace }}\ENet-CSharp
+            echo Clean
+            dotnet clean
+            echo Build            
+            dotnet build
+#            copy "$GITHUB_WORKSPACE\Unity\Plugins\x86_64\enet.dll" "${{ runner.workspace }}\DebugOut"
+#            cd "${{ runner.workspace }}\DebugOut"
+#            Start-Process -NoNewWindow -FilePath "C:\Program Files\7-Zip\7z.exe" -ArgumentList "a Debug.zip enet.dll"
             
 # END WINDOWS BUILD JOB
 
