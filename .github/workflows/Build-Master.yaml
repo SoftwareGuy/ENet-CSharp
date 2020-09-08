@@ -58,7 +58,6 @@ jobs:
             build-type: Debug
             configure-options: -DENET_DEBUG=1
 
-
         - name: Stash compiled libraries
           run: |
             cp ${{ runner.workspace }}/build-release/libenet.so ${{ runner.workspace }}/ReleaseTemp/Release/libenet.so
@@ -103,23 +102,37 @@ jobs:
             mkdir ${{ runner.workspace }}\DebugOut
             mkdir ${{ runner.workspace }}\ReleaseOut
 
-# DEBUGGING - This shit really does my head in!
-#        - name: Investigate.
-#          run: |
-#            dir $GITHUB_WORKSPACE
-#            dir ${{ runner.workspace }}
-
-        - name: Build Debug configuration Enet
-          run: |            
+        - name: Build Enet DLLs
+          run: |
             cd ${{ runner.workspace }}\ENet-CSharp
-            echo Clean
-            dotnet clean
-            echo Build            
-            dotnet build
-#            copy "$GITHUB_WORKSPACE\Unity\Plugins\x86_64\enet.dll" "${{ runner.workspace }}\DebugOut"
-#            cd "${{ runner.workspace }}\DebugOut"
-#            Start-Process -NoNewWindow -FilePath "C:\Program Files\7-Zip\7z.exe" -ArgumentList "a Debug.zip enet.dll"
-            
+            echo Clean && dotnet clean
+            echo Build && dotnet build
+            copy "${{ runner.workspace }}\ENet-CSharp\Unity\Plugins\x86_64\enet.dll" "${{ runner.workspace }}\DebugOut"
+            echo Clean && dotnet clean
+            echo Build && dotnet build -c Release
+            copy "${{ runner.workspace }}\ENet-CSharp\Unity\Plugins\x86_64\enet.dll" "${{ runner.workspace }}\ReleaseOut"
+
+       - name: Upload release library
+          id: upload-release-asset 
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+            asset_path: ${{ runner.workspace }}/ReleaseOut/Release.zip
+            asset_name: libenet-release-win64.zip
+            asset_content_type: application/zip
+
+        - name: Upload debug library
+          id: upload-debug-asset 
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+            asset_path: ${{ runner.workspace }}/ReleaseTemp/Debug.zip
+            asset_name: libenet-debug-win64.zip
+            asset_content_type: application/zip
 # END WINDOWS BUILD JOB
 
 # START APPLE MACOS BUILD JOB
@@ -160,7 +173,7 @@ jobs:
             mkdir -p ${{ runner.workspace }}/temp/Debug
 
         - name: Run iOS build script in production mode.
-          run: |            
+          run: |
             cd $GITHUB_WORKSPACE/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
             zip -j -9 ${{ runner.workspace }}/temp/Release/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Release-iphoneos/libenet.a
 
