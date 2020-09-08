@@ -13,7 +13,7 @@ rem the build process as part of the CI pipeline. Hopefully that
 rem means I can just use this script to run the Microsoft Windows
 rem builds, because I've had the shits as mentioned above trying to
 rem use YAML files. YAML can GTFO until further notice.
-set %_OutputFolder%=%1
+set _OutputFolder=%1
 PATH=C:\Program Files\7-Zip;%PATH%
 
 rem Make release and debug folders.
