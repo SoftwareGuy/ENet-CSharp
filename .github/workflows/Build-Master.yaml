@@ -8,32 +8,27 @@ on:
 jobs:
     create_release:
         name: Prepare a new release
+        # Really?
+        runs-on: ubuntu-latest
         outputs:
-          build_number: ${{ steps.buildnumber.outputs.build_number }}
-          create_release_url: ${{ steps.create_release.outputs.upload_url }}
+          create_release_url: ${{ steps.create_release.outputs.upload_url }}         
           
         steps:
-        - name: Generate a new build number.
-          id: buildnumber
-          uses: einaregilsson/build-number@v2 
-          with:
-            token: ${{secrets.github_token}}
-
         - name: Create release on repository
           id: create_release
           uses: actions/create-release@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            tag_name: build-number-${{ steps.buildnumber.outputs.build_number }}
-            release_name: ENet Native Libraries (Autobuild ${{ steps.buildnumber.outputs.build_number }})
-            body: This is an automated build of the ENet native libraries, and is up to date with the latest commits. The attached per-platform archives contain ENet built in both production and debug environments.
+            tag_name: "autobuild-${{ github.run_number }}"
+            release_name: "ENet Native Libraries (Autobuild ${{ github.run_number }})"
+            body: "This is an automated build of the ENet native libraries, and is up to date with the latest commits. The attached per-platform archives contain ENet built in both production and debug environments."
             draft: false
             prerelease: false
 
 # START LINUX BUILD JOB
     build_linux64:
-        name: Prepare and build a Linux64 library.
+        name: Build for Linux x64
         needs: create_release
         runs-on: ubuntu-latest
         steps:      
@@ -103,7 +98,16 @@ jobs:
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
 
-    # Stubbed!
+        - name: Housekeeping
+          run: |
+            mkdir ${{ runner.workspace }}\DebugOut
+            mkdir ${{ runner.workspace }}\ReleaseOut
+
+        - name: Investigate.
+          run: |
+            dir $GITHUB_WORKSPACE
+            dir ${{ runner.workspace }}
+            
 # END WINDOWS BUILD JOB
 
 # START APPLE MACOS BUILD JOB
@@ -111,7 +115,12 @@ jobs:
         name: Build for MacOS
         needs: create_release
         runs-on: macos-latest
-        steps:
+        steps:         
+        - name: Setup Xcode (with latest Apple SDK)
+          uses: maxim-lobanov/setup-xcode@1.0
+          with:
+            xcode-version: 11.6
+        
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
 
@@ -128,7 +137,7 @@ jobs:
         - name: Setup Xcode (with latest Apple SDK)
           uses: maxim-lobanov/setup-xcode@1.0
           with:
-            xcode-version: latest
+            xcode-version: 11.6
 
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
@@ -143,7 +152,7 @@ jobs:
             cd $GITHUB_WORKSPACE/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
             zip -j -9 ${{ runner.workspace }}/temp/Release/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Release-iphoneos/libenet.a
 
-        - name: Run iOS build script in Debug mode
+        - name: Run iOS build script in Debug mode.
           run: |
             cd $GITHUB_WORKSPACE/Build-iOS; sed -i '' 's/BUILD_TYPE="Release"/BUILD_TYPE="Debug"/g' Build-iOS.command ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
             zip -j -9 ${{ runner.workspace }}/temp/Debug/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Debug-iphoneos/libenet.a 
