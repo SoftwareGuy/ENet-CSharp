@@ -4,7 +4,7 @@ This file describes some mistakes that newcomers or even experienced veterans ca
 
 ### `Packet.Dispose()` called right after sending a packet.
 
-Never dispose a packet after enqueuing it for sending, ENet does that for you automatically, otherwise, a memory access failure will occur.
+Never dispose a packet after enqueuing it for sending, ENet does that for you automatically. Otherwise, a memory access failure will occur.
 
 ### `Packet.Dispose()` called more than once per received packet.
 
@@ -27,10 +27,9 @@ Make sure that only the actual payload is sent and not a whole buffer, a packet 
 ### A host is unable to accept multiple connections or degrades with many packets.
 
 Make sure that the service is processing as many events as possible and not only one event per frame/iteration. Put the service into a loop even within a game loop (but without a timeout to avoid blocking). 
-
-Example: If using the Unity Engine, you can carefully put Enet into it's own C# thread. This decouples Enet away from the Unity main loop.
-
 If nothing helps, you can try to increase the socket buffer size of the [host](https://github.com/SoftwareGuy/ENet-CSharp/DOCUMENTATION.md#host) up to one megabyte using the appropriate parameter at both ends.
+
+Example: If using the Unity Engine, you can carefully put ENet into it's own C# thread. This decouples Enet away from the Unity main loop.
 
 ### A host is not flushed after the service is no longer in a loop.
 
@@ -38,7 +37,7 @@ Always flush the host before the end of a session to ensure that all queued pack
 
 ### Unreliable packets are dropped significantly under simulation of latency.
 
-If the simulated delay/ping is applied in the middle of the process but not before connection establishment, then unreliable packets will be throttled if simulated latency exceeds the threshold (20 ms by default between service updates). 
+If the simulated delay/ping is applied in the middle of the process but not before connection establishment, then unreliable packets will be throttled if simulated latency exceeds the threshold (40 ms by default between service updates). 
 
 See the description of `Peer.ConfigureThrottle()` [here](https://github.com/SoftwareGuy/ENet-CSharp/blob/master/DOCUMENTATION.md#peer) for details and parameters tuning.
 
