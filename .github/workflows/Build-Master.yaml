@@ -4,25 +4,39 @@ on:
   push:
 # Leaving this here for classic build behaviour;
     branches: [ master ]
-#    tags: 
-#        - 'build-ready'
-
+    
 jobs:
-# START LINUX BUILD JOB
-    build_linux64:
-        name: Prepare and build a Linux64 library.
-        runs-on: ubuntu-latest
+    create_release:
+        name: Prepare a new release
         outputs:
           build_number: ${{ steps.buildnumber.outputs.build_number }}
           create_release_url: ${{ steps.create_release.outputs.upload_url }}
-        steps:      
           
+        steps:
         - name: Generate a new build number.
           id: buildnumber
           uses: einaregilsson/build-number@v2 
           with:
             token: ${{secrets.github_token}}
 
+        - name: Create release on repository
+          id: create_release
+          uses: actions/create-release@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: build-number-${{ steps.buildnumber.outputs.build_number }}
+            release_name: ENet Native Libraries (Autobuild ${{ steps.buildnumber.outputs.build_number }})
+            body: This is an automated build of the ENet native libraries, and is up to date with the latest commits. The attached per-platform archives contain ENet built in both production and debug environments.
+            draft: false
+            prerelease: false
+
+# START LINUX BUILD JOB
+    build_linux64:
+        name: Prepare and build a Linux64 library.
+        needs: create_release
+        runs-on: ubuntu-latest
+        steps:      
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
           
@@ -57,37 +71,13 @@ jobs:
             zip -j -9 ${{ runner.workspace }}/ReleaseTemp/Release.zip ${{ runner.workspace }}/ReleaseTemp/Release/libenet.so
             zip -j -9 ${{ runner.workspace }}/ReleaseTemp/Debug.zip ${{ runner.workspace }}/ReleaseTemp/Debug/libenet.so
 
-#        - name: Upload release build artifact
-#          uses: actions/upload-artifact@v2
-#          with:
-#            name: Linux64-Release-Binary
-#            path: ${{ runner.workspace }}/build-release/libenet.so
-#
-#        - name: Upload debug build artifact
-#          uses: actions/upload-artifact@v2
-#          with:
-#            name: Linux64-Debug-Binary
-#            path: ${{ runner.workspace }}/build-debug/libenet.so
-
-        - name: Create release on repository
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            tag_name: build-number-${{ steps.buildnumber.outputs.build_number }}
-            release_name: ENET Native Libraries (Autobuild ${{ steps.buildnumber.outputs.build_number }})
-            body: This is an automated build of the Enet native libraries. It is up to date with the latest build-ready tagged commit. Please do not mix and match ENET native binaries as code differences between forks may cause crashes. The release archive contains one for use in shipping, while the debug archive has logging facilities.
-            draft: false
-            prerelease: false
-
         - name: Upload release library
           id: upload-release-asset 
           uses: actions/upload-release-asset@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }} 
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
             asset_path: ${{ runner.workspace }}/ReleaseTemp/Release.zip
             asset_name: libenet-release-linux64.zip
             asset_content_type: application/zip
@@ -98,24 +88,40 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }} 
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
             asset_path: ${{ runner.workspace }}/ReleaseTemp/Debug.zip
             asset_name: libenet-debug-linux64.zip
             asset_content_type: application/zip
 # END LINUX BUILD JOB
 
 # START WINDOWS BUILD JOB
+    build_windows_64:
+        name: Build for Windows x64
+        needs: create_release
+        runs-on: windows-latest
+        steps:
+        - name: Grab the latest copy of the repository.
+          uses: actions/checkout@v2
 
+    # Stubbed!
 # END WINDOWS BUILD JOB
 
 # START APPLE MACOS BUILD JOB
+    build_apple_64:
+        name: Build for MacOS
+        needs: create_release
+        runs-on: macos-latest
+        steps:
+        - name: Grab the latest copy of the repository.
+          uses: actions/checkout@v2
 
+    # Stubbed!
 # END APPLE MACOS BUILD JOB
 
 # START APPLE IOS BUILD JOB
     build_apple_mobile:
         name: Build for Apple iOS
-        needs: build_linux64
+        needs: create_release
         runs-on: macos-latest
         steps:
       
@@ -142,25 +148,13 @@ jobs:
             cd $GITHUB_WORKSPACE/Build-iOS; sed -i '' 's/BUILD_TYPE="Release"/BUILD_TYPE="Debug"/g' Build-iOS.command ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
             zip -j -9 ${{ runner.workspace }}/temp/Debug/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Debug-iphoneos/libenet.a 
 
-#        - name: Stash release build artifact
-#          uses: actions/upload-artifact@v2
-#          with:
-#            name: enet-iOS-Release
-#            path: ${{ runner.workspace }}/temp/Release/libenet.zip
-#
-#        - name: Stash debug build artifact
-#          uses: actions/upload-artifact@v2
-#          with:
-#            name: enet-iOS-Debug
-#            path: ${{ runner.workspace }}/temp/Debug/libenet.zip
-
         - name: Upload release library
           id: upload-release-asset 
           uses: actions/upload-release-asset@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            upload_url: ${{ needs.build_linux64.outputs.create_release_url }} 
+            upload_url: ${{ needs.create_release.outputs.create_release_url }}
             asset_path: ${{ runner.workspace }}/temp/Release/libenet.zip
             asset_name: libenet-release-iOS.zip
             asset_content_type: application/zip
@@ -171,14 +165,22 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            upload_url: ${{ needs.build_linux64.outputs.create_release_url }}
+            upload_url: ${{ needs.create_release.outputs.create_release_url }}
             asset_path: ${{ runner.workspace }}/temp/Debug/libenet.zip
             asset_name: libenet-debug-iOS.zip
             asset_content_type: application/zip
 # END APPLE IOS BUILD JOB
 
-# end of build jobs.
-
 # START ANDROID BUILD JOB
+    build_android:
+        name: Build for Android
+        needs: create_release
+        runs-on: ubuntu-latest
+        steps:        
+        - name: Grab the latest copy of the repository.
+          uses: actions/checkout@v2
 
+    # Stubbed!
 # END ANDROID BUILD JOB
+
+# end of build jobs.
