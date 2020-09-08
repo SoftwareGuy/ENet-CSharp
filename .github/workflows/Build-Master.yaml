@@ -88,53 +88,6 @@ jobs:
             asset_content_type: application/zip
 # END LINUX BUILD JOB
 
-# START WINDOWS BUILD JOB
-    build_windows_64:
-        name: Build for Windows x64
-        needs: create_release
-        runs-on: windows-latest
-        steps:
-        - name: Grab the latest copy of the repository.
-          uses: actions/checkout@v2
-
-        - name: Housekeeping
-          run: |
-            mkdir ${{ runner.workspace }}\DebugOut
-            mkdir ${{ runner.workspace }}\ReleaseOut
-
-        - name: Build Enet DLLs
-          run: |
-            cd ${{ runner.workspace }}\ENet-CSharp
-            echo Clean && dotnet clean
-            echo Build && dotnet build
-            copy "${{ runner.workspace }}\ENet-CSharp\Unity\Plugins\x86_64\enet.dll" "${{ runner.workspace }}\DebugOut"
-            echo Clean && dotnet clean
-            echo Build && dotnet build -c Release
-            copy "${{ runner.workspace }}\ENet-CSharp\Unity\Plugins\x86_64\enet.dll" "${{ runner.workspace }}\ReleaseOut"
-
-       - name: Upload release library
-          id: upload-release-asset 
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
-            asset_path: ${{ runner.workspace }}/ReleaseOut/Release.zip
-            asset_name: libenet-release-win64.zip
-            asset_content_type: application/zip
-
-        - name: Upload debug library
-          id: upload-debug-asset 
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
-            asset_path: ${{ runner.workspace }}/ReleaseTemp/Debug.zip
-            asset_name: libenet-debug-win64.zip
-            asset_content_type: application/zip
-# END WINDOWS BUILD JOB
-
 # START APPLE MACOS BUILD JOB
     build_apple_64:
         name: Build for MacOS
