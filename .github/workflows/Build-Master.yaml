@@ -2,8 +2,9 @@ name: Master Build
 
 on:
   push:
-    branches: [ master ]
-    tags: [ 'v2.*' ]
+    # branches: [ master ]
+    tags:
+      - 'v2.*'
 jobs:
     create_release:
         name: Prepare a new release
