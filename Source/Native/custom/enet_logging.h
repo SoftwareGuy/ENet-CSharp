@@ -3,15 +3,13 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-
 #if __APPLE__
-	#include <TargetConditionals.h>
+#include <TargetConditionals.h>
 #endif
 
 // TODO: Make better filenames; ie. enet_log.pid.txt
-#define ENET_LOG_FILE "enet_log.txt"
-
-static FILE *enet_log_fp = NULL;
+#define ENET_LOG_FILE "enet_debug.log"
+static FILE* enet_log_fp = NULL;
 
 enum enet_log_type
 {
@@ -25,14 +23,14 @@ static const char *const enet_log_type_names[] = {
 };
 
 #if ENET_DEBUG
-#	define ENET_LOG_TRACE(...) enet_log(ENET_LOG_TYPE_TRACE, __FUNCTION__, __LINE__, __VA_ARGS__)
-#	define ENET_LOG_ERROR(...) enet_log(ENET_LOG_TYPE_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
+#	define ENET_LOG_TRACE(...) enet_log_to_file(ENET_LOG_TYPE_TRACE, __FUNCTION__, __LINE__, __VA_ARGS__)
+#	define ENET_LOG_ERROR(...) enet_log_to_file(ENET_LOG_TYPE_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
 #else
 #	define ENET_LOG_TRACE(...) ((void)0)
 #	define ENET_LOG_ERROR(...) ((void)0)
 #endif
 
-static inline void enet_log(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
+static inline void enet_log_to_file(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
 {
 	va_list args;
 	time_t tstamp = time(NULL);
@@ -41,19 +39,17 @@ static inline void enet_log(enum enet_log_type type, const char *func, int line,
 
 	time_buf[strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_time)] = '\0';
 
-#if __APPLE__ && TARGET_OS_IPHONE
-	// https://github.com/SoftwareGuy/ENet-CSharp/issues/15
-	// iOS Debugging - File Access Permission (#blameApple)
+#if __ANDROID__ || (__APPLE__ && TARGET_OS_IPHONE)
+	// iOS Debugging - Sandboxed logging can't write file. This might extend even into Android!
 	// Can't write to files without the file permission... so don't do that if we're on Apple.
-
-	// Prefix
+	// https://github.com/SoftwareGuy/ENet-CSharp/issues/15
 	printf("%s [%s] [%s:%d] ", time_buf, enet_log_type_names[type], func, line);
-
+	
 	va_start(args, fmt);	
 	vprintf(fmt, args);	
 	va_end(args);
-
 	printf("\n");
+	// -- End logging for Android and Apple iOS -- //
 #else
 	// Open the log file
 	if (!enet_log_fp) enet_log_fp = fopen(ENET_LOG_FILE, "a");
@@ -66,6 +62,7 @@ static inline void enet_log(enum enet_log_type type, const char *func, int line,
 
 	fprintf(enet_log_fp, "\n");
 	fflush(enet_log_fp);
+	// -- End logging for other platforms -- //
 #endif
 
 }
