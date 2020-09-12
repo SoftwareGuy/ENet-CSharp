@@ -15,13 +15,15 @@ In short, this is an independent ENet native implementation with a modified prot
 The native C library code (although condensed) included in both this fork and upstream uses is located [here](https://github.com/lsalzman/enet).
 
 ### Why another fork?
-This fork started since *nxrighthere*'s repository was originally archived, disabling the ability to report issues and submit pull requests. He also blacklisted numerous developers over petty things, which is a story for another day.
+This fork started since *nxrighthere*'s repository was originally archived, disabling the ability to report issues and submit pull requests.
 
 Due to this, I forked his repository manually and this is the result. As a result, developers can ask questions about Enet, get answers and submit pull requests to improve the implementation.
 
-Please note that while upstream may have a *newer* version number compared to this fork, upstream Enet native commits will be cherry picked. So you'll get best of both worlds.
+This repository might not always have the latest version of the implementation from upstream, as careful integration of fork-specific features needs to be taken. However, I will try to keep it in sync with upstream as much as possible.
+
 ## Native Library Features
 
+- Enhanced debugging functionality, including piping messages to console or log file (default behaviour)
 - Lightweight and straightforward
 - Low resource consumption
 - Dual-stack IPv4/IPv6 support
@@ -30,8 +32,9 @@ Please note that while upstream may have a *newer* version number compared to th
 - Adaptability and portability
 
 ## Upstream Compatibility
+In theory, upstream binaries can be used with this fork unless things change dramatically. To err on the safe side, use the automatic builds located on the release page.
 
-Do not use the upstream binaries with this fork. While it *may* work, it is best to err on the side of caution and play it safe.
+In short: just use the automatic build binaries in [Releases](https://github.com/SoftwareGuy/ENet-CSharp/releases).
 
 ## Obtaining Native Libraries
 
@@ -47,9 +50,9 @@ However the following will be oriented for power users and command line heroes, 
 
 #### Desktop Compiling
 
-- **Windows:** Make sure you have Visual Studio 2019 (2017 should work too) installed with C++ Development Support, a recent Windows SDK and CMake. You may need to install [CMake from Kitware](https://cmake.org/download/) as it *sometimes* doesn't get automatically installed with Visual Studio. Version 3.16 or newer works fine.
+- **Windows:** Make sure you have Visual Studio 2017 or newer installed with C++ Development Support, a recent Windows SDK and CMake. You may need to install [CMake 3.16+ from Kitware](https://cmake.org/download/) as it *sometimes* doesn't get automatically installed with Visual Studio.
 
-- **MacOS:** You'll need Xcode (available from the Mac App Store or the Apple Developer Portal). Make sure you also have Apple Xcode CLI Tools installed.
+- **MacOS:** You'll need Xcode, which is available from the Mac App Store or the Apple Developer Portal. Make sure you also have the Apple Xcode CLI Tools installed.
 
 - **Linux:** Make sure you have your repositories' `build-essential` and `cmake` package installed. On Debian and Ubuntu-based distros, you can do `sudo apt -y build-essential cmake` to install the required packages.
 
@@ -73,12 +76,15 @@ However the following will be oriented for power users and command line heroes, 
 
 - Clone a fresh copy of this Git Repo somewhere on your workstation's filesystem.
 - Open a command prompt/terminal and change directory into the newly cloned git repository.
-- Run `dotnet build`. 
+- Run `dotnet build`. A **Debug** release will be generated, unless you read the next dot point.
 - **Protip:** You can append `-c Release` or `-c Debug` to your `dotnet build` command to build a release binary or a debug binary of ENET's C library. At the moment, the default build is a Debug build.
 
-You will see [Ignorance](https://github.com/SoftwareGuy/Ignorance) ASCII art fly by and the compile will start. CMake will fire up, configure itself after inspecting your build environment and hopefully spit out a binary blob inside a `Unity/Plugins` directory. If it does not, read the error messages and file an issue ticket if you are not able to solve it yourself.
+You will see a [Ignorance](https://github.com/SoftwareGuy/Ignorance) banner fly by and the compile will start. CMake will then be invoked and configure the build after inspecting your environment. If all is well, a binary blob inside the `Unity/Plugins` directory will be generated.
 
-On Windows, this freshly baked library will be a DLL, on Mac it will be a `.bundle` file and on Linux it will be a shared object (`.so`). This can be used with Unity or other applications like a C# NET Core application or C/C++ apps.
+If it does not compile successfully, read the error messages it provides and file an issue ticket if you are not able to solve it yourself.
+
+On Windows, this freshly baked library will be called `enet.dll` DLL, on Mac it will be `libenet.bundle` and on Linux it will be a shared object (`libenet.so`). This can be used with Unity or other applications like a C# NET Core application or C/C++ apps.
+Unity users should take note that you may need to rename `libenet.bundle` to `libenet.dylib` for Unity to load the plugin at runtime. 
 
 #### Rebuilding the native binaries
 
@@ -91,13 +97,17 @@ It is recommended to clean the repository work space before building.
 
 ### Testing
 
-- `dotnet test` will run some sanity checks and make sure ENET initializes, data is received and sent correctly, etc.
+- `dotnet test` will run some sanity checks and make sure ENet initializes, data is received and sent correctly, etc. Right now tests are limited, but eventually will hopefully test the basics of ENet to ensure nothing is broken.
 
 ## Usage
 
-- Please make sure you initialize ENet first before doing anything by calling the `ENet.Library.Initialize();` function. This returns **true** if successful, if not it will return **false**. You can use this to gracefully quit your application should it fail to initialize, for example.
-- Once you are done with Enet, deinitialize the library using `ENet.Library.Deinitialize();` function to ensure clean shutdown.
-- Using Enet-CSharp inside Unity Engine is almost the same as in the .NET environment, except that the console functions must be replaced with functions provided by Unity. If the `Host.Service()` will be called in a game loop, then make sure that the timeout parameter set to 0 which means non-blocking. Also make sure Unity runs in the background by enabling the ***Run in Background*** player setting.
+- Please make sure you initialize ENet first before doing anything by calling the `ENet.Library.Initialize();` function.
+	- This returns **true** if successful, if not it will return **false**. 
+	- You can use this to gracefully quit your application should it fail to initialize, for example.
+- Once you are done with Enet, deinitialize the library using `ENet.Library.Deinitialize();` function to ensure a clean shutdown.
+- Using Enet-CSharp inside the Unity Engine is almost the same as in the standard .NET environment, except that the console functions must be replaced with functions provided by Unity.
+	- If the `Host.Service()` will be called in a game loop, then make sure that the timeout parameter set to 0 which means non-blocking. 
+	- Also make sure Unity runs in the background by enabling the ***Run in Background*** player setting.
 
 ### Code Examples/Quick Start
 
@@ -113,7 +123,7 @@ It is recommended to clean the repository work space before building.
 ### Strategy
 The best-known strategy is to use ENet in an independent I/O thread. This can be achieved by using Threads as well as ConcurrentQueues, RingBuffers and Disruptors, for example. 
 
-You can use whatever system you are comfortable with, just make sure you keep Enet pumping as fast as possible in your application. Not pumping fast enough will cause Enet to become backlogged/congested, and this will hurt performance and network throughput.
+You can use whatever system you are comfortable with, just make sure you keep ENet pumping as fast as possible in your application. Not pumping fast enough will cause Enet to become backlogged/congested, and this will hurt performance and network throughput.
 
 A real world example is Oiran Studio's [Ignorance](https://github.com/SoftwareGuy/Ignorance) transport which uses ConcurrentQueues for high performance transport I/O.
 
@@ -129,7 +139,7 @@ In general, ENet is not thread-safe, but some of its functions can be used safel
 
 ## Supporters
 
-This fork is supported, used and mantained by [Oiran Studio](http://www.oiran.studio).
+Enet-CSharp is supported by, used internally and mantained by [Oiran Studio](http://www.oiran.studio).
 
 <p align="left"> 
   <img src="http://www.oiran.studio/OiranFanFinal_Colour_Mini.png" alt="Oiran Studio Logo">

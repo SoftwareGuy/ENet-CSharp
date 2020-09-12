@@ -2,9 +2,8 @@ name: Master Build
 
 on:
   push:
-# Leaving this here for classic build behaviour;
     branches: [ master ]
-    
+    tags: [ 'v2.*' ]
 jobs:
     create_release:
         name: Prepare a new release
