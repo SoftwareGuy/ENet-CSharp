@@ -4500,8 +4500,8 @@ int enet_socket_get_address(ENetSocket socket, ENetAddress* address) {
 	socklen_t saLength = sizeof(ss);
 
 	if (getsockname(socket, (struct sockaddr*)&ss, &saLength) == -1) {
-		ENET_LOG_ERROR("Getsockname() error.")
-			return -1;
+		ENET_LOG_ERROR("Getsockname() error.");
+		return -1;
 	}
 
 	if (ss.ss_family == AF_INET) {
