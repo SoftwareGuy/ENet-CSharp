@@ -4463,10 +4463,13 @@ int enet_address_get_hostname(const ENetAddress* address, char* name, size_t nam
 
 #ifndef _WIN32
 int enet_initialize(void) {
+	ENET_LOG_TRACE("Unix-like Environment: Initialization");
 	return 0;
 }
 
-void enet_deinitialize(void) { }
+void enet_deinitialize(void) {
+	ENET_LOG_TRACE("Unix-like Environment: Deinitialization");
+}
 
 uint64_t enet_host_random_seed(void) {
 	struct timeval timeVal;
