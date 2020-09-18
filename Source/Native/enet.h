@@ -4718,12 +4718,14 @@ int enet_socket_receive(ENetSocket socket, ENetAddress* address, ENetBuffer* buf
 		if (errno == EWOULDBLOCK)
 			return 0;
 
+		ENET_LOG_ERROR("An error occurred receiving data from socket. recvLength result is negative, returned code is %i.", errno);
 		return -1;
 	}
 
-	if (msgHdr.msg_flags & MSG_TRUNC)
+	if (msgHdr.msg_flags & MSG_TRUNC) {
 		ENET_LOG_ERROR("Incoming socket message header was truncated.");
-	return -2;
+		return -2;
+	}
 
 	if (address != NULL) {
 		address->ipv6 = sin.sin6_addr;
