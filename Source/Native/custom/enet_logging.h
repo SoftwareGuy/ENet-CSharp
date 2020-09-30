@@ -23,12 +23,9 @@ static const char *const enet_log_type_names[] = {
 };
 
 #if ENET_DEBUG
-#	define ENET_LOG_TRACE(...) enet_log_to_file(ENET_LOG_TYPE_TRACE, __FUNCTION__, __LINE__, __VA_ARGS__)
-#	define ENET_LOG_ERROR(...) enet_log_to_file(ENET_LOG_TYPE_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
-#else
-#	define ENET_LOG_TRACE(...) ((void)0)
-#	define ENET_LOG_ERROR(...) ((void)0)
-#endif
+// Debug
+#define ENET_LOG_TRACE(...) enet_log_to_file(ENET_LOG_TYPE_TRACE, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define ENET_LOG_ERROR(...) enet_log_to_file(ENET_LOG_TYPE_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
 
 static inline void enet_log_to_file(enum enet_log_type type, const char *func, int line, const char *fmt, ...)
 {
@@ -64,6 +61,12 @@ static inline void enet_log_to_file(enum enet_log_type type, const char *func, i
 	fflush(enet_log_fp);
 	// -- End logging for other platforms -- //
 #endif
-
 }
+#else
+// Not Debug
+#define ENET_LOG_TRACE(...) ((void)0)
+#define ENET_LOG_ERROR(...) ((void)0)
+#endif
+
+// end ifndef
 #endif
