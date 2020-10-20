@@ -29,13 +29,10 @@
 #include <stdint.h>
 #include <time.h>
 #include "custom/enet_logging.h"
-#if __APPLE__ && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200 || __IPHONE_OS_VERSION_MIN_REQUIRED < 100000)
-#include "custom/enet_iosFixes.h"
-#endif
 
 #define ENET_VERSION_MAJOR 2
 #define ENET_VERSION_MINOR 4
-#define ENET_VERSION_PATCH 3
+#define ENET_VERSION_PATCH 4
 #define ENET_VERSION_CREATE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 #define ENET_VERSION_GET_MAJOR(version) (((version) >> 16) & 0xFF)
 #define ENET_VERSION_GET_MINOR(version) (((version) >> 8) & 0xFF)
@@ -633,7 +630,7 @@ extern "C" {
 
 	typedef uint64_t(ENET_CALLBACK* ENetChecksumCallback)(const ENetBuffer* buffers, int bufferCount);
 
-	typedef int (ENET_CALLBACK* ENetInterceptCallback)(ENetEvent* event, uint8_t* receivedData, int receivedDataLength);
+	typedef int (ENET_CALLBACK* ENetInterceptCallback)(ENetEvent* event, ENetAddress* address, uint8_t* receivedData, int receivedDataLength);
 
 	typedef struct _ENetHost {
 		ENetSocket socket;
@@ -2645,32 +2642,32 @@ static int enet_protocol_receive_incoming_commands(ENetHost* host, ENetEvent* ev
 		host->totalReceivedPackets++;
 
 		if (host->interceptCallback != NULL) {
-			switch (host->interceptCallback(event, host->receivedData, host->receivedDataLength)) {
-			case 1:
-				if (event != NULL && event->type != ENET_EVENT_TYPE_NONE)
-					return 1;
+			switch (host->interceptCallback(event, &host->receivedAddress, host->receivedData, host->receivedDataLength)) {
+				case 1:
+					if (event != NULL && event->type != ENET_EVENT_TYPE_NONE)
+						return 1;
 
-				continue;
+					continue;
 
-			case -1:
-				ENET_LOG_ERROR("Intercept callback failure.");
-				return -1;
+				case -1:
+					ENET_LOG_ERROR("Intercept callback failure.");
+					return -1;
 
-			default:
-				break;
+				default:
+					break;
 			}
 		}
 
 		switch (enet_protocol_handle_incoming_commands(host, event)) {
-		case 1:
-			return 1;
+			case 1:
+				return 1;
 
-		case -1:
-			ENET_LOG_ERROR("Failed handling incoming protocol commands.");
-			return -1;
+			case -1:
+				ENET_LOG_ERROR("Failed handling incoming protocol commands.");
+				return -1;
 
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 
@@ -2777,7 +2774,7 @@ static int enet_protocol_check_outgoing_commands(ENetHost* host, ENetPeer* peer)
 			reliableWindow = outgoingCommand->reliableSequenceNumber / ENET_PEER_RELIABLE_WINDOW_SIZE;
 
 			if (channel != NULL) {
-				if (!windowWrap && outgoingCommand->sendAttempts < 1 && !(outgoingCommand->reliableSequenceNumber % ENET_PEER_RELIABLE_WINDOW_SIZE) && (channel->reliableWindows[(reliableWindow + ENET_PEER_RELIABLE_WINDOWS - 1) % ENET_PEER_RELIABLE_WINDOWS] >= ENET_PEER_RELIABLE_WINDOW_SIZE || channel->usedReliableWindows & ((((1 << ENET_PEER_FREE_RELIABLE_WINDOWS) - 1) << reliableWindow) | (((1 << ENET_PEER_FREE_RELIABLE_WINDOWS) - 1) >> (ENET_PEER_RELIABLE_WINDOWS - reliableWindow)))))
+				if (!windowWrap && outgoingCommand->sendAttempts < 1 && !(outgoingCommand->reliableSequenceNumber % ENET_PEER_RELIABLE_WINDOW_SIZE) && (channel->reliableWindows[(reliableWindow + ENET_PEER_RELIABLE_WINDOWS - 1) % ENET_PEER_RELIABLE_WINDOWS] >= ENET_PEER_RELIABLE_WINDOW_SIZE || channel->usedReliableWindows & ((((1 << (ENET_PEER_FREE_RELIABLE_WINDOWS + 1)) - 1) << reliableWindow) | (((1 << (ENET_PEER_FREE_RELIABLE_WINDOWS + 1)) - 1) >> (ENET_PEER_RELIABLE_WINDOWS - reliableWindow)))))
 					windowWrap = 1;
 
 				if (windowWrap) {

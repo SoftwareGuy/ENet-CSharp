@@ -65,7 +65,7 @@ Definitions of peer states for `Peer.State` property:
 #### Host callbacks
 Provides per host events.
 
-`InterceptCallback(ref Event @event, IntPtr receivedData, int receivedDataLength)` notifies when a raw UDP packet is intercepted. Status code returned from this callback instructs ENet how the set event should be handled. Returning 1 indicates dispatching of the set event by the service. Returning 0 indicates that ENet subsystems should handle received data. Returning -1 indicates an error.
+`InterceptCallback(ref Event @event, ref Address address, IntPtr receivedData, int receivedDataLength)` notifies when a raw UDP packet is intercepted. Status code returned from this callback instructs ENet how the set event should be handled. Returning 1 indicates dispatching of the set event by the service. Returning 0 indicates that ENet subsystems should handle received data. Returning -1 indicates an error. A reference to the delegate should be preserved from being garbage collected.
 
 ### Structures
 #### Address

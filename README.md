@@ -77,7 +77,7 @@ However the following will be oriented for power users and command line heroes, 
 - Clone a fresh copy of this Git Repo somewhere on your workstation's filesystem.
 - Open a command prompt/terminal and change directory into the newly cloned git repository.
 - Run `dotnet build`. A **Debug** release will be generated, unless you read the next dot point.
-- **Protip:** You can append `-c Release` or `-c Debug` to your `dotnet build` command to build a release binary or a debug binary of ENET's C library. At the moment, the default build is a Debug build.
+- **Protip:** You can append `-c Release` or `-c Debug` to your `dotnet build` command to build a release binary or a debug binary of ENet. At the moment, the default build is a Debug build.
 
 You will see a [Ignorance](https://github.com/SoftwareGuy/Ignorance) banner fly by and the compile will start. CMake will then be invoked and configure the build after inspecting your environment. If all is well, a binary blob inside the `Unity/Plugins` directory will be generated.
 
