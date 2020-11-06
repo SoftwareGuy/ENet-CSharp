@@ -32,5 +32,5 @@ echo Compressing...
 cd $WORKDIR/ReleaseOut && zip -9 Release.zip libenet.bundle
 cd $WORKDIR/DebugOut && zip -9 Debug.zip libenet.bundle
 
-echo End of Build Script.
+echo End of Build Script. Have a nice day.
 exit $?
