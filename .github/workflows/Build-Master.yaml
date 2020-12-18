@@ -95,7 +95,7 @@ jobs:
         runs-on: macos-latest
         steps:         
         - name: Setup XCode
-          uses: maxim-lobanov/setup-xcode@1.0
+          uses: maxim-lobanov/setup-xcode@v1
           with:
             xcode-version: 11.6
         
@@ -172,7 +172,7 @@ jobs:
         steps:
       
         - name: Setup XCode
-          uses: maxim-lobanov/setup-xcode@1.0
+          uses: maxim-lobanov/setup-xcode@v1
           with:
             xcode-version: 11.6
 
