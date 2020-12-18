@@ -22,7 +22,7 @@ SOFTWARE.
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp2.2</TargetFramework>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
         <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
         <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
         <EnableDefaultItems>false</EnableDefaultItems>
@@ -31,7 +31,7 @@ SOFTWARE.
     <Import Project="$(CsDir)Common\BannerTask.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
 
     <Target Name="ConsoleBanner" BeforeTargets="Build" Condition="'$(BuildingInsideVisualStudio)' != 'true'">
-        <BannerTask TextFile="$(CsDir)Common\Banner.txt" Condition="'$(BannerSkip)' != 'true'"/>
+        <BannerTask TextFile="$(CsDir)Common\Banner.txt" Condition="'$(BannerSkip)' != 'true'" />
     </Target>
 
     <Import Project="CMake.Build.targets" />
