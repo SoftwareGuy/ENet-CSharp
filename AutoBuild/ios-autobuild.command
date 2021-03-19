@@ -17,7 +17,7 @@ create_enet_symlink() {
 	# Only symlink if we don't have one already
 	if [ ! -d "Sources" ]; then 
 		# Symlink work directory sources.
-		ln -s Sources "$WORKSPACE/../Source/Native"
+		ln -s "$WORKSPACE/../Source/Native" "Sources"
 		if [ $? -ne 0 ]; then
 			echo "ERROR: Failed to make symlink to ENet source code. Did you git pull this correctly? Build script aborted."
 			exit $?
@@ -38,7 +38,7 @@ make_enet_directories() {
 	else 
 		# Purge it.
 		echo "Cleaning out existing x64 Simulator staging directory."
-		rm -rv "$X64_SIMULATOR_STAGING"/*
+		rm -rfv "$X64_SIMULATOR_STAGING"/*
 
 		if [ $? -ne 0 ]; then
 			echo "ERROR: Failed to delete files inside staging directory. Build script aborted."
@@ -58,7 +58,7 @@ make_enet_directories() {
 	else 
 		# Purge it.
 		echo "Cleaning out existing ARMv7 staging directory."
-		rm -rv "$ARMV7_STAGING"/*
+		rm -rfv "$ARMV7_STAGING"/*
 
 		if [ $? -ne 0 ]; then
 			echo "ERROR: Failed to delete files inside staging directory. Build script aborted."
@@ -78,7 +78,7 @@ make_enet_directories() {
 	else 
 		# Purge it.
 		echo "Cleaning out existing ARM64 staging directory."
-		rm -rv "$ARM64_STAGING"/*
+		rm -rfv "$ARM64_STAGING"/*
 
 		if [ $? -ne 0 ]; then
 			echo "ERROR: Failed to delete files inside staging directory. Build script aborted."
@@ -90,7 +90,7 @@ make_enet_directories() {
 compile_enet_x64simulator () {
 	cd "$X64_SIMULATOR_STAGING"
 	# Pre-clean
-	rm -v *.a *.o
+	rm -vf *.a *.o
 	
 	# Release Binaries
 	gcc -c Sources/enet.c -fembed-bitcode -target x86_64-apple-ios-simulator
@@ -98,7 +98,7 @@ compile_enet_x64simulator () {
 	libtool -static enet.o -o libenet-release-simulator64.a
 	
 	# Cleanup
-	rm -v *.o
+	rm -vf *.o
 	
 	# Debug Binaries
 	gcc -DENET_DEBUG=1 -c Sources/enet.c -fembed-bitcode -target x86_64-apple-ios-simulator
@@ -112,7 +112,7 @@ compile_enet_armv7 () {
 	cd "$ARMV7_STAGING"
 	
 	# Pre-clean
-	rm -v *.a *.o
+	rm -vf *.a *.o
 	
 	create_enet_symlink
 	
@@ -122,7 +122,7 @@ compile_enet_armv7 () {
 	libtool -static enet.o -o libenet-release-armv7.a
 	
 	# Cleanup
-	rm -v *.o
+	rm -vf *.o
 	
 	# Debug Binaries
 	gcc -DENET_DEBUG=1 -c Sources/enet.c -fembed-bitcode -target armv7-apple-ios
@@ -136,7 +136,7 @@ compile_enet_arm64 () {
 	cd "$ARM64_STAGING"
 	
 	# Pre-clean
-	rm -v *.a *.o
+	rm -vf *.a *.o
 	
 	create_enet_symlink
 		
@@ -166,8 +166,6 @@ compress_and_exfil() {
 		echo "WARNING: Looks like the compression step failed, continuing as this is not fatal"
 	fi
 }
-
-# ln -s Sources $WORKSPACE/../Source/Native
 
 # Make staging directories and build.
 make_enet_directories
