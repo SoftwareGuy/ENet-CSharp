@@ -138,7 +138,7 @@ compile_enet_arm64 () {
 	# Pre-clean
 	rm -v *.a *.o
 	
-	create_enet_symlink()
+	create_enet_symlink
 		
 	# Release Binaries
 	gcc -c Sources/enet.c -fembed-bitcode -target arm64-apple-ios
