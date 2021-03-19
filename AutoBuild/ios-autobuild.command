@@ -26,6 +26,23 @@ create_enet_symlink() {
 }
 
 make_enet_directories() { 
+	# Output
+	if [ ! -d "$OUTPUT" ]; then
+		mkdir "$OUTPUT"
+
+		if [ $? -ne 0 ]; then
+			echo "ERROR: Failed to make staging directory for x64 Simulator. Build script aborted."
+			exit $?	
+		fi
+	else
+		rm -rfv "$OUTPUT"/*
+
+		if [ $? -ne 0 ]; then
+			echo "ERROR: Failed to delete files inside output directory. Build script aborted."
+			exit $?	
+		fi
+	fi
+	
 	# Simulator
 	if [ ! -d "$X64_SIMULATOR_STAGING" ]; then
 		# Make it.
@@ -88,9 +105,13 @@ make_enet_directories() {
 }
 
 compile_enet_x64simulator () {
+	echo "Start compiling x64 Simulator"
+	
 	cd "$X64_SIMULATOR_STAGING"
 	# Pre-clean
 	rm -vf *.a *.o
+	
+	create_enet_symlink
 	
 	# Release Binaries
 	gcc -c Sources/enet.c -fembed-bitcode -target x86_64-apple-ios-simulator
@@ -109,6 +130,8 @@ compile_enet_x64simulator () {
 }
 
 compile_enet_armv7 () {
+	echo "Start compiling ARMv7"
+	
 	cd "$ARMV7_STAGING"
 	
 	# Pre-clean
@@ -133,6 +156,7 @@ compile_enet_armv7 () {
 }
 
 compile_enet_arm64 () {
+	echo "Start compiling ARM64"
 	cd "$ARM64_STAGING"
 	
 	# Pre-clean
@@ -159,6 +183,12 @@ compile_enet_arm64 () {
 compress_and_exfil() {
 	# Good 'ol Zip.
 	cd $OUTPUT
+	
+	if [ $? -ne 0 ]; then
+		echo "WARNING: Looks like we can't enter the output directory, skipping compression phase"
+		return
+	fi
+	
 	echo "About to compress compiled binaries."
 	zip -v -9 -j "libenet-combo-iOS.zip" *.a
 	
