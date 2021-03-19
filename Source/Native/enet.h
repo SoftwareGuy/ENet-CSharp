@@ -1015,7 +1015,7 @@ static ENetCallbacks callbacks = {
 
 int enet_initialize_with_callbacks(ENetVersion version, const ENetCallbacks* inits) {
 	if (version < ENET_VERSION_CREATE(1, 3, 0)) {
-		ENET_LOG_ERROR("ENET version is too old");
+		ENET_LOG_ERROR("ENet version is too old");
 		return -1;
 	}
 
@@ -1885,7 +1885,7 @@ static int enet_protocol_handle_send_reliable(ENetHost* host, ENetPeer* peer, co
 	size_t dataLength;
 
 	if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-		ENET_LOG_ERROR("Destination Channel ID is greater than the Peer's Channel count, or the Peer isn't connected or pending disconnection later.");
+		ENET_LOG_ERROR("Destination channel ID is greater than the configured peer channel count, or the peer is disconnected/later pending disconnection");
 		return -1;
 	}
 
@@ -1910,7 +1910,7 @@ static int enet_protocol_handle_send_unsequenced(ENetHost* host, ENetPeer* peer,
 	size_t dataLength;
 
 	if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-		ENET_LOG_ERROR("Destination Channel ID is greater than the Peer's Channel count, or the Peer isn't connected or pending disconnection later.");
+		ENET_LOG_ERROR("Destination channel ID is greater than the configured peer channel count, or the peer is disconnected/later pending disconnection");
 		return -1;
 	}
 
@@ -1956,7 +1956,7 @@ static int enet_protocol_handle_send_unreliable(ENetHost* host, ENetPeer* peer, 
 	size_t dataLength;
 
 	if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-		ENET_LOG_ERROR("Destination Channel ID is greater than the Peer's Channel count, or the Peer isn't connected or pending disconnection later.");
+		ENET_LOG_ERROR("Destination channel ID is greater than the configured peer channel count, or the peer is disconnected/later pending disconnection");
 		return -1;
 	}
 
@@ -1984,7 +1984,7 @@ static int enet_protocol_handle_send_fragment(ENetHost* host, ENetPeer* peer, co
 	ENetIncomingCommand* startCommand = NULL;
 
 	if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-		ENET_LOG_ERROR("Destination Channel ID is greater than the Peer's Channel count, or the Peer isn't connected or pending disconnection later.");
+		ENET_LOG_ERROR("Destination channel ID is greater than the configured peer channel count, or the peer is disconnected/later pending disconnection");
 		return -1;
 	}
 
@@ -2080,7 +2080,7 @@ static int enet_protocol_handle_send_unreliable_fragment(ENetHost* host, ENetPee
 	ENetIncomingCommand* startCommand = NULL;
 
 	if (command->header.channelID >= peer->channelCount || (peer->state != ENET_PEER_STATE_CONNECTED && peer->state != ENET_PEER_STATE_DISCONNECT_LATER)) {
-		ENET_LOG_ERROR("Destination Channel ID is greater than the Peer's Channel count, or the Peer isn't connected or pending disconnection later.");
+		ENET_LOG_ERROR("Destination channel ID is greater than the configured peer channel count, or the peer is disconnected/later pending disconnection");
 		return -1;
 	}
 

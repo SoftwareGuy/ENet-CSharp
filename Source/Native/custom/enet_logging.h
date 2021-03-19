@@ -8,7 +8,7 @@
 #endif
 
 // TODO: Make better filenames; ie. enet_log.pid.txt
-#define ENET_LOG_FILE "enet_debug.log"
+#define ENET_LOG_FILE "enet-debug.log"
 static FILE* enet_log_fp = NULL;
 
 enum enet_log_type
@@ -38,7 +38,7 @@ static inline void enet_log_to_file(enum enet_log_type type, const char *func, i
 
 #if __ANDROID__ || (__APPLE__ && TARGET_OS_IPHONE)
 	// iOS Debugging - Sandboxed logging can't write file. This might extend even into Android!
-	// Can't write to files without the file permission... so don't do that if we're on Apple.
+	// Can't write to files without the file permission... so don't do that if we're on iOS/Android.
 	// https://github.com/SoftwareGuy/ENet-CSharp/issues/15
 
 	// Write the initial debug text to stdout.
