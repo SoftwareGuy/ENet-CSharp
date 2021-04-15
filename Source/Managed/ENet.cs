@@ -2,7 +2,7 @@
  * 	Managed C# wrapper for an extended version of ENet
  *	This is a fork from upstream and is available at http://github.com/SoftwareGuy/ENet-CSharp
  *  
- *	Copyright (c) 2019 Matt Coburn (SoftwareGuy/Coburn64), Chris Burns (c6burns)
+ *	Copyright (c) 2019-2021 Matt Coburn (SoftwareGuy/Coburn64), Chris Burns (c6burns)
  *  Copyright (c) 2013 James Bellinger, 2016 Nate Shoffner, 2018 Stanislav Denisov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1128,7 +1128,7 @@ namespace ENet
 		public const uint timeoutLimit = 32;
 		public const uint timeoutMinimum = 5000;
 		public const uint timeoutMaximum = 30000;
-		public const uint version = (2 << 16) | (4 << 8) | (6);
+		public const uint version = (2 << 16) | (4 << 8) | (7);
 
 		public static uint Time
 		{
@@ -1141,7 +1141,7 @@ namespace ENet
 		public static bool Initialize()
 		{
 			if (Native.enet_linked_version() != version)
-				throw new InvalidOperationException("You're trying to use an incompatible version of ENet with this Managed Library.");
+				throw new throw new InvalidOperationException("ENet native is out of date. Download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
 
 			return Native.enet_initialize() == 0;
 		}
@@ -1152,7 +1152,7 @@ namespace ENet
 				throw new ArgumentNullException("callbacks");
 
 			if (Native.enet_linked_version() != version)
-				throw new InvalidOperationException("Incompatatible version");
+				throw new InvalidOperationException("ENet native is out of date. Download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
 
 			ENetCallbacks nativeCallbacks = callbacks.NativeData;
 
