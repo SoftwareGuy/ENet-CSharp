@@ -2761,9 +2761,9 @@ static int enet_protocol_check_outgoing_commands(ENetHost* host, ENetPeer* peer)
 	ENetBuffer* buffer = &host->buffers[host->bufferCount];
 	ENetOutgoingCommand* outgoingCommand;
 	ENetListIterator currentCommand;
-	ENetChannel* channel;
-	uint16_t reliableWindow;
-	size_t commandSize;
+	ENetChannel* channel = NULL;
+	uint16_t reliableWindow = 0;
+	size_t commandSize = 0;
 	int windowExceeded = 0, windowWrap = 0, canPing = 1;
 	currentCommand = enet_list_begin(&peer->outgoingCommands);
 
@@ -3150,7 +3150,7 @@ int enet_peer_throttle(ENetPeer* peer, uint32_t rtt) {
 }
 
 int enet_peer_send(ENetPeer* peer, uint8_t channelID, ENetPacket* packet) {
-	ENetChannel* channel = &peer->channels[channelID];
+	ENetChannel* channel;
 	ENetProtocol command;
 	size_t fragmentLength;
 
@@ -3158,7 +3158,8 @@ int enet_peer_send(ENetPeer* peer, uint8_t channelID, ENetPacket* packet) {
 		ENET_LOG_ERROR("Failed sending data. Peer is not connected, the channel is above the maximum channels supported or the payload length is too large.");
 		return -1;
 	}
-
+	
+	channel = &peer->channels[channelID];
 	fragmentLength = peer->mtu - sizeof(ENetProtocolHeader) - sizeof(ENetProtocolSendFragment) - sizeof(ENetProtocolAcknowledge);
 
 	if (peer->host->checksumCallback != NULL)
