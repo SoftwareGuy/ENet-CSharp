@@ -104,7 +104,7 @@ jobs:
 
         - name: Run automated build script.
           run: |
-            cd ${{ runner.workspace }}/ENet-CSharp && bash AutoBuild/githubAutoBuild.command
+            cd "${{ runner.workspace }}/ENet-CSharp" && bash AutoBuild/apple-mac.command
             
         - name: Upload release library
           id: upload-release-asset 
@@ -114,7 +114,7 @@ jobs:
           with:
             upload_url: ${{ needs.create_release.outputs.create_release_url }} 
             asset_path: ${{ runner.workspace }}/ENet-CSharp/ReleaseOut/Release.zip
-            asset_name: libenet-release-MacOS.zip
+            asset_name: libenet-release-macOS.zip
             asset_content_type: application/zip
 
         - name: Upload debug library
@@ -125,7 +125,7 @@ jobs:
           with:
             upload_url: ${{ needs.create_release.outputs.create_release_url }} 
             asset_path: ${{ runner.workspace }}/ENet-CSharp/DebugOut/Debug.zip
-            asset_name: libenet-debug-MacOS.zip
+            asset_name: libenet-debug-macOS.zip
             asset_content_type: application/zip
 
 # END APPLE MACOS BUILD JOB
@@ -140,7 +140,7 @@ jobs:
 
         - name: Run automated build script
           run: |
-            cd ${{ runner.workspace }}\ENet-CSharp && &.\Autobuild\githubAutobuild.cmd ${{ runner.workspace }}
+            cd ${{ runner.workspace }}\ENet-CSharp && &.\Autobuild\ms-windows.cmd "${{ runner.workspace }}"
 
         - name: Upload release library
           id: upload-release-asset 
@@ -179,20 +179,25 @@ jobs:
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
 
-        - name: Create temporary staging directories.
+        - name: Run the iOS build script
           run: |
-            mkdir -p ${{ runner.workspace }}/temp/Release
-            mkdir -p ${{ runner.workspace }}/temp/Debug
+            cd "$GITHUB_WORKSPACE/AutoBuild" && bash ./apple-ios.command
+            
+#        - name: Create temporary staging directories.
+#          run: |
+#            mkdir -p ${{ runner.workspace }}/temp/Release
+#            mkdir -p ${{ runner.workspace }}/temp/Debug
+#
+#        - name: Run iOS build script in production mode.
+#          run: |
+#            cd $GITHUB_WORKSPACE/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
+#            zip -j -9 ${{ runner.workspace }}/temp/Release/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Release-iphoneos/libenet.a
 
-        - name: Run iOS build script in production mode.
-          run: |
-            cd $GITHUB_WORKSPACE/Build-iOS ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
-            zip -j -9 ${{ runner.workspace }}/temp/Release/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Release-iphoneos/libenet.a
-
-        - name: Run iOS build script in Debug mode.
-          run: |
-            cd $GITHUB_WORKSPACE/Build-iOS; sed -i '' 's/BUILD_TYPE="Release"/BUILD_TYPE="Debug"/g' Build-iOS.command ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
-            zip -j -9 ${{ runner.workspace }}/temp/Debug/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Debug-iphoneos/libenet.a 
+#        - name: Run iOS build script in Debug mode.
+#          run: |
+#            cd $GITHUB_WORKSPACE/Build-iOS; sed -i '' 's/BUILD_TYPE="Release"/BUILD_TYPE="Debug"/g' Build-iOS.command ; chmod +x ./Build-iOS.command ; ./Build-iOS.command
+#            zip -j -9 ${{ runner.workspace }}/temp/Debug/libenet.zip $GITHUB_WORKSPACE/Build-iOS/build/Debug-iphoneos/libenet.a 
+#
 
         - name: Upload release library
           id: upload-release-asset 
@@ -201,20 +206,21 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
             upload_url: ${{ needs.create_release.outputs.create_release_url }}
-            asset_path: ${{ runner.workspace }}/temp/Release/libenet.zip
-            asset_name: libenet-release-iOS.zip
+            asset_path: ${{ runner.workspace }}/AutoBuild/Binaries/libenet-combo-iOS.zip
+            asset_name: libenet-combo-iOS.zip
             asset_content_type: application/zip
 
-        - name: Upload debug library
-          id: upload-debug-asset 
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ needs.create_release.outputs.create_release_url }}
-            asset_path: ${{ runner.workspace }}/temp/Debug/libenet.zip
-            asset_name: libenet-debug-iOS.zip
-            asset_content_type: application/zip
+#        - name: Upload debug library
+#          id: upload-debug-asset 
+#          uses: actions/upload-release-asset@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ needs.create_release.outputs.create_release_url }}
+#            asset_path: ${{ runner.workspace }}/temp/Debug/libenet.zip
+#            asset_name: libenet-debug-iOS.zip
+#            asset_content_type: application/zip
+
 # END APPLE IOS BUILD JOB
 
 # START ANDROID BUILD JOB

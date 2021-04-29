@@ -3,10 +3,11 @@
 # https://github.com/nxrighthere/ENet-CSharp/blob/master/Source/Native/build-ios.sh
 # Original portions by JohannesDeml, modifications by Coburn.
 
-# Point sysdir to iOS SDK
-export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
 # Cache this for later.
-WORKSPACE=$(pwd)
+# Point sysdir to iOS SDK
+RELEASE_SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
+SIMULATOR_SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk"
+WORKSPACE="$(pwd)"
 OUTPUT="$WORKSPACE/Binaries"
 X64_SIMULATOR_STAGING="$WORKSPACE/x86_64-apple-ios-simulator"
 ARM64_STAGING="$WORKSPACE/arm64-apple-ios"
@@ -106,7 +107,8 @@ make_enet_directories() {
 
 compile_enet_x64simulator () {
 	echo "Start compiling x64 Simulator"
-	
+	export SDKROOT=$SIMULATOR_SDKROOT
+
 	cd "$X64_SIMULATOR_STAGING"
 	# Pre-clean
 	rm -vf *.a *.o
@@ -115,23 +117,40 @@ compile_enet_x64simulator () {
 	
 	# Release Binaries
 	gcc -c Sources/enet.c -fembed-bitcode -target x86_64-apple-ios-simulator
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Compile step resulted in failure."
+		exit $?
+	fi
+
 	# Create static library
 	libtool -static enet.o -o libenet-release-simulator64.a
-	
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Libtool step resulted in failure."
+		exit $?
+	fi
+
 	# Cleanup
 	rm -vf *.o
 	
 	# Debug Binaries
 	gcc -DENET_DEBUG=1 -c Sources/enet.c -fembed-bitcode -target x86_64-apple-ios-simulator
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Compile step resulted in failure."
+		exit $?
+	fi
 	libtool -static enet.o -o libenet-debug-simulator64.a
-	
+		if [ $? -ne 0 ]; then
+		echo "ERROR: Libtool step resulted in failure."
+		exit $?
+	fi
+
 	# Copy.
 	cp -v *.a "$OUTPUT"
 }
 
 compile_enet_armv7 () {
 	echo "Start compiling ARMv7"
-	
+	export SDKROOT=$RELEASE_SDKROOT
 	cd "$ARMV7_STAGING"
 	
 	# Pre-clean
@@ -141,22 +160,41 @@ compile_enet_armv7 () {
 	
 	# Release Binaries
 	gcc -c Sources/enet.c -fembed-bitcode -target armv7-apple-ios
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Compile step resulted in failure."
+		exit $?
+	fi
+
 	# Create static library
 	libtool -static enet.o -o libenet-release-armv7.a
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Libtool step resulted in failure."
+		exit $?
+	fi
 	
 	# Cleanup
 	rm -vf *.o
 	
 	# Debug Binaries
 	gcc -DENET_DEBUG=1 -c Sources/enet.c -fembed-bitcode -target armv7-apple-ios
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Compile step resulted in failure."
+		exit $?
+	fi
+
 	libtool -static enet.o -o libenet-debug-armv7.a
-	
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Libtool step resulted in failure."
+		exit $?
+	fi
+
 	# Copy.
 	cp -v *.a "$OUTPUT"
 }
 
 compile_enet_arm64 () {
 	echo "Start compiling ARM64"
+	export SDKROOT=$RELEASE_SDKROOT
 	cd "$ARM64_STAGING"
 	
 	# Pre-clean
@@ -166,16 +204,34 @@ compile_enet_arm64 () {
 		
 	# Release Binaries
 	gcc -c Sources/enet.c -fembed-bitcode -target arm64-apple-ios
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Compile step resulted in failure."
+		exit $?
+	fi
+
 	# Create static library
 	libtool -static enet.o -o libenet-release-arm64.a
-	
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Libtool step resulted in failure."
+		exit $?
+	fi
+
 	# Cleanup
 	rm -v *.o
 	
 	# Debug Binaries
 	gcc -DENET_DEBUG=1 -c Sources/enet.c -fembed-bitcode -target arm64-apple-ios
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Compile step resulted in failure."
+		exit $?
+	fi
+
 	libtool -static enet.o -o libenet-debug-arm64.a
-	
+	if [ $? -ne 0 ]; then
+		echo "ERROR: Libtool step resulted in failure."
+		exit $?
+	fi
+
 	# Copy.
 	cp -v *.a "$OUTPUT"
 }
