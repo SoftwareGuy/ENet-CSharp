@@ -206,7 +206,7 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
             upload_url: ${{ needs.create_release.outputs.create_release_url }}
-            asset_path: ${{ runner.workspace }}/AutoBuild/Binaries/libenet-combo-iOS.zip
+            asset_path: ${{ runner.workspace }}/ENet-CSharp/AutoBuild/Binaries/libenet-combo-iOS.zip
             asset_name: libenet-combo-iOS.zip
             asset_content_type: application/zip
 
