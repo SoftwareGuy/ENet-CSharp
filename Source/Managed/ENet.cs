@@ -1141,7 +1141,7 @@ namespace ENet
 		public static bool Initialize()
 		{
 			if (Native.enet_linked_version() != version)
-				throw new throw new InvalidOperationException("ENet native is out of date. Download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
+				throw new InvalidOperationException("ENet native is out of date. Download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
 
 			return Native.enet_initialize() == 0;
 		}
