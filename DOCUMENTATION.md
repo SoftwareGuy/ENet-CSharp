@@ -60,7 +60,7 @@ Definitions of peer states for `Peer.State` property:
 
 #### Packet callbacks
 
-`PacketFreeCallback(Packet packet)` notifies when a packet is being destroyed. A reference to the delegate should be preserved from being garbage collected.
+`PacketFreeCallback(Packet packet)` notifies when a packet is being destroyed. Indicates if a reliable packet was acknowledged. A reference to the delegate should be preserved from being garbage collected.
 
 #### Host callbacks
 Provides per host events.
