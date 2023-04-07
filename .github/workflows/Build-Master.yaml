@@ -97,7 +97,7 @@ jobs:
         - name: Setup XCode
           uses: maxim-lobanov/setup-xcode@v1
           with:
-            xcode-version: 11.6
+            xcode-version: latest-stable
         
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
@@ -174,7 +174,7 @@ jobs:
         - name: Setup XCode
           uses: maxim-lobanov/setup-xcode@v1
           with:
-            xcode-version: 11.6
+            xcode-version: latest-stable
 
         - name: Grab the latest copy of the repository.
           uses: actions/checkout@v2
