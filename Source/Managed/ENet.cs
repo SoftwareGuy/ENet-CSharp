@@ -1,8 +1,8 @@
 /*  
- * 	Managed C# wrapper for an extended version of ENet
- *	This is a fork from upstream and is available at http://github.com/SoftwareGuy/ENet-CSharp
+ *  Managed C# wrapper for an extended version of ENet
+ *  This is a fork from upstream and is available at http://github.com/SoftwareGuy/ENet-CSharp
  *  
- *	Copyright (c) 2019-2021 Matt Coburn (SoftwareGuy/Coburn64), Chris Burns (c6burns)
+ *  Copyright (c) 2019-2023 Matt Coburn (SoftwareGuy/Coburn64), Chris Burns (c6burns)
  *  Copyright (c) 2013 James Bellinger, 2016 Nate Shoffner, 2018 Stanislav Denisov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy

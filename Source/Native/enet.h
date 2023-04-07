@@ -1,6 +1,7 @@
 /*
  *  Custom fork of ENet reliable UDP networking library
- *  Copyright (c) 2019-2020 Matt Coburn, Chris Burns, 2018 Lee Salzman, Vladyslav Hrytsenko, Dominik Madarász, Stanislav Denisov
+ *  Copyright (c) 2019-2020 Matt Coburn, Chris Burns
+ *  Copyright (c) 2018 Lee Salzman, Vladyslav Hrytsenko, Dominik Madarász, Stanislav Denisov
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -236,7 +237,7 @@ extern "C" {
 		ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE = 65536,
 		ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT = 1,
 		ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT = 255,
-		ENET_PROTOCOL_MAXIMUM_PEER_ID = 0xFFF,
+		ENET_PROTOCOL_MAXIMUM_PEER_ID = 0x1FFF, // 0xFFF = 4095, 0x1FFF = 8191. Experimental capacity increase as of 2023-04-07.
 		ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT = 1024 * 1024
 	};
 
