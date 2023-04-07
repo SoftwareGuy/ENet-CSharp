@@ -1141,7 +1141,7 @@ namespace ENet
 		public static bool Initialize()
 		{
 			if (Native.enet_linked_version() != version)
-				throw new InvalidOperationException("ENet native is out of date. Download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
+				throw new InvalidOperationException("ENet native library is out of date, please download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
 
 			return Native.enet_initialize() == 0;
 		}
@@ -1152,7 +1152,7 @@ namespace ENet
 				throw new ArgumentNullException("callbacks");
 
 			if (Native.enet_linked_version() != version)
-				throw new InvalidOperationException("ENet native is out of date. Download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
+				throw new InvalidOperationException("ENet native library is out of date, please download the latest release from https://github.com/SoftwareGuy/ENet-CSharp/releases");
 
 			ENetCallbacks nativeCallbacks = callbacks.NativeData;
 
