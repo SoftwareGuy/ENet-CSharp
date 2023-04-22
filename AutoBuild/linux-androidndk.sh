@@ -17,7 +17,7 @@ echo "Grabbing tools if they don't exist already..."
 echo ""
 
 if [ ! -d $DUMP ]; then
-        mkdir $HOME/Dump
+        mkdir $DUMP
 fi
 
 if [ ! -f "$DUMP/android-ndk-r25c-linux.zip" ]; then
