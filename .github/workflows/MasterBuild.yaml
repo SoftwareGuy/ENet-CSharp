@@ -141,15 +141,22 @@ jobs:
         needs: create_release
         runs-on: windows-latest
         steps:
-        - name: Grab the latest copy of the repository.
+        - name: Checkout
           uses: actions/checkout@v2
-
+        
         - name: Compile ENet (non-debug)
           uses: ashutoshvarma/action-cmake-build@master
           with:
             build-dir: ${{ runner.workspace }}/ReleaseBuild
             build-type: Release
             configure-options: -DENET_DEBUG=0
+
+        - name: Find out some stuffs
+          run: |
+            dir "${{ runner.workspace }}/ReleaseBuild/"
+            dir "${{ runner.workspace }}/ReleaseBuild/x64"            
+            dir "${{ runner.workspace }}/ReleaseBuild/x64/Release"
+
 #
 #        - name: Configure and build non-debug DLL using CMake
 #          uses: threeal/cmake-action@v1.3.0
@@ -166,11 +173,9 @@ jobs:
 #            build-dir: ${{ runner.workspace }}/debug-build
 #            options: ENET_DEBUG=1 ENET_SHARED=1
 #            run-build: true
-        - name: Find out some stuffs.
-          run: |
+
+
 #            dir "${{ runner.workspace }}/build/x64/Release" && dir "${{ runner.workspace }}/debug-build/x64/Debug"
-            dir "${{ runner.workspace }}/ReleaseBuild/x64/Release"
-            
 #        - name: Run automated build script
 #          run: |
 #            cd ${{ runner.workspace }}\ENet-CSharp && &.\BuildScripts\ms-windows.cmd "${{ runner.workspace }}"
