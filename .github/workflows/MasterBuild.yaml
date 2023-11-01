@@ -164,12 +164,25 @@ jobs:
         - name: List debug build directory
           run: |
             dir "${{ runner.workspace }}/DebugBuild/Debug"
-            
-        - name: Compress libraries for upload
-          run: |
-            Compress-Archive -Path "${{ runner.workspace }}/ReleaseBuild/Release/enet.dll" -DestinationPath "${{ runner.workspace }}/Release.zip
-            Compress-Archive -Path "${{ runner.workspace }}/DebugBuild/Debug/enet.dll" -DestinationPath "${{ runner.workspace }}/Debug.zip
+               
+        - name: Archive release library
+          uses: thedoctor0/zip-release@0.7.5
+          with:
+            type: 'zip'
+            directory: '${{ runner.workspace }}'
+            path: '${{ runner.workspace }}/ReleaseBuild/Release'
+            filename: 'Release.zip'
+            exclusions: '*.exp *.lib *.pdb'
 
+        - name: Archive debug library
+          uses: thedoctor0/zip-release@0.7.5
+          with:
+            type: 'zip'
+            directory: '${{ runner.workspace }}'
+            path: '${{ runner.workspace }}/DebugBuild/Debug'
+            filename: 'Debug.zip'
+            exclusions: '*.exp *.lib *.pdb'
+            
         - name: Upload release library
           id: upload-release-asset 
           uses: actions/upload-release-asset@master
