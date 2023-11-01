@@ -1,0 +1,250 @@
+name: Master Build
+
+on:
+  push:
+    # branches: [ master ]
+    tags:
+      - 'v2.*'
+jobs:
+    create_release:
+        name: Prepare a new release
+        runs-on: ubuntu-latest
+        outputs:
+          create_release_url: ${{ steps.create_release.outputs.upload_url }}         
+          
+        steps:
+        - name: Get the commit hash.          
+          steps:
+          - id: commit
+            uses: prompt/actions-commit-hash@v3          
+                    
+        - name: Create release on repository
+          id: create_release
+          uses: actions/create-release@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: "autobuild-${{ steps.commit.outputs.short }}"
+            release_name: "Native Libraries (Autobuild ${{ steps.commit.outputs.short }})"
+            body: "Automated build of the ENet native libraries, up to date with the latest commits. The attached per-platform archives contain ENet for use in both production and debugging environments."
+            draft: false
+            prerelease: false
+
+# START LINUX BUILD JOB
+    build_linux64:
+        name: Linux x86_64
+        needs: create_release
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: Create temporary staging directories
+          run: |
+            mkdir -p ${{ runner.workspace }}/Staging
+            mkdir -p ${{ runner.workspace }}/Work/ReleaseBuild
+            mkdir -p ${{ runner.workspace }}/Work/DebugBuild
+
+        - name: Compile ENet (non-debug)
+          uses: ashutoshvarma/action-cmake-build@master
+          with:
+            build-dir: ${{ runner.workspace }}/Work/ReleaseBuild
+            cc: gcc
+            cxx: g++
+            build-type: Release
+            configure-options: -DENET_DEBUG=0
+            
+        - name: Stash and compress production library
+          run: |
+            zip -j -9 ${{ runner.workspace }}/Staging/Release.zip ${{ runner.workspace }}/Work/ReleaseBuild/libenet.so
+
+        - name: Compile ENet (debug)
+          uses: ashutoshvarma/action-cmake-build@master
+          with:
+            build-dir: mkdir -p ${{ runner.workspace }}/Work/DebugBuild
+            cc: gcc
+            cxx: g++
+            build-type: Debug
+            configure-options: -DENET_DEBUG=1
+
+        - name: Stash compiled libraries
+          run: |          
+            zip -j -9 ${{ runner.workspace }}/Staging/Debug.zip ${{ runner.workspace }}/Work/DebugBuild/libenet.so
+
+        - name: Upload non-debug library
+          id: upload-release-asset 
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+            asset_path: ${{ runner.workspace }}/Staging/Release.zip
+            asset_name: libenet-release-linux-x86_64.zip
+            asset_content_type: application/zip
+
+        - name: Upload debug library
+          id: upload-debug-asset 
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+            asset_path: ${{ runner.workspace }}/Staging/Debug.zip
+            asset_name: libenet-debug-linux-x86_64.zip
+            asset_content_type: application/zip
+# END LINUX BUILD JOB
+
+# START APPLE MACOS BUILD JOB
+# Need to revise this - future Coburn job.
+#    build_apple_64:
+#        name: MacOS
+#        needs: create_release
+#        runs-on: macos-latest
+#        steps:         
+#        - name: Setup XCode
+#          uses: maxim-lobanov/setup-xcode@v1
+#          with:
+#            xcode-version: latest-stable
+#        
+#        - name: Grab the latest copy of the repository.
+#          uses: actions/checkout@v2
+#
+#        - name: Run automated build script.
+#          run: |
+#            cd "${{ runner.workspace }}/ENet-CSharp" && bash BuildScripts/apple-mac.command
+#            
+#        - name: Upload release library
+#          id: upload-release-asset 
+#          uses: actions/upload-release-asset@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+#            asset_path: ${{ runner.workspace }}/ENet-CSharp/ReleaseOut/Release.zip
+#            asset_name: libenet-release-macOS.zip
+#            asset_content_type: application/zip
+#
+#        - name: Upload debug library
+#          id: upload-debug-asset 
+#          uses: actions/upload-release-asset@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+#            asset_path: ${{ runner.workspace }}/ENet-CSharp/DebugOut/Debug.zip
+#            asset_name: libenet-debug-macOS.zip
+#            asset_content_type: application/zip
+#
+# END APPLE MACOS BUILD JOB
+
+    build_windows_64:
+        name: Windows x86_64
+        needs: create_release
+        runs-on: windows-latest
+        steps:
+        - name: Grab the latest copy of the repository.
+          uses: actions/checkout@v2
+
+        - name: Configure and build non-debug DLL using CMake
+          uses: threeal/cmake-action@v1.3.0
+          with: 
+            source-dir: ${{ runner.workspace }}/ENet-CSharp/Source/Native
+            build-dir: ${{ runner.workspace }}/build
+            options: ENET_DEBUG=0
+            run-build: true
+
+        - name: Configure and build debug DLL using CMake
+          uses: threeal/cmake-action@v1.3.0
+          with: 
+            source-dir: ${{ runner.workspace }}/ENet-CSharp/Source/Native
+            build-dir: ${{ runner.workspace }}/debug-build
+            options: ENET_DEBUG=1
+            run-build: true
+
+        - name: List directory
+            run |
+            dir /s "${{ runner.workspace }}/build"
+            dir /s "${{ runner.workspace }}/debug-build"
+            
+#        - name: Run automated build script
+#          run: |
+#            cd ${{ runner.workspace }}\ENet-CSharp && &.\BuildScripts\ms-windows.cmd "${{ runner.workspace }}"
+#
+#        - name: Upload release library
+#          id: upload-release-asset 
+#          uses: actions/upload-release-asset@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+#            asset_path: ${{ runner.workspace }}\ReleaseOut\Release.zip
+#            asset_name: libenet-release-win64.zip
+#            asset_content_type: application/zip
+#
+#        - name: Upload debug library
+#          id: upload-debug-asset 
+#          uses: actions/upload-release-asset@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+#            asset_path: ${{ runner.workspace }}/DebugOut/Debug.zip
+#           asset_name: libenet-debug-win64.zip
+#            asset_content_type: application/zip
+
+# START APPLE IOS BUILD JOB
+    build_apple_mobile:
+        name: Build for Apple iOS
+        needs: create_release
+        runs-on: macos-latest
+        steps:
+      
+        - name: Setup XCode
+          uses: maxim-lobanov/setup-xcode@v1
+          with:
+            xcode-version: latest-stable
+
+        - name: Grab the latest copy of the repository.
+          uses: actions/checkout@v2
+
+        - name: Run the iOS build script
+          run: |
+            cd "$GITHUB_WORKSPACE/BuildScripts" && bash ./apple-ios.command
+
+        - name: Upload release library
+          id: upload-release-asset 
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }}
+            asset_path: ${{ runner.workspace }}/ENet-CSharp/BuildScripts/Binaries/libenet-combo-iOS.zip
+            asset_name: libenet-combo-iOS.zip
+            asset_content_type: application/zip
+
+#        - name: Upload debug library
+#          id: upload-debug-asset 
+#          uses: actions/upload-release-asset@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ needs.create_release.outputs.create_release_url }}
+#            asset_path: ${{ runner.workspace }}/temp/Debug/libenet.zip
+#            asset_name: libenet-debug-iOS.zip
+#            asset_content_type: application/zip
+
+# END APPLE IOS BUILD JOB
+
+# START ANDROID BUILD JOB
+    build_android:
+        name: Build for Android
+        needs: create_release
+        runs-on: ubuntu-latest
+        steps:        
+        - name: Grab the latest copy of the repository.
+          uses: actions/checkout@v2
+
+    # Stubbed!
+# END ANDROID BUILD JOB
+
+# end of build jobs.
