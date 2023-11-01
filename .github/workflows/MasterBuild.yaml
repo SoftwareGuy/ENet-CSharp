@@ -154,7 +154,7 @@ jobs:
           run: |
             dir "${{ runner.workspace }}/ReleaseBuild/Release"            
 
-        - name: Compile ENet (non-debug)
+        - name: Compile ENet (debug)
           uses: ashutoshvarma/action-cmake-build@master
           with:
             build-dir: ${{ runner.workspace }}/DebugBuild
@@ -181,7 +181,7 @@ jobs:
             directory: '${{ runner.workspace }}'
             path: '${{ runner.workspace }}/DebugBuild/Debug'
             filename: 'Debug.zip'
-            exclusions: '*.exp *.lib *.pdb'
+            exclusions: 'enet.exp enet.lib enet.pdb'
             
         - name: Upload release library
           id: upload-release-asset 
@@ -195,8 +195,10 @@ jobs:
             asset_content_type: application/zip
             
         - name: Upload debug library
-          id: upload-debug-asset
-          uses: actions/upload-release-asset@master
+          id: upload-debug-asset 
+          uses: actions/upload-debug-asset@master
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
             upload_url: ${{ needs.create_release.outputs.create_release_url }} 
             asset_path: ${{ runner.workspace }}/Debug.zip
