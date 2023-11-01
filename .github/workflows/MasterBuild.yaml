@@ -152,7 +152,6 @@ jobs:
 
         - name: List release build directory
           run: |
-            dir "${{ runner.workspace }}/ReleaseBuild/"
             dir "${{ runner.workspace }}/ReleaseBuild/Release"            
 
         - name: Compile ENet (non-debug)
@@ -164,13 +163,12 @@ jobs:
 
         - name: List debug build directory
           run: |
-            dir "${{ runner.workspace }}/DebugBuild/"
             dir "${{ runner.workspace }}/DebugBuild/Debug"
             
         - name: Compress libraries for upload
           run: |
-            "C:\Program Files\7-Zip\7z.exe" a "${{ runner.workspace }}/Release.zip" "${{ runner.workspace }}/ReleaseBuild/Release/enet.dll"
-            "C:\Program Files\7-Zip\7z.exe" a "${{ runner.workspace }}/Debug.zip" "${{ runner.workspace }}/DebugBuild/Debug/enet.dll"
+            "Compress-Archive -Path "${{ runner.workspace }}/ReleaseBuild/Release/enet.dll" -DestinationPath "${{ runner.workspace }}/Release.zip"
+            "Compress-Archive -Path "${{ runner.workspace }}/DebugBuild/Debug/enet.dll" -DestinationPath "${{ runner.workspace }}/Debug.zip"
 
         - name: Upload release library
           id: upload-release-asset 
@@ -183,7 +181,7 @@ jobs:
             asset_name: libenet-release-win64.zip
             asset_content_type: application/zip
             
-        - name: shit
+        - name: Upload debug library
           id: upload-debug-asset
           uses: actions/upload-release-asset@master
           with:
