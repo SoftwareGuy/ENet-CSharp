@@ -2,7 +2,6 @@ name: Master Build
 
 on:
   push:
-    # branches: [ master ]
     tags:
       - 'v2.*'
 jobs:
@@ -19,7 +18,7 @@ jobs:
                     
         - name: Create release on repository
           id: create_release
-          uses: actions/create-release@v1
+          uses: actions/create-release@master
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
@@ -72,7 +71,7 @@ jobs:
 
         - name: Upload non-debug library
           id: upload-release-asset 
-          uses: actions/upload-release-asset@v1
+          uses: actions/upload-release-asset@master
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
@@ -83,7 +82,7 @@ jobs:
 
         - name: Upload debug library
           id: upload-debug-asset 
-          uses: actions/upload-release-asset@v1
+          uses: actions/upload-release-asset@master
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
@@ -114,7 +113,7 @@ jobs:
 #            
 #        - name: Upload release library
 #          id: upload-release-asset 
-#          uses: actions/upload-release-asset@v1
+#          uses: actions/upload-release-asset@master
 #          env:
 #            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #          with:
@@ -125,7 +124,7 @@ jobs:
 #
 #        - name: Upload debug library
 #          id: upload-debug-asset 
-#          uses: actions/upload-release-asset@v1
+#          uses: actions/upload-release-asset@master
 #          env:
 #            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #          with:
@@ -151,56 +150,48 @@ jobs:
             build-type: Release
             configure-options: -DENET_DEBUG=0
 
-        - name: Find out some stuffs
+        - name: List release build directory
           run: |
             dir "${{ runner.workspace }}/ReleaseBuild/"
-            dir "${{ runner.workspace }}/ReleaseBuild/x64"            
-            dir "${{ runner.workspace }}/ReleaseBuild/x64/Release"
+            dir "${{ runner.workspace }}/ReleaseBuild/Release"            
 
-#
-#        - name: Configure and build non-debug DLL using CMake
-#          uses: threeal/cmake-action@v1.3.0
-#          with: 
-#            source-dir: ${{ runner.workspace }}/ENet-CSharp/Source/Native
-#            build-dir: ${{ runner.workspace }}/build
-#            options: ENET_DEBUG=0 ENET_SHARED=1
-#            run-build: true
+        - name: Compile ENet (non-debug)
+          uses: ashutoshvarma/action-cmake-build@master
+          with:
+            build-dir: ${{ runner.workspace }}/DebugBuild
+            build-type: Debug
+            configure-options: -DENET_DEBUG=1
 
-#        - name: Configure and build debug DLL using CMake
-#          uses: threeal/cmake-action@v1.3.0
-#          with: 
-#            source-dir: ${{ runner.workspace }}/ENet-CSharp/Source/Native
-#            build-dir: ${{ runner.workspace }}/debug-build
-#            options: ENET_DEBUG=1 ENET_SHARED=1
-#            run-build: true
+        - name: List debug build directory
+          run: |
+            dir "${{ runner.workspace }}/DebugBuild/"
+            dir "${{ runner.workspace }}/DebugBuild/Debug"
+            
+        - name: Compress libraries for upload
+          run: |
+            "C:\Program Files\7-Zip\7z.exe" a "${{ runner.workspace }}/Release.zip" "${{ runner.workspace }}/ReleaseBuild/Release/enet.dll"
+            "C:\Program Files\7-Zip\7z.exe" a "${{ runner.workspace }}/Debug.zip" "${{ runner.workspace }}/DebugBuild/Debug/enet.dll"
 
-
-#            dir "${{ runner.workspace }}/build/x64/Release" && dir "${{ runner.workspace }}/debug-build/x64/Debug"
-#        - name: Run automated build script
-#          run: |
-#            cd ${{ runner.workspace }}\ENet-CSharp && &.\BuildScripts\ms-windows.cmd "${{ runner.workspace }}"
-#
-#        - name: Upload release library
-#          id: upload-release-asset 
-#          uses: actions/upload-release-asset@v1
-#          env:
-#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          with:
-#            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
-#            asset_path: ${{ runner.workspace }}\ReleaseOut\Release.zip
-#            asset_name: libenet-release-win64.zip
-#            asset_content_type: application/zip
-#
-#        - name: Upload debug library
-#          id: upload-debug-asset 
-#          uses: actions/upload-release-asset@v1
-#          env:
-#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          with:
-#            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
-#            asset_path: ${{ runner.workspace }}/DebugOut/Debug.zip
-#           asset_name: libenet-debug-win64.zip
-#            asset_content_type: application/zip
+        - name: Upload release library
+          id: upload-release-asset 
+          uses: actions/upload-release-asset@master
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+            asset_path: ${{ runner.workspace }}/Release.zip
+            asset_name: libenet-release-win64.zip
+            asset_content_type: application/zip
+            
+        - name: shit
+          id: upload-debug-asset
+          uses: actions/upload-release-asset@master
+          with:
+            upload_url: ${{ needs.create_release.outputs.create_release_url }} 
+            asset_path: ${{ runner.workspace }}/Debug.zip
+            asset_name: libenet-debug-win64.zip
+            asset_content_type: application/zip
+            
 
 # START APPLE IOS BUILD JOB
     build_apple_mobile:
@@ -210,7 +201,7 @@ jobs:
         steps:
       
         - name: Setup XCode
-          uses: maxim-lobanov/setup-xcode@v1
+          uses: maxim-lobanov/setup-xcode@master
           with:
             xcode-version: latest-stable
 
@@ -223,7 +214,7 @@ jobs:
 
         - name: Upload release library
           id: upload-release-asset 
-          uses: actions/upload-release-asset@v1
+          uses: actions/upload-release-asset@master
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
@@ -231,30 +222,17 @@ jobs:
             asset_path: ${{ runner.workspace }}/ENet-CSharp/BuildScripts/Binaries/libenet-combo-iOS.zip
             asset_name: libenet-combo-iOS.zip
             asset_content_type: application/zip
-
-#        - name: Upload debug library
-#          id: upload-debug-asset 
-#          uses: actions/upload-release-asset@v1
-#          env:
-#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          with:
-#            upload_url: ${{ needs.create_release.outputs.create_release_url }}
-#            asset_path: ${{ runner.workspace }}/temp/Debug/libenet.zip
-#            asset_name: libenet-debug-iOS.zip
-#            asset_content_type: application/zip
-
 # END APPLE IOS BUILD JOB
 
 # START ANDROID BUILD JOB
-    build_android:
-        name: Build for Android
-        needs: create_release
-        runs-on: ubuntu-latest
-        steps:        
-        - name: Grab the latest copy of the repository.
-          uses: actions/checkout@v2
-
-    # Stubbed!
+#    build_android:
+#        name: Build for Android
+#        needs: create_release
+#        runs-on: ubuntu-latest
+#        steps:        
+#        - name: Grab the latest copy of the repository.
+#          uses: actions/checkout@v2
+# Stubbed!
 # END ANDROID BUILD JOB
 
 # end of build jobs.
